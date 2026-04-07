@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>Sanken Overseas — QR with GPS Tracking</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #08090d; --s1: #0f1117; --s2: #161b24;
+  --gold: #f0a500; --gold2: #ffc94a; --golddim: rgba(240,165,0,0.12);
+  --text: #e8eaf0; --muted: #5a6478; --border: rgba(255,255,255,0.07);
+}
+body { font-family: 'Rajdhani', sans-serif; background: var(--bg); color: var(--text); }
+.nav { display: flex; justify-content: space-between; padding: 0 20px; height: 54px; background: #08090d; border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap; }
+.tab-bar { display: flex; gap: 4px; background: var(--s2); border-radius: 30px; padding: 4px; }
+.tab { padding: 6px 16px; border-radius: 30px; font-size: 12px; font-weight: 700; cursor: pointer; color: #8090a8; }
+.tab.active { background: var(--gold); color: #000; }
+.main { padding: 20px; max-width: 1300px; margin: auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.upload-zone { border: 2px dashed #f0a500; border-radius: 16px; background: #0f1117; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 24px; position: relative; }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.settings-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; margin-bottom: 22px; }
+.sinp, .ssel { background: #161b24; border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 10px; color: white; }
+.genbtn { background: var(--gold); color: #000; border: none; border-radius: 8px; padding: 11px 20px; font-family: 'Bebas Neue'; cursor: pointer; }
+.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 22px; }
+.stat { background: #0f1117; border-radius: 10px; padding: 12px; }
+.sval { font-family: 'Bebas Neue'; font-size: 28px; color: var(--gold); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tbtn { background: #161b24; border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 8px 14px; cursor: pointer; color: white; }
+.tbtn:hover { background: var(--gold); color: black; }
+.items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 16px; }
+.item-card { background: #0f1117; border-radius: 13px; padding: 16px; border: 1px solid rgba(255,255,255,0.07); }
+.item-card.selected { border-color: var(--gold); background: rgba(240,165,0,0.1); }
+.card-check { width: 18px; height: 18px; border: 2px solid #5a6478; border-radius: 4px; cursor: pointer; }
+.card-check.checked { background: var(--gold); border-color: var(--gold); }
+.card-check.checked::after { content: '✓'; display: block; text-align: center; font-size: 11px; color: black; }
+.qr-wrapper { background: white; border-radius: 8px; padding: 8px; width: 130px; height: 130px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; }
+.qr-placeholder { width: 114px; height: 114px; background: #1e1e2a; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 24px; }
+.qr-data { background: #1e1e2a; border-radius: 6px; padding: 8px; font-size: 10px; font-family: monospace; word-break: break-all; margin-top: 8px; }
+.card-actions { display: flex; gap: 6px; margin-top: 10px; }
+.card-btn { flex:1; background: #161b24; border-radius: 7px; padding: 6px; text-align: center; cursor: pointer; font-size: 11px; }
+.scanner-container { background: #0f1117; border-radius: 20px; padding: 20px; margin-bottom: 24px; }
+#reader { width: 100%; max-width: 500px; margin: auto; border-radius: 12px; overflow: hidden; }
+.scan-details { background: #161b24; border-radius: 12px; padding: 12px; margin-top: 16px; font-size: 13px; display: none; }
+.supabase-config { background: #161b24; border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+.log-entry { border-bottom: 1px solid #2a2a2a; padding: 12px; font-size: 12px; }
+.progress-bar { height: 4px; background: #161b24; margin: 12px 0; display: none; }
+.progress-fill { width: 0%; height: 100%; background: var(--gold); }
+.modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center; }
+.modal-content { background: var(--s1); border-radius: 20px; padding: 24px; max-width: 90%; width: 400px; text-align: center; border: 1px solid var(--gold); }
+.modal-close { background: var(--gold); color: #000; border: none; padding: 8px 20px; border-radius: 8px; margin-top: 12px; cursor: pointer; }
+.test-qr { text-align: center; margin: 20px 0; cursor: pointer; }
+@media (max-width:700px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<nav><div style="display:flex; gap:10px; align-items:center;"><div style="background:var(--gold); width:30px; height:30px; border-radius:6px;"></div><strong>Sanken Overseas — QR with GPS</strong></div><div class="tab-bar"><div class="tab active" data-tab="generator">📦 QR Gen</div><div class="tab" data-tab="scanner">📷 Scan & GPS</div><div class="tab" data-tab="logs">📜 Cloud Logs</div></div></nav>
+<div class="main">
+<div id="tab-generator" class="tab-content active">
+<div class="upload-zone" id="upload-zone"><input type="file" id="file-input" accept=".xlsx,.xls,.csv" /><div>📂 Drop or click to upload PO file</div><div style="font-size:12px; margin-top:8px;">Auto-detects description column</div><div style="margin-top:12px;"><div style="background:var(--gold); display:inline-block; padding:8px 24px; border-radius:8px;">Browse File</div></div></div>
+<div class="settings-bar"><input class="sinp" id="prefix-inp" value="SO-MV" placeholder="Prefix"><input class="sinp" id="shipment-inp" value="SO-2026-031" placeholder="Shipment"><input class="sinp" id="site-inp" value="Hulhumalé" placeholder="Site"><select class="ssel" id="qr-size"><option value="300">300px</option><option value="400" selected>400px</option><option value="500">500px</option></select><button class="genbtn" id="gen-all-btn" disabled>⚡ Generate ALL QRs</button><button class="genbtn" id="gen-selected-btn" disabled>📌 Generate Selected</button></div>
+<div class="stats-row"><div class="stat"><div>Total items</div><div class="sval" id="stat-total">0</div></div><div class="stat"><div>QRs generated</div><div class="sval" id="stat-generated">0</div></div><div class="stat"><div>Selected</div><div class="sval" id="stat-selected">0</div></div><div class="stat"><div>Ready</div><div class="sval" id="stat-ready">0</div></div></div>
+<div class="toolbar"><input class="tsearch" id="search-inp" placeholder="Search..."><button class="tbtn" id="select-all-btn">Select all</button><button class="tbtn" id="deselect-all-btn">Deselect all</button><button class="tbtn" id="print-btn">🖨 Print selected</button><button class="tbtn" id="download-all-qr">⬇ Download all QRs</button><button class="tbtn" id="clear-qr-btn">Clear QR data</button></div>
+<div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+<div class="items-grid" id="items-grid"><div style="text-align:center; padding:60px;">Upload Excel/CSV file</div></div>
+</div>
+<div id="tab-scanner" class="tab-content">
+<div class="supabase-config"><div><strong>☁️ Supabase Cloud Storage (auto‑connect)</strong></div><div id="supabase-status" style="font-size:12px; margin-top:8px;"></div></div>
+<div class="scanner-container"><div style="text-align:center;">📱 Scan QR code → GPS location captured & saved to cloud</div><div id="reader"></div><div style="margin-top:12px; display:flex; gap:8px;"><button id="start-scanner" class="genbtn" style="flex:1;">▶ Start Camera</button><button id="stop-scanner" class="genbtn" style="flex:1; background:#333;">⏹ Stop Camera</button><button id="toggle-torch" class="genbtn" style="flex:1;">🔦 Torch</button></div><div class="scan-details" id="scan-details"><strong>📄 Scanned data:</strong><br><span id="scanned-text"></span></div></div>
+<div class="test-qr" id="test-qr-btn" style="text-align:center; margin-top:20px;"><span style="background:var(--gold); padding:8px 20px; border-radius:30px;">🔍 Test Scan: Show large QR (first item)</span></div>
+</div>
+<div id="tab-logs" class="tab-content"><div style="display:flex; justify-content:space-between; margin-bottom:16px;"><h3>📋 Cloud Scan History (with GPS)</h3><button id="export-logs-btn" class="tbtn">⬇ Export CSV</button></div><div id="logs-container" style="background:#0f1117; border-radius:16px; padding:12px; max-height:500px; overflow:auto;"><div style="text-align:center; padding:40px;">Loading cloud logs...</div></div></div>
+</div>
+<div id="qr-modal" class="modal"><div class="modal-content"><strong>QR Code Data</strong><div style="margin:16px 0; font-family:monospace; word-break:break-all;" id="modal-data"></div><div id="modal-location" style="margin-top:8px; font-size:12px; color:var(--gold);"></div><button class="modal-close" onclick="closeModal()">Close</button></div></div>
+
+<script>
+// ---------- SUPABASE CREDENTIALS (replace fake key) ----------
+const SUPABASE_URL = "https://gcmjdippsyqcyfpamnnp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbWpkaXBwc3lxY3lmcGFtbm5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzI5MTQsImV4cCI6MjA5MTE0ODkxNH0.O8rnGW9jUL3H2th6rwihxfFuSx3bHeNAB_iN7VYOpu4";
+// IMPORTANT: Replace with your actual Supabase anon public key.
+
+let supabaseClient = null;
+async function initSupabase() {
+  try {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { error } = await supabaseClient.from('scans').select('id', { count: 'exact', head: true });
+    if (!error) {
+      document.getElementById('supabase-status').innerHTML = '✅ Connected to Supabase (cloud storage active)';
+      loadLogsFromSupabase();
+      return true;
+    } else throw error;
+  } catch(e) {
+    supabaseClient = null;
+    document.getElementById('supabase-status').innerHTML = '❌ Connection failed. Check anon key.';
+    return false;
+  }
+}
+async function loadLogsFromSupabase() {
+  if (!supabaseClient) return;
+  const { data, error } = await supabaseClient.from('scans').select('*').order('timestamp', { ascending: false });
+  if (error) return;
+  const container = document.getElementById('logs-container');
+  if (!data || data.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px;">No scans yet</div>'; return; }
+  container.innerHTML = data.map(log => `<div class="log-entry"><div>🕒 ${new Date(log.timestamp).toLocaleString()}</div><div><strong>QR Data:</strong> ${log.qr_raw || '-'}</div><div><strong>Item Code:</strong> ${log.item_code || '?'}</div><div><strong>Description:</strong> ${log.description || '-'}</div><div><strong>📍 Location:</strong> ${log.address || (log.lat ? `${log.lat},${log.lng}` : 'No GPS')}</div></div>`).join('');
+}
+async function addScanToSupabase(scan) { if (supabaseClient) { await supabaseClient.from('scans').insert([scan]); loadLogsFromSupabase(); } }
+
+// ---------- QR GENERATION (High quality, H error correction, quiet zone) ----------
+let items = [];
+let isGenerating = false;
+
+function generateQRDataURL(text, pixelSize) {
+  try {
+    let version = 10;
+    if (text.length > 150) version = 12;
+    if (text.length > 200) version = 14;
+    const qr = qrcode(version, 'H');
+    qr.addData(text);
+    qr.make();
+    const moduleCount = qr.getModuleCount();
+    const quietZone = 4;
+    const totalModules = moduleCount + 2 * quietZone;
+    const scale = pixelSize / totalModules;
+    const canvas = document.createElement('canvas');
+    canvas.width = pixelSize;
+    canvas.height = pixelSize;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, pixelSize, pixelSize);
+    ctx.fillStyle = '#000000';
+    for (let row = 0; row < moduleCount; row++) {
+      for (let col = 0; col < moduleCount; col++) {
+        if (qr.isDark(row, col)) {
+          const x = (col + quietZone) * scale;
+          const y = (row + quietZone) * scale;
+          ctx.fillRect(x, y, scale, scale);
+        }
+      }
+    }
+    return canvas.toDataURL('image/png');
+  } catch(e) { return null; }
+}
+
+async function generateQRForItem(item, updateUI=true) {
+  const prefix = document.getElementById('prefix-inp').value.trim() || 'SO';
+  const shipment = document.getElementById('shipment-inp').value.trim() || 'SHIP';
+  const site = document.getElementById('site-inp').value.trim() || 'SITE';
+  const code = `${prefix}-${String(item.id).padStart(3,'0')}`;
+  const qrText = `SANKEN|${code}|${item.desc.substring(0,80)}|${shipment}|${site}`;
+  const size = parseInt(document.getElementById('qr-size').value) || 400;
+  const dataUrl = generateQRDataURL(qrText, size);
+  if (dataUrl) {
+    item.qrGenerated = true;
+    item.qrDataUrl = dataUrl;
+    item.code = code;
+    item.qrText = qrText;
+  } else {
+    item.qrGenerated = false;
+    item.qrDataUrl = null;
+    item.qrText = null;
+  }
+  if (updateUI) {
+    const wrap = document.getElementById(`qr-wrap-${item.id}`);
+    const dataSpan = document.getElementById(`qr-data-${item.id}`);
+    if (wrap && item.qrDataUrl) wrap.innerHTML = `<img src="${item.qrDataUrl}" style="width:114px;height:114px;" />`;
+    else if (wrap) wrap.innerHTML = '<div class="qr-placeholder">⚠️</div>';
+    if (dataSpan && item.qrText) dataSpan.innerText = item.qrText;
+  }
+  updateStats();
+  return !!dataUrl;
+}
+
+function getCurrentCode(item) { return `${document.getElementById('prefix-inp').value.trim() || 'SO'}-${String(item.id).padStart(3,'0')}`; }
+function updateStats() {
+  document.getElementById('stat-total').innerText = items.length;
+  document.getElementById('stat-generated').innerText = items.filter(i=>i.qrGenerated).length;
+  document.getElementById('stat-selected').innerText = items.filter(i=>i.selected).length;
+  document.getElementById('stat-ready').innerText = items.filter(i=>i.qrGenerated).length;
+}
+
+function renderCards() {
+  const grid = document.getElementById('items-grid');
+  const search = document.getElementById('search-inp').value.toLowerCase();
+  if (!items.length) { grid.innerHTML = '<div style="text-align:center; padding:60px;">Upload Excel/CSV file</div>'; return; }
+  grid.innerHTML = '';
+  items.forEach(item => {
+    if (search && !item.desc.toLowerCase().includes(search)) return;
+    const currentCode = getCurrentCode(item);
+    const shipment = document.getElementById('shipment-inp').value;
+    const site = document.getElementById('site-inp').value;
+    const qrTextDisplay = item.qrText ? item.qrText : (item.qrGenerated ? 'Encoded data ready' : 'Not generated');
+    const card = document.createElement('div');
+    card.className = `item-card ${item.selected ? 'selected' : ''}`;
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+        <div class="card-check ${item.selected ? 'checked' : ''}" data-id="${item.id}"></div>
+        <div style="background:rgba(240,165,0,0.2); padding:2px 8px; border-radius:12px;">${escapeHtml(currentCode)}</div>
+      </div>
+      <div style="font-weight:600; margin-bottom:10px;">${escapeHtml(item.desc)}</div>
+      <div class="qr-wrapper" id="qr-wrap-${item.id}">${item.qrGenerated && item.qrDataUrl ? `<img src="${item.qrDataUrl}" style="width:114px;height:114px;" />` : '<div class="qr-placeholder">◻</div>'}</div>
+      <div class="qr-data" id="qr-data-${item.id}">${escapeHtml(qrTextDisplay)}</div>
+      <div style="font-size:11px; margin:8px 0;">Shipment: ${escapeHtml(shipment)} | Site: ${escapeHtml(site)}</div>
+      <div class="card-actions"><div class="card-btn" data-action="view" data-id="${item.id}">👁 View</div><div class="card-btn" data-action="gen" data-id="${item.id}">⚡ Gen</div><div class="card-btn" data-action="save" data-id="${item.id}">⬇ Save</div></div>
+    `;
+    grid.appendChild(card);
+  });
+  attachCardEvents();
+}
+function attachCardEvents() {
+  document.querySelectorAll('.card-check').forEach(el => el.addEventListener('click', (e) => { let id = parseInt(el.dataset.id); let item = items.find(i=>i.id===id); if(item){ item.selected=!item.selected; renderCards(); updateStats(); } }));
+  document.querySelectorAll('.card-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+    let id = parseInt(btn.dataset.id);
+    let item = items.find(i=>i.id===id);
+    if(!item) return;
+    if(btn.dataset.action === 'view') { if(!item.qrGenerated) await generateQRForItem(item,true); if(item.qrDataUrl){ let w=window.open(); w.document.write(`<body style="margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#000;"><img src="${item.qrDataUrl}" style="max-width:90%;"></body>`); } else alert("Generate first"); }
+    else if(btn.dataset.action === 'gen') { await generateQRForItem(item,true); renderCards(); updateStats(); }
+    else if(btn.dataset.action === 'save') { if(item.qrDataUrl){ let a=document.createElement('a'); a.href=item.qrDataUrl; a.download=`${getCurrentCode(item)}.png`; a.click(); } else alert("Generate first"); }
+  }));
+}
+async function generateAllQR() {
+  if(!items.length || isGenerating) return;
+  isGenerating=true;
+  const btn=document.getElementById('gen-all-btn');
+  const prog=document.getElementById('progress-bar');
+  const fill=document.getElementById('progress-fill');
+  prog.style.display='block';
+  for(let i=0;i<items.length;i++){
+    await generateQRForItem(items[i],true);
+    fill.style.width=`${((i+1)/items.length)*100}%`;
+    btn.innerText=`⚡ ${i+1}/${items.length}`;
+    updateStats();
+  }
+  prog.style.display='none';
+  btn.innerText='⚡ Generate ALL QRs';
+  isGenerating=false;
+  renderCards();
+}
+async function generateSelectedQR() {
+  const selected = items.filter(i=>i.selected);
+  if(!selected.length) return alert("No items selected");
+  const prog=document.getElementById('progress-bar');
+  const fill=document.getElementById('progress-fill');
+  prog.style.display='block';
+  for(let i=0;i<selected.length;i++){
+    await generateQRForItem(selected[i],true);
+    fill.style.width=`${((i+1)/selected.length)*100}%`;
+  }
+  prog.style.display='none';
+  renderCards();
+  alert(`Generated ${selected.length} QR codes`);
+}
+function downloadAllQR() { const qrItems=items.filter(i=>i.qrGenerated); if(!qrItems.length) return alert("No QR generated"); let idx=0; function next(){ if(idx>=qrItems.length) return; let a=document.createElement('a'); a.href=qrItems[idx].qrDataUrl; a.download=`${getCurrentCode(qrItems[idx])}.png`; a.click(); idx++; setTimeout(next,400); } next(); }
+function clearQRCodes() { items.forEach(i=>{i.qrGenerated=false; i.qrDataUrl=null; i.qrText=null;}); renderCards(); updateStats(); }
+function selectAll() { items.forEach(i=>i.selected=true); renderCards(); updateStats(); }
+function deselectAll() { items.forEach(i=>i.selected=false); renderCards(); updateStats(); }
+function printSelected() { window.print(); }
+function loadItems(descs, filename) {
+  items = descs.map((desc,idx)=>({id:idx+1, desc:desc.trim(), selected:true, qrGenerated:false, qrDataUrl:null, code:'', qrText:null}));
+  renderCards(); updateStats();
+  document.getElementById('gen-all-btn').disabled=false;
+  document.getElementById('gen-selected-btn').disabled=false;
+  document.querySelector('.upload-zone div:first-child').innerHTML = `✅ ${filename} (${items.length} items)`;
+}
+function readExcelFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(ws, {header:1});
+    let descCol=0;
+    if(data[0]) for(let i=0;i<data[0].length;i++) if(String(data[0][i]).toLowerCase().includes('desc')||String(data[0][i]).toLowerCase().includes('item')){ descCol=i; break; }
+    const startRow = (data[0] && String(data[0][descCol]).toLowerCase().includes('desc')) ? 1 : 0;
+    const descs = [];
+    for(let r=startRow; r<data.length; r++) if(data[r][descCol] && String(data[r][descCol]).trim()) descs.push(String(data[r][descCol]).trim());
+    if(descs.length) loadItems(descs, file.name);
+    else alert("No description column found");
+  };
+  reader.readAsArrayBuffer(file);
+}
+// ---------- QR SCANNER with GPS location ----------
+let html5QrCode = null;
+let torchEnabled = false;
+async function startScanner() {
+  if(html5QrCode) await stopScanner();
+  html5QrCode = new Html5Qrcode("reader");
+  const config = {
+    fps: 20,
+    qrbox: { width: 350, height: 350 },
+    aspectRatio: 1.0,
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+  };
+  try {
+    await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+    document.getElementById("scan-details").style.display = "block";
+  } catch(err) { alert("Camera error: "+err+"\nPlease grant camera permissions."); }
+}
+async function stopScanner() { if(html5QrCode) { await html5QrCode.stop(); html5QrCode.clear(); html5QrCode=null; } document.getElementById("scan-details").style.display = "none"; }
+async function toggleTorch() {
+  if(!html5QrCode) { alert("Start camera first"); return; }
+  torchEnabled = !torchEnabled;
+  try { await html5QrCode.applyVideoConstraints({ advanced: [{ torch: torchEnabled }] }); } catch(e) { alert("Torch not supported"); torchEnabled=false; }
+}
+async function onScanSuccess(decodedText) {
+  await stopScanner();
+  // Show modal with QR data first
+  document.getElementById("modal-data").innerText = decodedText;
+  document.getElementById("modal-location").innerHTML = "📍 Getting location...";
+  document.getElementById("qr-modal").style.display = "flex";
+  
+  // Parse QR
+  let itemCode = "Unknown", description = "";
+  const parts = decodedText.split('|');
+  if(parts[0] === "SANKEN" && parts[1]) itemCode = parts[1];
+  if(parts[2]) description = parts[2];
+  
+  // Get GPS location
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      let address = "";
+      try {
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`);
+        const geoData = await geoRes.json();
+        address = geoData.display_name || `${lat},${lng}`;
+      } catch(e) { address = `${lat},${lng}`; }
+      document.getElementById("modal-location").innerHTML = `📍 ${address}`;
+      const scanRecord = {
+        timestamp: new Date().toISOString(),
+        lat, lng, address,
+        item_code: itemCode,
+        description: description,
+        qr_raw: decodedText
+      };
+      await addScanToSupabase(scanRecord);
+    }, async (error) => {
+      document.getElementById("modal-location").innerHTML = "⚠️ Location permission denied or unavailable.";
+      const scanRecord = {
+        timestamp: new Date().toISOString(),
+        lat: null, lng: null, address: "Location not provided",
+        item_code: itemCode,
+        description: description,
+        qr_raw: decodedText
+      };
+      await addScanToSupabase(scanRecord);
+    });
+  } else {
+    document.getElementById("modal-location").innerHTML = "❌ Geolocation not supported by browser.";
+    const scanRecord = {
+      timestamp: new Date().toISOString(),
+      lat: null, lng: null, address: "GPS not supported",
+      item_code: itemCode,
+      description: description,
+      qr_raw: decodedText
+    };
+    await addScanToSupabase(scanRecord);
+  }
+}
+function closeModal() { document.getElementById("qr-modal").style.display = "none"; }
+
+function showTestQR() {
+  if(!items.length || !items[0].qrGenerated) {
+    alert("Please generate at least one QR code first.");
+    return;
+  }
+  const qrDataUrl = items[0].qrDataUrl;
+  const win = window.open();
+  win.document.write(`
+    <html><head><title>Test QR - Scan with your phone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>body { margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#000; } img { max-width:95%; height:auto; }</style>
+    </head><body><img src="${qrDataUrl}" /></body></html>
+  `);
+}
+
+function exportLogsCSV() { if(!supabaseClient) { alert("Supabase not connected"); return; } supabaseClient.from('scans').select('*').then(({data,error})=>{ if(error||!data.length){ alert("No logs"); return; } let csv="Timestamp,Latitude,Longitude,Address,ItemCode,Description,FullQR\n"; data.forEach(l=>{ csv+=`"${l.timestamp}",${l.lat??""},${l.lng??""},"${(l.address||"").replace(/"/g,'""')}","${l.item_code}","${(l.description||"").replace(/"/g,'""')}","${(l.qr_raw||"").replace(/"/g,'""')}"\n`; }); const blob=new Blob([csv],{type:"text/csv"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`qr_scans_${new Date().toISOString().slice(0,19)}.csv`; a.click(); }); }
+function escapeHtml(s) { return String(s).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+
+// Event listeners
+document.getElementById('file-input').addEventListener('change', e=>{ if(e.target.files[0]) readExcelFile(e.target.files[0]); });
+const zone=document.getElementById('upload-zone');
+zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', ()=> zone.classList.remove('dragover'));
+zone.addEventListener('drop', e=>{ e.preventDefault(); zone.classList.remove('dragover'); if(e.dataTransfer.files[0]) readExcelFile(e.dataTransfer.files[0]); });
+document.getElementById('gen-all-btn').addEventListener('click', generateAllQR);
+document.getElementById('gen-selected-btn').addEventListener('click', generateSelectedQR);
+document.getElementById('select-all-btn').addEventListener('click', selectAll);
+document.getElementById('deselect-all-btn').addEventListener('click', deselectAll);
+document.getElementById('print-btn').addEventListener('click', printSelected);
+document.getElementById('download-all-qr').addEventListener('click', downloadAllQR);
+document.getElementById('clear-qr-btn').addEventListener('click', clearQRCodes);
+document.getElementById('search-inp').addEventListener('input', renderCards);
+document.getElementById('start-scanner').addEventListener('click', startScanner);
+document.getElementById('stop-scanner').addEventListener('click', stopScanner);
+document.getElementById('toggle-torch').addEventListener('click', toggleTorch);
+document.getElementById('test-qr-btn').addEventListener('click', showTestQR);
+document.getElementById('export-logs-btn').addEventListener('click', exportLogsCSV);
+document.querySelectorAll('.tab').forEach(tab=>{ tab.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active'); document.querySelectorAll('.tab-content').forEach(tc=>tc.classList.remove('active')); document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active'); if(tab.dataset.tab==='scanner' && html5QrCode) stopScanner(); if(tab.dataset.tab==='logs') loadLogsFromSupabase(); }); });
+initSupabase();
+</script>
+</body>
+</html>
