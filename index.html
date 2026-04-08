@@ -6,10 +6,8 @@
   <title>Sanken Overseas · QR Generator</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- Reliable QR code library -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.min.js"></script>
   <style>
-    /* ── VARIABLES (unchanged) ── */
     :root{--bg:#08090d;--s1:#0f1117;--s2:#161b24;--s3:#1e2535;--gold:#f0a500;--gold2:#ffc94a;--golddim:rgba(240,165,0,0.12);--blue:#2196f3;--green:#00e676;--red:#ff3d3d;--cyan:#00bcd4;--text:#e8eaf0;--muted:#5a6478;--muted2:#8090a8;--border:rgba(255,255,255,0.07);--border2:rgba(240,165,0,0.25);}
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
@@ -267,29 +265,17 @@
 <script>
 // ---------- USER STORAGE (PIN-based) ----------
 const STORAGE_KEY = 'sanken_users_pin';
-let users = []; // { pin, name, email, role, approved, initials, color }
+let users = [];
 
 function loadUsers() {
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try { users = JSON.parse(stored); } catch(e) { users = []; }
-  }
+  if (stored) { try { users = JSON.parse(stored); } catch(e) { users = []; } }
   if (!users.length) {
-    users.push({
-      pin: '123456',
-      name: 'Administrator',
-      email: 'admin@sanken.com',
-      role: 'Admin',
-      approved: true,
-      initials: 'AD',
-      color: '#ff3d3d'
-    });
+    users.push({ pin:'123456', name:'Administrator', email:'admin@sanken.com', role:'Admin', approved:true, initials:'AD', color:'#ff3d3d' });
   }
   saveUsers();
 }
-function saveUsers() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-}
+function saveUsers() { localStorage.setItem(STORAGE_KEY, JSON.stringify(users)); }
 
 // ---------- GLOBAL STATE ----------
 let items = [];
@@ -318,36 +304,24 @@ function doLogin() {
   const pin = document.getElementById('login-pin').value.trim();
   const user = users.find(u => u.pin === pin);
   const msg = document.getElementById('lf-msg');
-  if (!user) {
-    msg.className = 'lf-msg err';
-    msg.textContent = 'Invalid PIN.';
-    msg.style.display = 'block';
-    return;
-  }
-  if (!user.approved) {
-    msg.className = 'lf-msg err';
-    msg.textContent = 'Account pending approval.';
-    msg.style.display = 'block';
-    return;
-  }
-  msg.style.display = 'none';
+  if (!user) { msg.className='lf-msg err'; msg.textContent='Invalid PIN.'; msg.style.display='block'; return; }
+  if (!user.approved) { msg.className='lf-msg err'; msg.textContent='Account pending approval.'; msg.style.display='block'; return; }
+  msg.style.display='none';
   currentUser = user;
   isAdmin = (user.role === 'Admin' || user.pin === '123456');
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
   document.getElementById('nav-avatar').textContent = user.initials;
   document.getElementById('nav-avatar').style.background = user.color;
   document.getElementById('admin-tab-btn').style.display = isAdmin ? '' : 'none';
   showTab('generator');
-  document.getElementById('login-pin').value = '';
+  document.getElementById('login-pin').value='';
 }
-
 function doSignOut() {
-  currentUser = null; isAdmin = false;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
+  currentUser=null; isAdmin=false;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
 }
-
 function showTab(t) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(b => b.classList.remove('active'));
@@ -367,49 +341,49 @@ function renderAdminPanel() {
   const aDiv = document.getElementById('adm-approved');
   pDiv.innerHTML = pending.length ? '' : '<div style="padding:10px;color:var(--muted2);">No pending requests</div>';
   pending.forEach(u => {
-    const d = document.createElement('div'); d.className = 'al-item';
-    d.innerHTML = `<div class="al-info"><div class="al-av" style="background:var(--golddim);">${u.initials||'?'}</div><div><div class="al-name">${u.name}</div><div class="al-email">${u.email||''} · ${u.role}</div></div></div>
-      <div class="al-btns"><span class="al-badge pend">Pending</span>
+    const d = document.createElement('div'); d.className='al-item';
+    d.innerHTML = `<div class="al-info"><div class="al-av" style="background:var(--golddim);">${u.initials||'?'}</div><div><div>${u.name}</div><div>${u.email||''} · ${u.role}</div></div></div>
+      <div><span class="al-badge pend">Pending</span>
       <button class="al-act approve" onclick="approveUser('${u.pin}')">✓ Approve</button>
       <button class="al-act deny" onclick="denyUser('${u.pin}')">✕ Deny</button></div>`;
     pDiv.appendChild(d);
   });
-  aDiv.innerHTML = '';
+  aDiv.innerHTML='';
   approved.forEach(u => {
-    const d = document.createElement('div'); d.className = 'al-item';
-    d.innerHTML = `<div class="al-info"><div class="al-av" style="background:${u.color};">${u.initials}</div><div><div class="al-name">${u.name}</div><div class="al-email">${u.email||''} · ${u.role} · PIN: ${u.pin}</div></div></div>
-      <div class="al-btns"><span class="al-badge">✓ Active</span>
-      <button class="al-act revoke" onclick="revokeUser('${u.pin}')">Revoke</button></div>`;
+    const d = document.createElement('div'); d.className='al-item';
+    d.innerHTML = `<div class="al-info"><div class="al-av" style="background:${u.color};">${u.initials}</div><div><div>${u.name}</div><div>${u.email||''} · ${u.role} · PIN: ${u.pin}</div></div></div>
+      <div><span class="al-badge">✓ Active</span>
+      <button class="al-act deny" onclick="revokeUser('${u.pin}')">Revoke</button></div>`;
     aDiv.appendChild(d);
   });
 }
-window.approveUser = (pin) => { const u = users.find(u => u.pin === pin); if(u) { u.approved = true; saveUsers(); renderAdminPanel(); } };
-window.denyUser = (pin) => { users = users.filter(u => u.pin !== pin); saveUsers(); renderAdminPanel(); };
-window.revokeUser = (pin) => { if(pin === '123456') return alert('Cannot revoke default admin'); if(confirm('Revoke access?')) { users = users.filter(u => u.pin !== pin); saveUsers(); renderAdminPanel(); } };
+window.approveUser = (pin) => { const u=users.find(u=>u.pin===pin); if(u){u.approved=true;saveUsers();renderAdminPanel();} };
+window.denyUser = (pin) => { users=users.filter(u=>u.pin!==pin); saveUsers(); renderAdminPanel(); };
+window.revokeUser = (pin) => { if(pin==='123456') return alert('Cannot revoke default admin'); if(confirm('Revoke access?')){users=users.filter(u=>u.pin!==pin);saveUsers();renderAdminPanel();} };
 window.adminAddUser = () => {
-  const name = document.getElementById('add-name').value.trim();
-  const email = document.getElementById('add-email').value.trim();
-  const pin = document.getElementById('add-pin').value.trim();
-  const role = document.getElementById('add-role').value.trim() || 'Staff';
-  if(!name || !pin || pin.length<4) return alert('Name and PIN (min 4 digits) required.');
-  if(users.find(u => u.pin === pin)) return alert('PIN already exists.');
-  const initials = name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
-  const colors = ['#f0a500','#2196f3','#00bcd4','#7c6fff','#00e676'];
-  users.push({ pin, name, email, role, approved: true, initials, color: colors[Math.floor(Math.random()*colors.length)] });
+  const name=document.getElementById('add-name').value.trim();
+  const email=document.getElementById('add-email').value.trim();
+  const pin=document.getElementById('add-pin').value.trim();
+  const role=document.getElementById('add-role').value.trim()||'Staff';
+  if(!name||!pin||pin.length<4) return alert('Name and PIN (min 4 digits) required.');
+  if(users.find(u=>u.pin===pin)) return alert('PIN already exists.');
+  const initials=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const colors=['#f0a500','#2196f3','#00bcd4','#7c6fff','#00e676'];
+  users.push({pin,name,email,role,approved:true,initials,color:colors[Math.floor(Math.random()*colors.length)]});
   saveUsers();
-  document.getElementById('add-name').value = document.getElementById('add-email').value = document.getElementById('add-pin').value = '';
+  document.getElementById('add-name').value=document.getElementById('add-email').value=document.getElementById('add-pin').value='';
   renderAdminPanel();
 };
 
-// ---------- FILE & ITEMS ----------
+// ---------- FILE READING ----------
 function readFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
   const reader = new FileReader();
   if(ext === 'csv') {
     reader.onload = e => {
-      const lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
+      const lines = e.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
       const start = lines[0].toLowerCase().includes('desc') ? 1 : 0;
-      const descs = lines.slice(start).map(l => l.replace(/^["']|["']$/g,'')).filter(Boolean);
+      const descs = lines.slice(start).map(l=>l.replace(/^["']|["']$/g,'')).filter(Boolean);
       loadItems(descs, file.name);
     };
     reader.readAsText(file);
@@ -420,7 +394,7 @@ function readFile(file) {
       const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
       const headers = data[0] || [];
       let descCol = 0;
-      headers.forEach((h,i) => { if(String(h).toLowerCase().includes('desc')||String(h).toLowerCase().includes('item')) descCol = i; });
+      headers.forEach((h,i) => { if(String(h).toLowerCase().includes('desc')||String(h).toLowerCase().includes('item')) descCol=i; });
       const startRow = headers.length && isNaN(headers[0]) ? 1 : 0;
       const descs = [];
       for(let r=startRow; r<data.length; r++) {
@@ -445,51 +419,125 @@ function loadItems(descs, fname) {
 }
 
 // ---------- QR GENERATION (FIXED) ----------
-function makeCode(item) { return (document.getElementById('s-prefix').value||'SO')+'-'+String(item.id).padStart(3,'0'); }
-function makeQRText(item) {
-  return `SANKEN|${makeCode(item)}|${item.desc}|${document.getElementById('s-ship').value||''}|${document.getElementById('s-site').value||''}`;
+function makeCode(item) {
+  return (document.getElementById('s-prefix').value||'SO')+'-'+String(item.id).padStart(3,'0');
 }
+
+// Keep QR payload short to avoid capacity overflow
+function makeQRText(item) {
+  const code = makeCode(item);
+  const ship = document.getElementById('s-ship').value || '';
+  const site = document.getElementById('s-site').value || '';
+  // Truncate description to 80 chars max to stay within QR capacity
+  const desc = item.desc.length > 80 ? item.desc.substring(0, 80) : item.desc;
+  return `${code}|${desc}|${ship}|${site}`;
+}
+
 function generateQRForItem(item, size, callback) {
-  if(typeof qrcode === 'undefined') { alert('QR library missing'); if(callback) callback(); return; }
-  const qr = qrcode(0, 'H');
-  qr.addData(makeQRText(item));
-  qr.make();
+  // Guard: library must be loaded
+  if (typeof qrcode === 'undefined') {
+    console.error('qrcode-generator library not loaded');
+    if (callback) callback(false);
+    return;
+  }
+
+  const text = makeQRText(item);
+
+  // Try type numbers from 0 (auto) up to 10 with descending error correction
+  // 'M' (15% recovery) is a good balance; fall back to 'L' (7%) if still too long
+  const attempts = [
+    { type: 0,  ecl: 'M' },
+    { type: 0,  ecl: 'L' },
+    { type: 10, ecl: 'M' },
+    { type: 10, ecl: 'L' },
+    { type: 20, ecl: 'L' },
+    { type: 40, ecl: 'L' },
+  ];
+
+  let qr = null;
+  for (const attempt of attempts) {
+    try {
+      qr = qrcode(attempt.type, attempt.ecl);
+      qr.addData(text);
+      qr.make();
+      break; // success
+    } catch (e) {
+      qr = null;
+    }
+  }
+
+  if (!qr) {
+    console.error('QR generation failed for:', text);
+    if (callback) callback(false);
+    return;
+  }
+
+  // Render to canvas
   const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
+  canvas.width = size;
+  canvas.height = size;
   const ctx = canvas.getContext('2d');
   const cells = qr.getModuleCount();
   const cellSize = size / cells;
-  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size,size);
-  ctx.fillStyle = '#000';
-  for(let row=0; row<cells; row++) {
-    for(let col=0; col<cells; col++) {
-      if(qr.isDark(row, col)) ctx.fillRect(col*cellSize, row*cellSize, cellSize, cellSize);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#000000';
+  for (let row = 0; row < cells; row++) {
+    for (let col = 0; col < cells; col++) {
+      if (qr.isDark(row, col)) {
+        ctx.fillRect(
+          Math.floor(col * cellSize),
+          Math.floor(row * cellSize),
+          Math.ceil(cellSize),
+          Math.ceil(cellSize)
+        );
+      }
     }
   }
+
   item.qrGenerated = true;
   item.qrDataUrl = canvas.toDataURL('image/png');
-  if(callback) callback();
+  if (callback) callback(true);
 }
+
 function generateAll() {
-  const btn = document.getElementById('gen-btn'); btn.disabled = true;
-  const pw = document.getElementById('prog-wrap'); pw.style.display='block';
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  const pw = document.getElementById('prog-wrap');
+  pw.style.display = 'block';
   const pf = document.getElementById('prog-fill');
-  let idx = 0, total = items.length;
+  let idx = 0;
+  const total = items.length;
+
   function next() {
-    if(idx >= total) { btn.disabled=false; btn.textContent='⚡ Generate All'; pw.style.display='none'; renderCards(); updateStats(); return; }
+    if (idx >= total) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Generate All';
+      pw.style.display = 'none';
+      renderCards();
+      updateStats();
+      return;
+    }
     generateQRForItem(items[idx], 300, () => {
-      idx++; pf.style.width = Math.round(idx/total*100)+'%';
+      idx++;
+      pf.style.width = Math.round(idx / total * 100) + '%';
       btn.textContent = `Generating ${idx}/${total}...`;
-      updateStats(); setTimeout(next, 10);
+      updateStats();
+      setTimeout(next, 10);
     });
   }
   next();
 }
+
 function generateSingle(id) {
-  const item = items.find(i => i.id===id); if(!item) return;
-  generateQRForItem(item, 300, () => {
-    const box = document.getElementById('qr-box-'+id);
-    if(box) box.innerHTML = `<img src="${item.qrDataUrl}" style="width:78px;height:78px;">`;
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  generateQRForItem(item, 300, (ok) => {
+    if (ok) {
+      const box = document.getElementById('qr-box-' + id);
+      if (box) box.innerHTML = `<img src="${item.qrDataUrl}" style="width:78px;height:78px;">`;
+    }
     updateStats();
   });
 }
@@ -501,12 +549,12 @@ function renderCards() {
   grid.innerHTML = '';
   let shown = 0;
   items.forEach(item => {
-    if(search && !item.desc.toLowerCase().includes(search)) return;
+    if (search && !item.desc.toLowerCase().includes(search)) return;
     shown++;
     const code = makeCode(item);
     const card = document.createElement('div');
-    card.className = 'icard'+(item.selected?' sel':'');
-    card.id = 'card-'+item.id;
+    card.className = 'icard' + (item.selected ? ' sel' : '');
+    card.id = 'card-' + item.id;
     card.innerHTML = `
       <div class="ic-top">
         <div class="ic-chk${item.selected?' on':''}" onclick="toggleSel(${item.id})" id="chk-${item.id}"></div>
@@ -514,7 +562,9 @@ function renderCards() {
       </div>
       <div class="ic-desc">${item.desc}</div>
       <div class="ic-qr"><div class="qr-box" id="qr-box-${item.id}">
-        ${item.qrGenerated && item.qrDataUrl ? `<img src="${item.qrDataUrl}" style="width:78px;height:78px;">` : '<div class="qr-ph">◻</div>'}
+        ${item.qrGenerated && item.qrDataUrl
+          ? `<img src="${item.qrDataUrl}" style="width:78px;height:78px;">`
+          : '<div class="qr-ph">◻</div>'}
       </div></div>
       <div class="ic-acts">
         <div class="ic-btn" onclick="viewItem(${item.id})">👁 View</div>
@@ -524,18 +574,19 @@ function renderCards() {
       </div>`;
     grid.appendChild(card);
   });
-  if(!shown) grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No items match</div>';
+  if (!shown) grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No items match</div>';
 }
 window.filterCards = renderCards;
 window.toggleSel = (id) => {
-  const item = items.find(i => i.id===id); if(!item) return;
+  const item = items.find(i => i.id === id); if (!item) return;
   item.selected = !item.selected;
-  document.getElementById('card-'+id)?.classList.toggle('sel', item.selected);
-  document.getElementById('chk-'+id)?.classList.toggle('on', item.selected);
+  document.getElementById('card-' + id)?.classList.toggle('sel', item.selected);
+  document.getElementById('chk-' + id)?.classList.toggle('on', item.selected);
   updateStats();
 };
-window.selAll = () => { items.forEach(i => i.selected=true); renderCards(); updateStats(); };
-window.deselAll = () => { items.forEach(i => i.selected=false); renderCards(); updateStats(); };
+window.selAll = () => { items.forEach(i => i.selected = true); renderCards(); updateStats(); };
+window.deselAll = () => { items.forEach(i => i.selected = false); renderCards(); updateStats(); };
+
 function updateStats() {
   document.getElementById('st-total').textContent = items.length;
   document.getElementById('st-gen').textContent = items.filter(i => i.qrGenerated).length;
@@ -546,76 +597,97 @@ function updateStats() {
 // ---------- PRINT & DOWNLOAD ----------
 window.bulkPrint = () => {
   const sel = items.filter(i => i.selected && i.qrGenerated);
-  if(!sel.length) return alert('Select generated items.');
-  const cols = parseInt(document.getElementById('s-cols').value)||3;
+  if (!sel.length) return alert('Select generated items first.');
+  const cols = parseInt(document.getElementById('s-cols').value) || 3;
   const grid = document.getElementById('print-grid');
   grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
   grid.innerHTML = '';
   sel.forEach(item => {
-    const div = document.createElement('div'); div.className='print-label';
-    div.innerHTML = `<div class="pl-qr"><img src="${item.qrDataUrl}"></div><div class="pl-code">${makeCode(item)} · ${document.getElementById('s-ship').value}</div><div class="pl-desc">${item.desc}</div><div class="pl-company">Sanken Overseas</div>`;
+    const div = document.createElement('div'); div.className = 'print-label';
+    div.innerHTML = `<div class="pl-qr"><img src="${item.qrDataUrl}"></div>
+      <div class="pl-code">${makeCode(item)} · ${document.getElementById('s-ship').value}</div>
+      <div class="pl-desc">${item.desc}</div>
+      <div class="pl-company">Sanken Overseas</div>`;
     grid.appendChild(div);
   });
   printedCount += sel.length; updateStats();
-  document.getElementById('print-area').style.display='block';
-  setTimeout(() => { window.print(); setTimeout(() => document.getElementById('print-area').style.display='none', 500); }, 400);
+  document.getElementById('print-area').style.display = 'block';
+  setTimeout(() => { window.print(); setTimeout(() => document.getElementById('print-area').style.display = 'none', 500); }, 400);
 };
+
 window.printSingleSelected = () => {
   const sel = items.filter(i => i.selected && i.qrGenerated);
-  if(!sel.length) return alert('Select generated items.');
-  let idx=0;
-  const next = () => { if(idx>=sel.length) return; printSingleItem(sel[idx].id, () => { idx++; setTimeout(next,1200); }); };
+  if (!sel.length) return alert('Select generated items first.');
+  let idx = 0;
+  const next = () => { if (idx >= sel.length) return; printSingleItem(sel[idx].id, () => { idx++; setTimeout(next, 1200); }); };
   next();
 };
+
 window.printSingleItem = (id, cb) => {
-  const item = items.find(i => i.id===id); if(!item) return cb?.();
+  const item = items.find(i => i.id === id); if (!item) return cb?.();
   const doPrint = () => {
     document.getElementById('pls-code').textContent = `${makeCode(item)} · ${document.getElementById('s-ship').value}`;
     document.getElementById('pls-desc').textContent = item.desc;
     document.getElementById('pls-qr').innerHTML = `<img src="${item.qrDataUrl}" style="width:80mm;height:80mm;">`;
     const pa = document.getElementById('print-area-single');
-    pa.style.display='flex'; pa.style.alignItems='center'; pa.style.justifyContent='center';
-    setTimeout(() => { window.print(); setTimeout(() => { pa.style.display='none'; printedCount++; updateStats(); cb?.(); }, 400); }, 500);
+    pa.style.display = 'flex'; pa.style.alignItems = 'center'; pa.style.justifyContent = 'center';
+    setTimeout(() => { window.print(); setTimeout(() => { pa.style.display = 'none'; printedCount++; updateStats(); cb?.(); }, 400); }, 500);
   };
-  if(!item.qrGenerated) generateQRForItem(item, 400, doPrint); else doPrint();
+  if (!item.qrGenerated) generateQRForItem(item, 400, doPrint); else doPrint();
 };
+
 window.dlSingle = (id) => {
-  const item = items.find(i => i.id===id); if(!item) return;
-  const save = () => { const a=document.createElement('a'); a.href=item.qrDataUrl; a.download=makeCode(item)+'.png'; a.click(); };
-  if(!item.qrGenerated) generateQRForItem(item, 300, save); else save();
+  const item = items.find(i => i.id === id); if (!item) return;
+  const save = () => { const a = document.createElement('a'); a.href = item.qrDataUrl; a.download = makeCode(item) + '.png'; a.click(); };
+  if (!item.qrGenerated) generateQRForItem(item, 300, save); else save();
 };
+
 window.dlAll = () => {
   const gen = items.filter(i => i.qrGenerated);
-  if(!gen.length) return alert('Generate first.');
-  let idx=0;
-  const next = () => { if(idx>=gen.length) return; const a=document.createElement('a'); a.href=gen[idx].qrDataUrl; a.download=makeCode(gen[idx])+'.png'; a.click(); idx++; setTimeout(next,300); };
+  if (!gen.length) return alert('Generate QR codes first.');
+  let idx = 0;
+  const next = () => {
+    if (idx >= gen.length) return;
+    const a = document.createElement('a'); a.href = gen[idx].qrDataUrl; a.download = makeCode(gen[idx]) + '.png'; a.click();
+    idx++; setTimeout(next, 300);
+  };
   next();
 };
+
 window.viewItem = (id) => {
-  const item = items.find(i => i.id===id); if(!item) return;
+  const item = items.find(i => i.id === id); if (!item) return;
   currentModalItem = item;
   document.getElementById('m-desc').textContent = item.desc;
   document.getElementById('m-code').textContent = `${makeCode(item)} · ${document.getElementById('s-ship').value}`;
   const qDiv = document.getElementById('m-qr-canvas'); qDiv.innerHTML = '';
-  if(item.qrDataUrl) {
-    const img = document.createElement('img'); img.src=item.qrDataUrl; img.style.width='200px'; img.style.height='200px';
-    qDiv.appendChild(img);
-  } else {
-    generateQRForItem(item, 200, () => { if(item.qrDataUrl) { const img=document.createElement('img'); img.src=item.qrDataUrl; img.style.width='200px'; qDiv.appendChild(img); } });
-  }
+  const showImg = () => {
+    if (item.qrDataUrl) {
+      const img = document.createElement('img'); img.src = item.qrDataUrl;
+      img.style.width = '200px'; img.style.height = '200px';
+      qDiv.appendChild(img);
+    }
+  };
+  if (!item.qrGenerated) generateQRForItem(item, 300, showImg); else showImg();
   document.getElementById('view-modal').classList.add('open');
 };
+
 window.closeModal = () => document.getElementById('view-modal').classList.remove('open');
-window.dlModalQR = () => { if(currentModalItem?.qrDataUrl) { const a=document.createElement('a'); a.href=currentModalItem.qrDataUrl; a.download=makeCode(currentModalItem)+'.png'; a.click(); } };
-window.printOneFromModal = () => { if(currentModalItem) { closeModal(); setTimeout(() => printSingleItem(currentModalItem.id), 200); } };
+window.dlModalQR = () => {
+  if (currentModalItem?.qrDataUrl) {
+    const a = document.createElement('a'); a.href = currentModalItem.qrDataUrl;
+    a.download = makeCode(currentModalItem) + '.png'; a.click();
+  }
+};
+window.printOneFromModal = () => { if (currentModalItem) { closeModal(); setTimeout(() => printSingleItem(currentModalItem.id), 200); } };
+
 window.resetAll = () => {
-  if(!confirm('Reset?')) return;
-  items=[]; printedCount=0;
-  document.getElementById('settings-bar').style.display='none';
-  document.getElementById('stats-row').style.display='none';
-  document.getElementById('toolbar').style.display='none';
-  document.getElementById('uz-title').textContent='Drop Excel / CSV file here';
-  document.getElementById('file-input').value='';
+  if (!confirm('Reset all items?')) return;
+  items = []; printedCount = 0;
+  document.getElementById('settings-bar').style.display = 'none';
+  document.getElementById('stats-row').style.display = 'none';
+  document.getElementById('toolbar').style.display = 'none';
+  document.getElementById('uz-title').textContent = 'Drop Excel / CSV file here';
+  document.getElementById('file-input').value = '';
   document.getElementById('items-grid').innerHTML = '<div class="empty"><div class="empty-ico">📋</div><div class="empty-t">Upload a file to start</div></div>';
   updateStats();
 };
