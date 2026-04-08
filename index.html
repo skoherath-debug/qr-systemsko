@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Sanken Overseas</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,7 +21,7 @@ document.addEventListener('visibilitychange', function() {
 });
 
 </script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" onerror="this.onerror=null;this.src='https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'">
 // Stop camera if user switches browser tab/app
 document.addEventListener('visibilitychange', function() {
   if (document.hidden) stopScanner();
@@ -704,7 +705,7 @@ function renderAdminPanel() {
       '</div>' +
       '<div class="al-acts">' +
         '<span class="al-badge ' + (u.isAdmin ? 'admin' : 'active') + '">' + (u.isAdmin ? '★ Admin' : '✓ ' + esc(u.role)) + '</span>' +
-        (!u.isAdmin ? '<button class="al-btn rm" onclick="removeUser('' + escA(u.pin) + '')">✕ Remove</button>' : '') +
+        (!u.isAdmin ? '<button class="al-btn rm" onclick="removeUser(\'' + escA(u.pin) + '\')">\u2715 Remove</button>' : '') +
       '</div>';
     list.appendChild(div);
   });
