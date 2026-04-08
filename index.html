@@ -74,6 +74,10 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
   padding:18px 8px;font-family:'Bebas Neue';font-size:24px;letter-spacing:1px;
   color:var(--text);cursor:pointer;text-align:center;transition:all .15s;
   user-select:none;-webkit-user-select:none;
+  /* Button reset */
+  -webkit-appearance:none;appearance:none;outline:none;
+  display:block;width:100%;line-height:1;
+  touch-action:manipulation;
 }
 .pkey:active,.pkey.pressed{background:var(--gold);color:#000;border-color:var(--gold);transform:scale(.94);}
 .pkey.pkey-del{font-size:18px;font-family:'Rajdhani';font-weight:700;}
@@ -534,18 +538,18 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
         <div class="pin-dot" id="pd3"></div>
       </div>
       <div class="pinpad" id="pinpad">
-        <div class="pkey" data-k="1">1</div>
-        <div class="pkey" data-k="2">2</div>
-        <div class="pkey" data-k="3">3</div>
-        <div class="pkey" data-k="4">4</div>
-        <div class="pkey" data-k="5">5</div>
-        <div class="pkey" data-k="6">6</div>
-        <div class="pkey" data-k="7">7</div>
-        <div class="pkey" data-k="8">8</div>
-        <div class="pkey" data-k="9">9</div>
-        <div class="pkey pkey-del" data-k="del">&#9003;</div>
-        <div class="pkey pkey-zero" data-k="0">0</div>
-        <div class="pkey pkey-enter" data-k="enter">Enter</div>
+        <button type="button" class="pkey" id="pk1">1</button>
+        <button type="button" class="pkey" id="pk2">2</button>
+        <button type="button" class="pkey" id="pk3">3</button>
+        <button type="button" class="pkey" id="pk4">4</button>
+        <button type="button" class="pkey" id="pk5">5</button>
+        <button type="button" class="pkey" id="pk6">6</button>
+        <button type="button" class="pkey" id="pk7">7</button>
+        <button type="button" class="pkey" id="pk8">8</button>
+        <button type="button" class="pkey" id="pk9">9</button>
+        <button type="button" class="pkey pkey-del" id="pkdel">&#9003;</button>
+        <button type="button" class="pkey pkey-zero" id="pk0">0</button>
+        <button type="button" class="pkey pkey-enter" id="pkenter">Enter</button>
       </div>
       <div class="pin-foot">Contact your administrator to get access.</div>
       <div style="margin-top:18px;text-align:center;">
@@ -693,8 +697,11 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
           <div class="section-label" style="margin-top:20px;">ADD NEW USER</div>
           <div class="add-user-card">
             <div class="add-fields">
-              <input class="add-inp" id="add-name" placeholder="Full name" autocomplete="off">
-              <input class="add-inp" id="add-pin" type="tel" placeholder="e.g. 1234" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+              <input class="add-inp" id="add-name" placeholder="Full name" autocomplete="off" autocorrect="off">
+              <div>
+                <input class="add-inp" id="add-pin" type="tel" placeholder="Access code e.g. 1234" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="previewPin()">
+                <div id="pin-preview" style="display:none;font-size:11px;color:var(--gold);font-weight:700;margin-top:4px;letter-spacing:1px;padding-left:4px;"></div>
+              </div>
             </div>
             <div class="add-fields" style="margin-top:0">
               <input class="add-inp" id="add-role" placeholder="Role" value="Staff">
@@ -854,15 +861,25 @@ window.addEventListener('DOMContentLoaded', function() {
   loadAuth();
   loadScans();
 
-  // PIN pad
-  document.getElementById('pinpad').addEventListener('click', function(e) {
-    var k = e.target.closest('.pkey');
-    if (!k) return;
-    var val = k.getAttribute('data-k');
-    if (val === 'del')   { pinDel(); }
-    else if (val === 'enter') { pinEnter(); }
-    else { pinAdd(val); }
+  // PIN pad — direct listeners on each button (most reliable on all mobile browsers)
+  function bindPinKey(id, action) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    // Use both touchend and click for maximum mobile compatibility
+    el.addEventListener('touchend', function(e) {
+      e.preventDefault(); // prevent the 300ms delayed click
+      action();
+    });
+    el.addEventListener('click', function(e) {
+      action();
+    });
+  }
+  var digits = ['0','1','2','3','4','5','6','7','8','9'];
+  digits.forEach(function(d) {
+    bindPinKey('pk' + d, function() { pinAdd(d); });
   });
+  bindPinKey('pkdel',   function() { pinDel(); });
+  bindPinKey('pkenter', function() { pinEnter(); });
 
   // Keyboard support for PIN
   document.addEventListener('keydown', function(e) {
@@ -1083,20 +1100,43 @@ function renderAdminPanel() {
 
 function adminAddUser() {
   var name = document.getElementById('add-name').value.trim();
-  var pin  = document.getElementById('add-pin').value.trim();
+  var pin  = document.getElementById('add-pin').value.replace(/\D/g, '').trim(); // digits only
   var role = document.getElementById('add-role').value.trim() || 'Staff';
   if (!name)                  { alert('Please enter a name.'); return; }
   if (pin.length < 4)         { alert('Access code must be at least 4 digits.'); return; }
-  if (!/^[0-9]+$/.test(pin))  { alert('Access code must be numbers only.'); return; }
-  if (pin === _AP)             { alert('That code is reserved.'); return; }
-  if (authUsers.find(function(u) { return u.pin === pin; })) { alert('This code is already in use.'); return; }
+  if (pin === _AP)             { alert('That code is reserved. Choose another.'); return; }
+  if (authUsers.find(function(u) { return u.pin === pin; })) { alert('This code is already in use. Choose another.'); return; }
   authUsers.push({ name: name, pin: pin, role: role, isAdmin: false, addedAt: new Date().toISOString() });
   saveAuth();
   document.getElementById('add-name').value = '';
   document.getElementById('add-pin').value  = '';
   document.getElementById('add-role').value = 'Staff';
+  var prev = document.getElementById('pin-preview');
+  if (prev) prev.style.display = 'none';
   renderAdminPanel();
+  // Show confirmation
+  var btn = document.getElementById('add-submit-btn');
+  var origText = btn.textContent;
+  btn.textContent = '✓ ' + name + ' added!';
+  btn.style.background = 'var(--green)';
+  setTimeout(function() { btn.textContent = origText; btn.style.background = ''; }, 2500);
 }
+
+window.previewPin = function() {
+  var val = (document.getElementById('add-pin').value || '').replace(/\D/g,'');
+  document.getElementById('add-pin').value = val; // strip non-digits live
+  var prev = document.getElementById('pin-preview');
+  if (val.length >= 4) {
+    prev.style.display = 'block';
+    prev.textContent = '✓ Code: ' + val + ' (' + val.length + ' digits)';
+  } else {
+    prev.style.display = val.length ? 'block' : 'none';
+    prev.style.color = 'var(--muted2)';
+    prev.textContent = val.length ? val.length + ' digit(s) entered...' : '';
+    return;
+  }
+  prev.style.color = 'var(--gold)';
+};
 
 // ─── SCAN TABLE & REPORTS ─────────────────────────────────────────────────────
 function renderScanTable() {
