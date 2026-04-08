@@ -1,292 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sanken Overseas Pvt Ltd — QR Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- QR Code library (fixed CDN) -->
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<style>
-/* ── VARIABLES ── */
-:root{
-  --bg:#08090d;--s1:#0f1117;--s2:#161b24;--s3:#1e2535;
-  --gold:#f0a500;--gold2:#ffc94a;--golddim:rgba(240,165,0,0.12);
-  --blue:#2196f3;--green:#00e676;--red:#ff3d3d;--cyan:#00bcd4;
-  --text:#e8eaf0;--muted:#5a6478;--muted2:#8090a8;
-  --border:rgba(255,255,255,0.07);--border2:rgba(240,165,0,0.25);
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-
-/* ══════════ LOGIN ══════════ */
-#login-screen{min-height:100vh;display:flex;align-items:stretch;}
-.login-left{
-  width:55%;background:linear-gradient(135deg,#0d1117 0%,#1a2236 60%,#0f1a0d 100%);
-  display:flex;flex-direction:column;justify-content:center;padding:64px 72px;position:relative;overflow:hidden;
-}
-.login-left::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(240,165,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(240,165,0,0.04) 1px,transparent 1px);background-size:48px 48px;}
-.login-left::after{content:'';position:absolute;bottom:-80px;right:-80px;width:360px;height:360px;background:radial-gradient(circle,rgba(240,165,0,0.1) 0%,transparent 70%);border-radius:50%;}
-.ll-brand{display:flex;align-items:center;gap:16px;margin-bottom:48px;position:relative;z-index:1;}
-.ll-logo{width:54px;height:54px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:24px;color:#000;box-shadow:0 0 28px rgba(240,165,0,0.35);}
-.ll-co{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;line-height:1.2;}
-.ll-co small{display:block;font-family:'Rajdhani';font-size:11px;color:var(--muted2);font-weight:600;letter-spacing:3px;text-transform:uppercase;}
-.ll-hero{font-family:'Bebas Neue';font-size:78px;line-height:0.88;letter-spacing:3px;margin-bottom:24px;position:relative;z-index:1;}
-.ll-hero em{color:var(--gold);font-style:normal;text-shadow:0 0 40px rgba(240,165,0,0.4);}
-.ll-desc{font-size:15px;color:var(--muted2);line-height:1.7;max-width:400px;margin-bottom:36px;position:relative;z-index:1;font-weight:500;}
-.ll-pills{display:flex;flex-wrap:wrap;gap:8px;position:relative;z-index:1;}
-.ll-pill{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--muted2);display:flex;align-items:center;gap:6px;font-weight:600;}
-.ll-pill::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
-.login-right{width:45%;background:var(--s1);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 48px;}
-.lform{width:100%;max-width:360px;}
-.lf-title{font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:4px;}
-.lf-sub{font-size:13px;color:var(--muted2);margin-bottom:28px;font-weight:500;}
-.lf-msg{display:none;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:600;}
-.lf-msg.err{background:rgba(255,61,61,0.1);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
-.lf-msg.ok{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--green);}
-.lf-inp{width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;transition:border-color 0.2s;margin-bottom:12px;}
-.lf-inp:focus{border-color:var(--gold);}
-.lf-inp::placeholder{color:var(--muted);}
-.lf-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:11px;font-family:'Bebas Neue';font-size:15px;letter-spacing:1.5px;cursor:pointer;margin-top:8px;transition:all 0.2s;}
-.lf-btn:hover{background:var(--gold2);}
-.lf-link{color:var(--gold);cursor:pointer;font-weight:600;text-decoration:underline;margin-left:5px;}
-.lf-div{height:1px;background:var(--border);margin:20px 0;}
-.lf-foot{font-size:11px;color:var(--muted);text-align:center;line-height:1.6;}
-.lf-foot span{color:var(--gold);}
-
-/* Register form */
-#reg-form{display:none;}
-.reg-toggle{text-align:center;margin-top:16px;font-size:13px;}
-
-/* ══════════ APP ══════════ */
-#app{display:none;}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(8,9,13,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);}
-.nbrand{display:flex;align-items:center;gap:10px;}
-.nlogo{width:30px;height:30px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#000;}
-.nname{font-family:'Bebas Neue';font-size:17px;letter-spacing:1.5px;}
-.nname small{display:block;font-family:'Rajdhani';font-size:10px;color:var(--muted2);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
-.ntabs{display:flex;gap:2px;background:var(--s2);border-radius:9px;padding:3px;}
-.ntab{padding:6px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--muted2);border:none;background:transparent;font-family:'Rajdhani';text-transform:uppercase;letter-spacing:0.5px;}
-.ntab.active{background:var(--gold);color:#000;}
-.ntab:hover:not(.active){color:var(--text);background:var(--s3);}
-.nright{display:flex;align-items:center;gap:10px;}
-.navatar{width:30px;height:30px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;cursor:pointer;}
-.nsignout{background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:12px;color:var(--muted2);cursor:pointer;font-family:'Rajdhani';font-weight:600;transition:all 0.2s;}
-.nsignout:hover{border-color:var(--red);color:var(--red);}
-
-/* SCREENS */
-.screen{display:none;padding:24px;animation:fi 0.25s ease;}
-.screen.active{display:block;}
-@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.ptitle{font-family:'Bebas Neue';font-size:30px;letter-spacing:2px;margin-bottom:3px;}
-.psub{color:var(--muted2);font-size:13px;margin-bottom:22px;font-weight:500;}
-
-/* UPLOAD */
-.upload-zone{border:2px dashed var(--border2);border-radius:14px;background:var(--s1);padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:20px;position:relative;}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:var(--golddim);}
-.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.uz-icon{font-size:40px;margin-bottom:12px;}
-.uz-title{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;margin-bottom:6px;}
-.uz-sub{font-size:13px;color:var(--muted2);font-weight:500;margin-bottom:14px;}
-.uz-fmts{display:flex;justify-content:center;gap:8px;}
-.uz-fmt{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted2);font-weight:700;letter-spacing:1px;}
-
-/* SETTINGS */
-.settings-bar{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:10px;margin-bottom:18px;align-items:end;}
-.sg{display:flex;flex-direction:column;gap:5px;}
-.slbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);}
-.si,.ss{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;transition:border-color 0.2s;appearance:none;}
-.si:focus,.ss:focus{border-color:var(--gold);}
-.abtn{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Bebas Neue';letter-spacing:1.5px;transition:all 0.2s;white-space:nowrap;align-self:end;}
-.abtn.gold{background:var(--gold);color:#000;}
-.abtn.gold:hover{background:var(--gold2);transform:translateY(-1px);}
-.abtn.outline{background:transparent;border:1px solid var(--border);color:var(--text);}
-.abtn.outline:hover{background:var(--s2);}
-.abtn:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
-
-/* STATS */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
-.scard{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;}
-.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
-.scard.g::before{background:var(--gold);}
-.scard.b::before{background:var(--blue);}
-.scard.gr::before{background:var(--green);}
-.scard.c::before{background:var(--cyan);}
-.sc-lbl{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:5px;}
-.sc-val{font-family:'Bebas Neue';font-size:32px;line-height:1;}
-.sc-val.g{color:var(--gold);}
-.sc-val.b{color:var(--blue);}
-.sc-val.gr{color:var(--green);}
-.sc-val.c{color:var(--cyan);}
-
-/* TOOLBAR */
-.toolbar{display:flex;align-items:center;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
-.tsearch{flex:1;min-width:180px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;}
-.tsearch:focus{border-color:var(--gold);}
-.tbtn{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 15px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:5px;}
-.tbtn:hover{background:var(--gold);color:#000;border-color:transparent;}
-.tbtn.prim{background:var(--gold);color:#000;border-color:transparent;}
-.tbtn.prim:hover{background:var(--gold2);}
-
-/* PROGRESS */
-.prog-wrap{background:var(--s2);border-radius:4px;height:5px;margin-bottom:14px;display:none;overflow:hidden;}
-.prog-fill{height:100%;background:var(--gold);border-radius:4px;transition:width 0.2s;}
-
-/* SCREEN GRID */
-.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
-.icard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all 0.2s;position:relative;}
-.icard:hover{border-color:var(--gold);}
-.icard.sel{border-color:var(--gold);background:var(--golddim);}
-.ic-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;}
-.ic-chk{width:18px;height:18px;border:2px solid var(--muted);border-radius:4px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-top:2px;}
-.ic-chk.on{background:var(--gold);border-color:var(--gold);}
-.ic-chk.on::after{content:'✓';font-size:11px;color:#000;font-weight:700;}
-.ic-code{font-family:'Bebas Neue';font-size:12px;color:var(--gold);background:var(--golddim);border:1px solid var(--border2);border-radius:5px;padding:2px 8px;flex-shrink:0;letter-spacing:1px;}
-.ic-desc{font-size:13px;font-weight:600;line-height:1.4;margin-bottom:10px;}
-.ic-qr{display:flex;justify-content:center;margin-bottom:10px;}
-.qr-box{background:#fff;border-radius:7px;padding:6px;width:90px;height:90px;display:flex;align-items:center;justify-content:center;}
-.qr-ph{width:78px;height:78px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:24px;}
-.ic-acts{display:flex;gap:6px;}
-.ic-btn{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:7px 4px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all 0.2s;text-align:center;text-transform:uppercase;}
-.ic-btn:hover{background:var(--gold);color:#000;border-color:transparent;}
-
-/* EMPTY */
-.empty{text-align:center;padding:70px 40px;color:var(--muted2);grid-column:1/-1;}
-.empty-ico{font-size:56px;margin-bottom:16px;opacity:0.35;}
-.empty-t{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;margin-bottom:6px;}
-
-/* MODAL */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999;align-items:center;justify-content:center;}
-.modal-ov.open{display:flex;}
-.modal-box{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:28px;max-width:380px;width:95%;text-align:center;}
-.modal-qr-wrap{background:#fff;border-radius:10px;padding:14px;display:inline-block;margin:14px 0;}
-.m-desc{font-size:14px;font-weight:600;margin-bottom:3px;line-height:1.4;}
-.m-code{font-family:'Bebas Neue';font-size:13px;color:var(--gold);letter-spacing:1.5px;margin-bottom:16px;}
-.m-btns{display:flex;gap:8px;justify-content:center;}
-.m-btn{border-radius:8px;padding:10px 20px;font-family:'Bebas Neue';font-size:13px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
-.m-btn.close{background:var(--s2);border:1px solid var(--border);color:var(--text);}
-.m-btn.dl{background:var(--gold);border:none;color:#000;}
-
-/* ADMIN PANEL */
-.admin-sec{font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:var(--muted2);margin-bottom:10px;margin-top:20px;}
-.admin-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
-.al-item{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border-radius:9px;padding:11px 14px;border:1px solid var(--border);}
-.al-info{display:flex;align-items:center;gap:10px;}
-.al-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:12px;flex-shrink:0;}
-.al-name{font-size:13px;font-weight:700;margin-bottom:2px;}
-.al-email{font-size:11px;color:var(--muted2);}
-.al-btns{display:flex;gap:7px;align-items:center;}
-.al-badge{background:rgba(0,230,118,0.1);color:var(--green);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;}
-.al-badge.pend{background:rgba(240,165,0,0.12);color:var(--gold);}
-.al-act{border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani';border:none;transition:all 0.2s;}
-.al-act.approve{background:var(--green);color:#000;}
-.al-act.deny{background:rgba(255,61,61,0.12);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
-.al-act.revoke{background:rgba(255,61,61,0.08);border:1px solid rgba(255,61,61,0.2);color:var(--red);}
-.add-user-form{background:var(--s2);border-radius:10px;padding:16px;border:1px solid var(--border);margin-top:8px;}
-.add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
-.add-inp{background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;}
-.add-inp:focus{border-color:var(--gold);}
-.add-inp::placeholder{color:var(--muted);}
-.add-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:7px;padding:10px;font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;cursor:pointer;}
-
-/* PRINT STYLES */
-#print-area{display:none;}
-#print-area-single{display:none;}
-
-@media print{
-  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
-  body{background:#fff!important;margin:0;padding:0;}
-  #login-screen,nav.nav,.upload-zone,.settings-bar,.stats-row,.toolbar,.prog-wrap,.ptitle,.psub,.items-grid,.modal-ov,#screen-admin{display:none!important;}
-  #app{display:block!important;}
-  #screen-generator{display:block!important;padding:0!important;}
-  #print-area{display:block!important;width:210mm;margin:0 auto;padding:6mm;}
-  #print-area-single[style*="flex"]{display:flex!important;}
-}
-
-.print-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm;width:100%;}
-.print-label{border:1.5px solid #000;border-radius:3mm;padding:4mm 3mm;display:flex;flex-direction:column;align-items:center;break-inside:avoid;page-break-inside:avoid;background:#fff;}
-.pl-qr{width:50mm;height:50mm;display:flex;align-items:center;justify-content:center;margin-bottom:2mm;}
-.pl-qr img,.pl-qr canvas{width:50mm!important;height:50mm!important;display:block;}
-.pl-code{font-family:monospace;font-size:7pt;color:#444;margin-bottom:2mm;letter-spacing:0.5px;}
-.pl-desc{font-family:Arial,Helvetica,sans-serif;font-size:8pt;text-align:center;line-height:1.4;color:#000;font-weight:700;word-break:break-word;}
-.pl-company{font-family:Arial,Helvetica,sans-serif;font-size:6.5pt;color:#888;margin-top:2mm;letter-spacing:0.5px;}
-.print-label-single{border:2px solid #000;border-radius:5mm;padding:10mm;display:flex;flex-direction:column;align-items:center;width:110mm;background:#fff;}
-.pls-qr{width:80mm;height:80mm;display:flex;align-items:center;justify-content:center;margin-bottom:6mm;}
-.pls-qr img{width:80mm!important;height:80mm!important;display:block;}
-.pls-code{font-family:monospace;font-size:9pt;color:#555;margin-bottom:3mm;letter-spacing:0.5px;}
-.pls-desc{font-family:Arial,Helvetica,sans-serif;font-size:11pt;text-align:center;line-height:1.4;font-weight:700;color:#000;}
-.pls-co{font-family:Arial,Helvetica,sans-serif;font-size:7pt;color:#999;margin-top:4mm;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanken Overseas · QR Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Reliable QR code library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.min.js"></script>
+  <style>
+    /* ── VARIABLES (unchanged) ── */
+    :root{--bg:#08090d;--s1:#0f1117;--s2:#161b24;--s3:#1e2535;--gold:#f0a500;--gold2:#ffc94a;--golddim:rgba(240,165,0,0.12);--blue:#2196f3;--green:#00e676;--red:#ff3d3d;--cyan:#00bcd4;--text:#e8eaf0;--muted:#5a6478;--muted2:#8090a8;--border:rgba(255,255,255,0.07);--border2:rgba(240,165,0,0.25);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    #login-screen{min-height:100vh;display:flex;align-items:stretch;}
+    .login-left{width:55%;background:linear-gradient(135deg,#0d1117 0%,#1a2236 60%,#0f1a0d 100%);display:flex;flex-direction:column;justify-content:center;padding:64px 72px;position:relative;overflow:hidden;}
+    .login-left::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(240,165,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(240,165,0,0.04) 1px,transparent 1px);background-size:48px 48px;}
+    .login-left::after{content:'';position:absolute;bottom:-80px;right:-80px;width:360px;height:360px;background:radial-gradient(circle,rgba(240,165,0,0.1) 0%,transparent 70%);border-radius:50%;}
+    .ll-brand{display:flex;align-items:center;gap:16px;margin-bottom:48px;position:relative;z-index:1;}
+    .ll-logo{width:54px;height:54px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:24px;color:#000;box-shadow:0 0 28px rgba(240,165,0,0.35);}
+    .ll-co{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;line-height:1.2;}
+    .ll-co small{display:block;font-family:'Rajdhani';font-size:11px;color:var(--muted2);font-weight:600;letter-spacing:3px;text-transform:uppercase;}
+    .ll-hero{font-family:'Bebas Neue';font-size:78px;line-height:0.88;letter-spacing:3px;margin-bottom:24px;position:relative;z-index:1;}
+    .ll-hero em{color:var(--gold);font-style:normal;text-shadow:0 0 40px rgba(240,165,0,0.4);}
+    .ll-desc{font-size:15px;color:var(--muted2);line-height:1.7;max-width:400px;margin-bottom:36px;position:relative;z-index:1;font-weight:500;}
+    .ll-pills{display:flex;flex-wrap:wrap;gap:8px;position:relative;z-index:1;}
+    .ll-pill{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--muted2);display:flex;align-items:center;gap:6px;font-weight:600;}
+    .ll-pill::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+    .login-right{width:45%;background:var(--s1);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 48px;}
+    .lform{width:100%;max-width:360px;}
+    .lf-title{font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:4px;}
+    .lf-sub{font-size:13px;color:var(--muted2);margin-bottom:28px;font-weight:500;}
+    .lf-msg{display:none;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:600;}
+    .lf-msg.err{background:rgba(255,61,61,0.1);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
+    .lf-msg.ok{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--green);}
+    .lf-inp{width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;transition:border-color 0.2s;margin-bottom:12px;}
+    .lf-inp:focus{border-color:var(--gold);}
+    .lf-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:11px;font-family:'Bebas Neue';font-size:15px;letter-spacing:1.5px;cursor:pointer;margin-top:8px;transition:all 0.2s;}
+    .lf-btn:hover{background:var(--gold2);}
+    .lf-link{color:var(--gold);cursor:pointer;font-weight:600;text-decoration:underline;margin-left:5px;}
+    .lf-div{height:1px;background:var(--border);margin:20px 0;}
+    .lf-foot{font-size:11px;color:var(--muted);text-align:center;line-height:1.6;}
+    .lf-foot span{color:var(--gold);}
+    #reg-form{display:none;}
+    .reg-toggle{text-align:center;margin-top:16px;font-size:13px;}
+    #app{display:none;}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(8,9,13,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);}
+    .nbrand{display:flex;align-items:center;gap:10px;}
+    .nlogo{width:30px;height:30px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#000;}
+    .nname{font-family:'Bebas Neue';font-size:17px;letter-spacing:1.5px;}
+    .nname small{display:block;font-family:'Rajdhani';font-size:10px;color:var(--muted2);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+    .ntabs{display:flex;gap:2px;background:var(--s2);border-radius:9px;padding:3px;}
+    .ntab{padding:6px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--muted2);border:none;background:transparent;font-family:'Rajdhani';text-transform:uppercase;letter-spacing:0.5px;}
+    .ntab.active{background:var(--gold);color:#000;}
+    .ntab:hover:not(.active){color:var(--text);background:var(--s3);}
+    .nright{display:flex;align-items:center;gap:10px;}
+    .navatar{width:30px;height:30px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;cursor:pointer;}
+    .nsignout{background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:12px;color:var(--muted2);cursor:pointer;font-family:'Rajdhani';font-weight:600;transition:all 0.2s;}
+    .nsignout:hover{border-color:var(--red);color:var(--red);}
+    .screen{display:none;padding:24px;animation:fi 0.25s ease;}
+    .screen.active{display:block;}
+    @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .ptitle{font-family:'Bebas Neue';font-size:30px;letter-spacing:2px;margin-bottom:3px;}
+    .psub{color:var(--muted2);font-size:13px;margin-bottom:22px;font-weight:500;}
+    .upload-zone{border:2px dashed var(--border2);border-radius:14px;background:var(--s1);padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:20px;position:relative;}
+    .upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:var(--golddim);}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .uz-icon{font-size:40px;margin-bottom:12px;}
+    .uz-title{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;margin-bottom:6px;}
+    .uz-sub{font-size:13px;color:var(--muted2);font-weight:500;margin-bottom:14px;}
+    .uz-fmts{display:flex;justify-content:center;gap:8px;}
+    .uz-fmt{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted2);font-weight:700;letter-spacing:1px;}
+    .settings-bar{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:10px;margin-bottom:18px;align-items:end;}
+    .sg{display:flex;flex-direction:column;gap:5px;}
+    .slbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);}
+    .si,.ss{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;transition:border-color 0.2s;appearance:none;}
+    .si:focus,.ss:focus{border-color:var(--gold);}
+    .abtn{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Bebas Neue';letter-spacing:1.5px;transition:all 0.2s;white-space:nowrap;align-self:end;}
+    .abtn.gold{background:var(--gold);color:#000;}
+    .abtn.gold:hover{background:var(--gold2);}
+    .abtn.outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+    .abtn.outline:hover{background:var(--s2);}
+    .abtn:disabled{opacity:0.45;cursor:not-allowed;}
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+    .scard{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;}
+    .scard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+    .scard.g::before{background:var(--gold);}
+    .scard.b::before{background:var(--blue);}
+    .scard.gr::before{background:var(--green);}
+    .scard.c::before{background:var(--cyan);}
+    .sc-lbl{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:5px;}
+    .sc-val{font-family:'Bebas Neue';font-size:32px;line-height:1;}
+    .toolbar{display:flex;align-items:center;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
+    .tsearch{flex:1;min-width:180px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;}
+    .tbtn{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 15px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:5px;}
+    .tbtn:hover{background:var(--gold);color:#000;border-color:transparent;}
+    .tbtn.prim{background:var(--gold);color:#000;}
+    .prog-wrap{background:var(--s2);border-radius:4px;height:5px;margin-bottom:14px;display:none;overflow:hidden;}
+    .prog-fill{height:100%;background:var(--gold);border-radius:4px;transition:width 0.2s;}
+    .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+    .icard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all 0.2s;}
+    .icard:hover{border-color:var(--gold);}
+    .icard.sel{border-color:var(--gold);background:var(--golddim);}
+    .ic-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+    .ic-chk{width:18px;height:18px;border:2px solid var(--muted);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .ic-chk.on{background:var(--gold);border-color:var(--gold);}
+    .ic-chk.on::after{content:'✓';font-size:11px;color:#000;font-weight:700;}
+    .ic-code{font-family:'Bebas Neue';font-size:12px;color:var(--gold);background:var(--golddim);border:1px solid var(--border2);border-radius:5px;padding:2px 8px;}
+    .ic-desc{font-size:13px;font-weight:600;margin-bottom:10px;}
+    .qr-box{background:#fff;border-radius:7px;padding:6px;width:90px;height:90px;display:flex;align-items:center;justify-content:center;}
+    .qr-ph{width:78px;height:78px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#bbb;}
+    .ic-acts{display:flex;gap:6px;}
+    .ic-btn{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:7px 4px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text);text-align:center;}
+    .ic-btn:hover{background:var(--gold);color:#000;}
+    .empty{text-align:center;padding:70px 40px;color:var(--muted2);grid-column:1/-1;}
+    .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999;align-items:center;justify-content:center;}
+    .modal-ov.open{display:flex;}
+    .modal-box{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:28px;max-width:380px;width:95%;text-align:center;}
+    .modal-qr-wrap{background:#fff;border-radius:10px;padding:14px;display:inline-block;margin:14px 0;}
+    .m-desc{font-size:14px;font-weight:600;margin-bottom:3px;}
+    .m-code{font-family:'Bebas Neue';font-size:13px;color:var(--gold);margin-bottom:16px;}
+    .m-btns{display:flex;gap:8px;justify-content:center;}
+    .m-btn{border-radius:8px;padding:10px 20px;font-family:'Bebas Neue';font-size:13px;cursor:pointer;}
+    .admin-sec{font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:var(--muted2);margin:20px 0 10px;}
+    .admin-list{display:flex;flex-direction:column;gap:8px;}
+    .al-item{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border-radius:9px;padding:11px 14px;border:1px solid var(--border);}
+    .al-info{display:flex;align-items:center;gap:10px;}
+    .al-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';}
+    .al-badge{background:rgba(0,230,118,0.1);color:var(--green);border-radius:20px;padding:3px 10px;font-size:11px;}
+    .al-badge.pend{background:rgba(240,165,0,0.12);color:var(--gold);}
+    .al-act{border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;border:none;}
+    .al-act.approve{background:var(--green);color:#000;}
+    .al-act.deny{background:rgba(255,61,61,0.12);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
+    .add-user-form{background:var(--s2);border-radius:10px;padding:16px;margin-top:8px;}
+    .add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+    .add-inp{background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);width:100%;}
+    .add-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:7px;padding:10px;font-family:'Bebas Neue';font-size:14px;cursor:pointer;}
+    #print-area,#print-area-single{display:none;}
+    @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:#fff!important;}#login-screen,nav,.upload-zone,.settings-bar,.stats-row,.toolbar,.prog-wrap,.ptitle,.psub,.items-grid,.modal-ov,#screen-admin{display:none!important;}#app{display:block!important;}#screen-generator{display:block!important;padding:0!important;}#print-area{display:block!important;width:210mm;margin:0 auto;padding:6mm;}}
+    .print-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm;}
+    .print-label{border:1.5px solid #000;border-radius:3mm;padding:4mm 3mm;background:#fff;}
+    .pl-qr{width:50mm;height:50mm;display:flex;justify-content:center;margin-bottom:2mm;}
+    .pl-qr img{width:50mm!important;height:50mm!important;}
+    .pl-code{font-family:monospace;font-size:7pt;color:#444;margin-bottom:2mm;}
+    .pl-desc{font-size:8pt;text-align:center;font-weight:700;}
+    .pl-company{font-size:6.5pt;color:#888;margin-top:2mm;}
+  </style>
 </head>
 <body>
-
-<!-- ══════════════════ LOGIN ══════════════════ -->
 <div id="login-screen">
   <div class="login-left">
-    <div class="ll-brand">
-      <div class="ll-logo">SO</div>
-      <div class="ll-co">Sanken Overseas Pvt Ltd<small>QR Asset Management System</small></div>
-    </div>
+    <div class="ll-brand"><div class="ll-logo">SO</div><div class="ll-co">Sanken Overseas Pvt Ltd<small>QR Asset Management</small></div></div>
     <div class="ll-hero">GENERATE.<br>TRACK.<br><em>DELIVER.</em></div>
-    <div class="ll-desc">QR code generation and asset tracking for construction materials and equipment shipped from Sri Lanka to Maldives project sites.</div>
-    <div class="ll-pills">
-      <div class="ll-pill">Bulk QR generation</div>
-      <div class="ll-pill">A4 print-ready labels</div>
-      <div class="ll-pill">PO file upload</div>
-      <div class="ll-pill">Shipment tracking</div>
-      <div class="ll-pill">Admin access control</div>
-    </div>
+    <div class="ll-desc">QR codes for construction materials shipped from Sri Lanka to Maldives.</div>
+    <div class="ll-pills"><div class="ll-pill">Bulk QR generation</div><div class="ll-pill">A4 labels</div><div class="ll-pill">Admin PIN access</div></div>
   </div>
-
   <div class="login-right">
     <div class="lform">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
-        <div style="width:42px;height:42px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;color:#000;flex-shrink:0;">SO</div>
-        <div>
-          <div style="font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;">Sanken Overseas Pvt Ltd</div>
-          <div style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:2px;font-weight:700;">Authorised Access Only</div>
-        </div>
+      <div style="display:flex;gap:12px;margin-bottom:28px;">
+        <div style="width:42px;height:42px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;color:#000;">SO</div>
+        <div><div style="font-family:'Bebas Neue';font-size:16px;">Sanken Overseas</div><div style="font-size:10px;color:var(--muted2);">Authorised Access</div></div>
       </div>
-
-      <div class="lf-title">Sign In</div>
-      <div class="lf-sub">Enter your credentials to continue</div>
+      <div class="lf-title">Enter PIN</div>
+      <div class="lf-sub">Use the PIN provided by your admin</div>
       <div class="lf-msg" id="lf-msg"></div>
-
-      <!-- Login form -->
-      <div id="login-form">
-        <input class="lf-inp" id="login-email" type="text" placeholder="Email (any format)" value="admin" />
-        <input class="lf-inp" id="login-password" type="password" placeholder="Password" value="admin" />
-        <button class="lf-btn" onclick="doLogin()">Sign In</button>
-      </div>
-
-      <!-- Registration form (hidden by default) -->
-      <div id="reg-form">
-        <input class="lf-inp" id="reg-name" type="text" placeholder="Full name" />
-        <input class="lf-inp" id="reg-email" type="text" placeholder="Email (any format)" />
-        <input class="lf-inp" id="reg-password" type="password" placeholder="Password" />
-        <input class="lf-inp" id="reg-role" type="text" placeholder="Role / Department" value="Staff" />
-        <button class="lf-btn" onclick="doRegister()">Request Access</button>
-      </div>
-
-      <div class="reg-toggle">
-        <span id="toggle-text">Don't have an account?</span> 
-        <span class="lf-link" id="toggle-link" onclick="toggleRegForm()">Request Access</span>
-      </div>
-
+      <input class="lf-inp" id="login-pin" type="password" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" pattern="\d*" />
+      <button class="lf-btn" onclick="doLogin()">Sign In</button>
       <div class="lf-div"></div>
-      <div class="lf-foot">Access restricted to authorised <span>Sanken Overseas Pvt Ltd</span> personnel only.<br>Default admin: <span>admin / admin</span></div>
+      <div class="lf-foot">Default admin PIN: <span>123456</span><br>Contact admin if you need access.</div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════ APP ══════════════════ -->
 <div id="app">
   <nav class="nav">
-    <div class="nbrand">
-      <div class="nlogo">SO</div>
-      <div class="nname">Sanken Overseas <small>QR Generator</small></div>
-    </div>
+    <div class="nbrand"><div class="nlogo">SO</div><div class="nname">Sanken Overseas <small>QR Generator</small></div></div>
     <div class="ntabs">
       <button class="ntab active" onclick="showTab('generator')">QR Generator</button>
       <button class="ntab" id="admin-tab-btn" onclick="showTab('admin')">Admin Panel</button>
@@ -297,97 +185,71 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
     </div>
   </nav>
 
-  <!-- ── GENERATOR SCREEN ── -->
   <div id="screen-generator" class="screen active">
     <div class="ptitle">Bulk QR Code Generator</div>
-    <div class="psub">Upload your Purchase Order Excel file · Generate QR codes · Print A4 labels</div>
-
-    <!-- UPLOAD -->
+    <div class="psub">Upload PO file · Generate · Print</div>
     <div class="upload-zone" id="upload-zone">
       <input type="file" id="file-input" accept=".xlsx,.xls,.csv" />
       <div class="uz-icon">📂</div>
       <div class="uz-title" id="uz-title">Drop Excel / CSV file here</div>
-      <div class="uz-sub" id="uz-sub">Supports Purchase Order files with Description column</div>
+      <div class="uz-sub" id="uz-sub">Supports Purchase Order files</div>
       <div class="uz-fmts"><span class="uz-fmt">XLSX</span><span class="uz-fmt">XLS</span><span class="uz-fmt">CSV</span></div>
-      <div style="margin-top:14px;">
-        <span style="background:var(--gold);color:#000;border-radius:8px;padding:9px 24px;font-family:'Bebas Neue';font-size:14px;letter-spacing:1.5px;cursor:pointer;">Browse File</span>
-      </div>
     </div>
-
-    <!-- SETTINGS -->
     <div class="settings-bar" id="settings-bar" style="display:none;">
-      <div class="sg"><label class="slbl">Item code prefix</label><input class="si" id="s-prefix" value="SO-MV" /></div>
-      <div class="sg"><label class="slbl">Shipment ref</label><input class="si" id="s-ship" value="SO-2026-031" /></div>
-      <div class="sg"><label class="slbl">Site / Project</label><input class="si" id="s-site" value="Hulhumalé Phase II" /></div>
-      <div class="sg"><label class="slbl">Labels per A4 row</label>
-        <select class="ss" id="s-cols">
-          <option value="3" selected>3 per row (recommended)</option>
-          <option value="2">2 per row (larger)</option>
-          <option value="4">4 per row (compact)</option>
-        </select>
-      </div>
+      <div class="sg"><label class="slbl">Prefix</label><input class="si" id="s-prefix" value="SO-MV" /></div>
+      <div class="sg"><label class="slbl">Shipment</label><input class="si" id="s-ship" value="SO-2026-031" /></div>
+      <div class="sg"><label class="slbl">Site</label><input class="si" id="s-site" value="Hulhumalé Phase II" /></div>
+      <div class="sg"><label class="slbl">Labels/row</label><select class="ss" id="s-cols"><option value="3">3</option><option value="2">2</option><option value="4">4</option></select></div>
       <button class="abtn gold" id="gen-btn" onclick="generateAll()">⚡ Generate All</button>
       <button class="abtn outline" onclick="resetAll()">↺ Reset</button>
     </div>
-
-    <!-- STATS -->
     <div class="stats-row" id="stats-row" style="display:none;">
-      <div class="scard g"><div class="sc-lbl">Total items</div><div class="sc-val g" id="st-total">0</div></div>
-      <div class="scard gr"><div class="sc-lbl">QRs generated</div><div class="sc-val gr" id="st-gen">0</div></div>
+      <div class="scard g"><div class="sc-lbl">Total</div><div class="sc-val g" id="st-total">0</div></div>
+      <div class="scard gr"><div class="sc-lbl">Generated</div><div class="sc-val gr" id="st-gen">0</div></div>
       <div class="scard b"><div class="sc-lbl">Selected</div><div class="sc-val b" id="st-sel">0</div></div>
-      <div class="scard c"><div class="sc-lbl">Printed labels</div><div class="sc-val c" id="st-printed">0</div></div>
+      <div class="scard c"><div class="sc-lbl">Printed</div><div class="sc-val c" id="st-printed">0</div></div>
     </div>
-
-    <!-- TOOLBAR -->
     <div class="toolbar" id="toolbar" style="display:none;">
-      <input class="tsearch" id="search-inp" placeholder="🔍  Search items..." oninput="filterCards()" />
+      <input class="tsearch" id="search-inp" placeholder="Search..." oninput="filterCards()" />
       <button class="tbtn" onclick="selAll()">☑ All</button>
       <button class="tbtn" onclick="deselAll()">☐ None</button>
-      <button class="tbtn prim" onclick="bulkPrint()">🖨 Bulk print (A4)</button>
-      <button class="tbtn" onclick="printSingleSelected()">📄 Print one by one</button>
-      <button class="tbtn" onclick="dlAll()">⬇ Download all PNGs</button>
+      <button class="tbtn prim" onclick="bulkPrint()">🖨 Bulk print</button>
+      <button class="tbtn" onclick="printSingleSelected()">📄 Print one</button>
+      <button class="tbtn" onclick="dlAll()">⬇ Download all</button>
     </div>
-
-    <!-- PROGRESS -->
     <div class="prog-wrap" id="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
-
-    <!-- CARDS -->
     <div class="items-grid" id="items-grid">
-      <div class="empty" id="empty-state">
-        <div class="empty-ico">📋</div>
-        <div class="empty-t">Upload a PO file to start</div>
-        <div style="font-size:13px;font-weight:500;">Supports Excel (.xlsx) and CSV files</div>
-      </div>
+      <div class="empty" id="empty-state"><div class="empty-ico">📋</div><div class="empty-t">Upload a file to start</div></div>
     </div>
   </div>
 
-  <!-- ── ADMIN SCREEN ── -->
   <div id="screen-admin" class="screen">
     <div class="ptitle">Admin Panel</div>
-    <div class="psub">Manage authorised users · Approve pending requests</div>
+    <div class="psub">Manage users · Approve requests · Issue PINs</div>
     <div style="max-width:680px;">
       <div class="admin-sec">PENDING REQUESTS</div>
       <div class="admin-list" id="adm-pending"></div>
       <div class="admin-sec">APPROVED USERS</div>
       <div class="admin-list" id="adm-approved"></div>
-      <div class="admin-sec">ADD USER MANUALLY</div>
+      <div class="admin-sec">ADD NEW USER (with PIN)</div>
       <div class="add-user-form">
         <div class="add-grid">
           <input class="add-inp" id="add-name" placeholder="Full name" />
-          <input class="add-inp" id="add-email" placeholder="Email" />
+          <input class="add-inp" id="add-email" placeholder="Email (optional)" />
         </div>
-        <input class="add-inp" id="add-password" placeholder="Password" style="margin-bottom:9px;" />
-        <input class="add-inp" id="add-role" placeholder="Role / Department" style="width:100%;margin-bottom:9px;" />
+        <div class="add-grid">
+          <input class="add-inp" id="add-pin" placeholder="6-digit PIN" maxlength="6" />
+          <input class="add-inp" id="add-role" placeholder="Role" value="Staff" />
+        </div>
         <button class="add-btn" onclick="adminAddUser()">+ ADD & APPROVE USER</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- VIEW MODAL -->
 <div class="modal-ov" id="view-modal" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
-    <div style="font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;margin-bottom:4px;">QR CODE</div>
+    <div style="font-family:'Bebas Neue';font-size:18px;">QR CODE</div>
     <div class="m-desc" id="m-desc"></div>
     <div class="m-code" id="m-code"></div>
     <div class="modal-qr-wrap"><div id="m-qr-canvas"></div></div>
@@ -399,180 +261,94 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
   </div>
 </div>
 
-<!-- PRINT AREAS -->
 <div id="print-area"><div class="print-grid" id="print-grid"></div></div>
-<div id="print-area-single"><div class="print-label-single" id="print-label-single"><div class="pls-qr" id="pls-qr"></div><div class="pls-code" id="pls-code"></div><div class="pls-desc" id="pls-desc"></div><div class="pls-co">Sanken Overseas Pvt Ltd</div></div></div>
+<div id="print-area-single"><div class="print-label-single" id="print-label-single"><div class="pls-qr" id="pls-qr"></div><div class="pls-code" id="pls-code"></div><div class="pls-desc" id="pls-desc"></div><div class="pls-co">Sanken Overseas</div></div></div>
 
 <script>
-// ══════════ USER STORAGE ══════════
-var STORAGE_KEY = 'sanken_users';
-var users = [];        // { email, password, name, role, approved, initials, color }
-var pendingUsers = []; // derived from users with approved:false
-var approvedUsers = [];// derived from users with approved:true
+// ---------- USER STORAGE (PIN-based) ----------
+const STORAGE_KEY = 'sanken_users_pin';
+let users = []; // { pin, name, email, role, approved, initials, color }
 
-function loadUsers(){
-  var stored = localStorage.getItem(STORAGE_KEY);
-  if(stored){
-    try{ users = JSON.parse(stored); }catch(e){ users = []; }
+function loadUsers() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try { users = JSON.parse(stored); } catch(e) { users = []; }
   }
-  if(users.length === 0){
-    // Default admin
+  if (!users.length) {
     users.push({
-      email: 'admin',
-      password: 'admin',
+      pin: '123456',
       name: 'Administrator',
+      email: 'admin@sanken.com',
       role: 'Admin',
       approved: true,
       initials: 'AD',
       color: '#ff3d3d'
     });
   }
-  updateDerivedLists();
   saveUsers();
 }
-function saveUsers(){
+function saveUsers() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-  updateDerivedLists();
-}
-function updateDerivedLists(){
-  pendingUsers = users.filter(u => !u.approved);
-  approvedUsers = users.filter(u => u.approved);
 }
 
-// ══════════ STATE ══════════
-var items = [];
-var printedCount = 0;
-var currentModalItem = null;
-var modalQRObj = null;
-var currentUser = null; // logged in user object
-var isAdmin = false;
+// ---------- GLOBAL STATE ----------
+let items = [];
+let printedCount = 0;
+let currentModalItem = null;
+let currentUser = null;
+let isAdmin = false;
 
-// ══════════ BOOT ══════════
-window.addEventListener('DOMContentLoaded', function(){
+// ---------- INIT ----------
+window.addEventListener('DOMContentLoaded', () => {
   loadUsers();
-  // File upload
-  document.getElementById('file-input').addEventListener('change', function(e){
-    if(e.target.files[0]) readFile(e.target.files[0]);
-  });
-  var zone = document.getElementById('upload-zone');
-  zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('drag');});
-  zone.addEventListener('dragleave',function(){zone.classList.remove('drag');});
-  zone.addEventListener('drop',function(e){
-    e.preventDefault();zone.classList.remove('drag');
+  const fileInput = document.getElementById('file-input');
+  fileInput.addEventListener('change', e => { if(e.target.files[0]) readFile(e.target.files[0]); });
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag');
     if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
   });
-  // Enter key on login
-  document.getElementById('login-password').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
-  document.getElementById('reg-password').addEventListener('keydown',function(e){if(e.key==='Enter')doRegister();});
+  document.getElementById('login-pin').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 });
 
-// ══════════ LOGIN / REG ══════════
-function toggleRegForm(){
-  var loginDiv = document.getElementById('login-form');
-  var regDiv = document.getElementById('reg-form');
-  var toggleText = document.getElementById('toggle-text');
-  var toggleLink = document.getElementById('toggle-link');
-  if(regDiv.style.display === 'none' || !regDiv.style.display){
-    regDiv.style.display = 'block';
-    loginDiv.style.display = 'none';
-    toggleText.textContent = 'Already have an account?';
-    toggleLink.textContent = 'Sign In';
-  } else {
-    regDiv.style.display = 'none';
-    loginDiv.style.display = 'block';
-    toggleText.textContent = 'Don\'t have an account?';
-    toggleLink.textContent = 'Request Access';
-  }
-}
-
-function doLogin(){
-  var email = document.getElementById('login-email').value.trim();
-  var pass = document.getElementById('login-password').value;
-  var user = users.find(u => u.email === email && u.password === pass);
-  var msg = document.getElementById('lf-msg');
-  if(!user){
+// ---------- LOGIN ----------
+function doLogin() {
+  const pin = document.getElementById('login-pin').value.trim();
+  const user = users.find(u => u.pin === pin);
+  const msg = document.getElementById('lf-msg');
+  if (!user) {
     msg.className = 'lf-msg err';
-    msg.textContent = 'Invalid email or password.';
+    msg.textContent = 'Invalid PIN.';
     msg.style.display = 'block';
     return;
   }
-  if(!user.approved){
+  if (!user.approved) {
     msg.className = 'lf-msg err';
-    msg.textContent = 'Your account is pending approval. Please wait for admin approval.';
+    msg.textContent = 'Account pending approval.';
     msg.style.display = 'block';
     return;
   }
   msg.style.display = 'none';
-  // Success
   currentUser = user;
-  isAdmin = (user.role === 'Admin' || user.email === 'admin');
-  // UI
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.getElementById('nav-avatar').textContent = user.initials || user.name.charAt(0).toUpperCase();
-  document.getElementById('nav-avatar').style.background = user.color || '#f0a500';
-  document.getElementById('nav-avatar').style.color = '#000';
-  // Show/hide admin tab
+  isAdmin = (user.role === 'Admin' || user.pin === '123456');
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('nav-avatar').textContent = user.initials;
+  document.getElementById('nav-avatar').style.background = user.color;
   document.getElementById('admin-tab-btn').style.display = isAdmin ? '' : 'none';
   showTab('generator');
-  // Clear fields
-  document.getElementById('login-email').value = '';
-  document.getElementById('login-password').value = '';
+  document.getElementById('login-pin').value = '';
 }
 
-function doRegister(){
-  var name = document.getElementById('reg-name').value.trim();
-  var email = document.getElementById('reg-email').value.trim();
-  var pass = document.getElementById('reg-password').value;
-  var role = document.getElementById('reg-role').value.trim() || 'Staff';
-  var msg = document.getElementById('lf-msg');
-  if(!name || !email || !pass){
-    msg.className = 'lf-msg err';
-    msg.textContent = 'Please fill all fields.';
-    msg.style.display = 'block';
-    return;
-  }
-  if(users.find(u => u.email === email)){
-    msg.className = 'lf-msg err';
-    msg.textContent = 'An account with this email already exists.';
-    msg.style.display = 'block';
-    return;
-  }
-  // Generate initials and color
-  var initials = name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
-  var colors = ['#f0a500','#2196f3','#00bcd4','#7c6fff','#00e676'];
-  var color = colors[Math.floor(Math.random()*colors.length)];
-  var newUser = {
-    email, password: pass, name, role,
-    approved: false,
-    initials, color
-  };
-  users.push(newUser);
-  saveUsers();
-  msg.className = 'lf-msg ok';
-  msg.textContent = 'Registration request sent! Admin will review your account.';
-  msg.style.display = 'block';
-  // Reset form
-  document.getElementById('reg-name').value = '';
-  document.getElementById('reg-email').value = '';
-  document.getElementById('reg-password').value = '';
-  document.getElementById('reg-role').value = 'Staff';
-  toggleRegForm(); // back to login
-}
-
-function doSignOut(){
+function doSignOut() {
   currentUser = null; isAdmin = false;
-  document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  // Reset login form state
-  document.getElementById('login-form').style.display = 'block';
-  document.getElementById('reg-form').style.display = 'none';
-  document.getElementById('toggle-text').textContent = 'Don\'t have an account?';
-  document.getElementById('toggle-link').textContent = 'Request Access';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
 }
 
-// ══════════ TABS ══════════
-function showTab(t){
+function showTab(t) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(b => b.classList.remove('active'));
   document.getElementById('screen-'+t).classList.add('active');
@@ -583,203 +359,152 @@ function showTab(t){
   if(t==='admin') renderAdminPanel();
 }
 
-// ══════════ ADMIN PANEL ══════════
-function renderAdminPanel(){
-  var pList = document.getElementById('adm-pending');
-  var aList = document.getElementById('adm-approved');
-  pList.innerHTML = '';
-  aList.innerHTML = '';
-
-  if(pendingUsers.length === 0){
-    pList.innerHTML = '<div style="font-size:13px;color:var(--muted2);padding:10px 0;font-weight:600;">No pending requests</div>';
-  } else {
-    pendingUsers.forEach((u) => {
-      var d = document.createElement('div'); d.className='al-item';
-      d.innerHTML = `<div class="al-info"><div class="al-av" style="background:var(--golddim);border:1px solid var(--border2);color:var(--gold);">${u.initials}</div>
-        <div><div class="al-name">${u.name}</div><div class="al-email">${u.email} · ${u.role}</div></div></div>
-        <div class="al-btns"><span class="al-badge pend">Pending</span>
-        <button class="al-act approve" onclick="approveUser('${u.email}')">✓ Approve</button>
-        <button class="al-act deny" onclick="denyUser('${u.email}')">✕ Deny</button></div>`;
-      pList.appendChild(d);
-    });
-  }
-
-  approvedUsers.forEach((u) => {
-    var d = document.createElement('div'); d.className='al-item';
-    d.innerHTML = `<div class="al-info"><div class="al-av" style="background:${u.color};color:#000;">${u.initials}</div>
-      <div><div class="al-name">${u.name}</div><div class="al-email">${u.email} · ${u.role}</div></div></div>
+// ---------- ADMIN PANEL ----------
+function renderAdminPanel() {
+  const pending = users.filter(u => !u.approved);
+  const approved = users.filter(u => u.approved);
+  const pDiv = document.getElementById('adm-pending');
+  const aDiv = document.getElementById('adm-approved');
+  pDiv.innerHTML = pending.length ? '' : '<div style="padding:10px;color:var(--muted2);">No pending requests</div>';
+  pending.forEach(u => {
+    const d = document.createElement('div'); d.className = 'al-item';
+    d.innerHTML = `<div class="al-info"><div class="al-av" style="background:var(--golddim);">${u.initials||'?'}</div><div><div class="al-name">${u.name}</div><div class="al-email">${u.email||''} · ${u.role}</div></div></div>
+      <div class="al-btns"><span class="al-badge pend">Pending</span>
+      <button class="al-act approve" onclick="approveUser('${u.pin}')">✓ Approve</button>
+      <button class="al-act deny" onclick="denyUser('${u.pin}')">✕ Deny</button></div>`;
+    pDiv.appendChild(d);
+  });
+  aDiv.innerHTML = '';
+  approved.forEach(u => {
+    const d = document.createElement('div'); d.className = 'al-item';
+    d.innerHTML = `<div class="al-info"><div class="al-av" style="background:${u.color};">${u.initials}</div><div><div class="al-name">${u.name}</div><div class="al-email">${u.email||''} · ${u.role} · PIN: ${u.pin}</div></div></div>
       <div class="al-btns"><span class="al-badge">✓ Active</span>
-      <button class="al-act revoke" onclick="revokeUser('${u.email}')">Revoke</button></div>`;
-    aList.appendChild(d);
+      <button class="al-act revoke" onclick="revokeUser('${u.pin}')">Revoke</button></div>`;
+    aDiv.appendChild(d);
   });
 }
-
-function approveUser(email){
-  var user = users.find(u => u.email === email);
-  if(user){ user.approved = true; saveUsers(); renderAdminPanel(); }
-}
-function denyUser(email){
-  users = users.filter(u => u.email !== email);
-  saveUsers(); renderAdminPanel();
-}
-function revokeUser(email){
-  if(email === 'admin'){ alert('Cannot revoke default admin.'); return; }
-  if(confirm('Revoke access for ' + email + '?')){
-    users = users.filter(u => u.email !== email);
-    saveUsers(); renderAdminPanel();
-  }
-}
-function adminAddUser(){
-  var name = document.getElementById('add-name').value.trim();
-  var email = document.getElementById('add-email').value.trim();
-  var pass = document.getElementById('add-password').value;
-  var role = document.getElementById('add-role').value.trim() || 'Staff';
-  if(!name || !email || !pass){ alert('Please fill all fields.'); return; }
-  if(users.find(u => u.email === email)){ alert('Email already exists.'); return; }
-  var initials = name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
-  var colors = ['#f0a500','#2196f3','#00bcd4','#7c6fff','#00e676'];
-  var color = colors[Math.floor(Math.random()*colors.length)];
-  users.push({ email, password: pass, name, role, approved: true, initials, color });
+window.approveUser = (pin) => { const u = users.find(u => u.pin === pin); if(u) { u.approved = true; saveUsers(); renderAdminPanel(); } };
+window.denyUser = (pin) => { users = users.filter(u => u.pin !== pin); saveUsers(); renderAdminPanel(); };
+window.revokeUser = (pin) => { if(pin === '123456') return alert('Cannot revoke default admin'); if(confirm('Revoke access?')) { users = users.filter(u => u.pin !== pin); saveUsers(); renderAdminPanel(); } };
+window.adminAddUser = () => {
+  const name = document.getElementById('add-name').value.trim();
+  const email = document.getElementById('add-email').value.trim();
+  const pin = document.getElementById('add-pin').value.trim();
+  const role = document.getElementById('add-role').value.trim() || 'Staff';
+  if(!name || !pin || pin.length<4) return alert('Name and PIN (min 4 digits) required.');
+  if(users.find(u => u.pin === pin)) return alert('PIN already exists.');
+  const initials = name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+  const colors = ['#f0a500','#2196f3','#00bcd4','#7c6fff','#00e676'];
+  users.push({ pin, name, email, role, approved: true, initials, color: colors[Math.floor(Math.random()*colors.length)] });
   saveUsers();
-  document.getElementById('add-name').value = '';
-  document.getElementById('add-email').value = '';
-  document.getElementById('add-password').value = '';
-  document.getElementById('add-role').value = '';
+  document.getElementById('add-name').value = document.getElementById('add-email').value = document.getElementById('add-pin').value = '';
   renderAdminPanel();
-}
+};
 
-// ══════════ FILE READING ══════════
-function readFile(file){
-  var ext = file.name.split('.').pop().toLowerCase();
-  var reader = new FileReader();
-  if(ext === 'csv'){
-    reader.onload = function(e){
-      var lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
-      var start = lines[0].toLowerCase().includes('desc') ? 1 : 0;
-      var descs = lines.slice(start).map(l => l.replace(/^["']|["']$/g,'')).filter(Boolean);
+// ---------- FILE & ITEMS ----------
+function readFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  if(ext === 'csv') {
+    reader.onload = e => {
+      const lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
+      const start = lines[0].toLowerCase().includes('desc') ? 1 : 0;
+      const descs = lines.slice(start).map(l => l.replace(/^["']|["']$/g,'')).filter(Boolean);
       loadItems(descs, file.name);
     };
     reader.readAsText(file);
   } else {
-    reader.onload = function(e){
-      try{
-        var wb = XLSX.read(e.target.result, {type:'array'});
-        var ws = wb.Sheets[wb.SheetNames[0]];
-        var data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-        var headers = data[0] || [];
-        var descCol = 0;
-        for(var i=0; i<headers.length; i++){
-          var h = String(headers[i]).toLowerCase();
-          if(h.includes('desc')||h.includes('item')||h.includes('name')){ descCol=i; break; }
-        }
-        var startRow = (headers.length>0 && isNaN(headers[0]) && headers[0]!=='') ? 1 : 0;
-        var descs = [];
-        for(var r=startRow; r<data.length; r++){
-          var v = data[r][descCol];
-          if(v && String(v).trim().length>2) descs.push(String(v).trim());
-        }
-        loadItems(descs, file.name);
-      }catch(err){ alert('Error reading file: '+err.message); }
+    reader.onload = e => {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      const headers = data[0] || [];
+      let descCol = 0;
+      headers.forEach((h,i) => { if(String(h).toLowerCase().includes('desc')||String(h).toLowerCase().includes('item')) descCol = i; });
+      const startRow = headers.length && isNaN(headers[0]) ? 1 : 0;
+      const descs = [];
+      for(let r=startRow; r<data.length; r++) {
+        const v = data[r][descCol];
+        if(v && String(v).trim().length>2) descs.push(String(v).trim());
+      }
+      loadItems(descs, file.name);
     };
     reader.readAsArrayBuffer(file);
   }
 }
-
-function loadItems(descs, fname){
+function loadItems(descs, fname) {
   items = descs.map((d,i) => ({ id:i+1, desc:d, selected:true, qrGenerated:false, qrDataUrl:null }));
   document.getElementById('empty-state').style.display='none';
   document.getElementById('settings-bar').style.display='grid';
   document.getElementById('stats-row').style.display='grid';
   document.getElementById('toolbar').style.display='flex';
-  document.getElementById('uz-title').textContent = '✅ ' + fname + ' loaded';
-  document.getElementById('uz-sub').textContent = descs.length + ' items found.';
+  document.getElementById('uz-title').textContent = '✅ '+fname+' loaded';
+  document.getElementById('uz-sub').textContent = items.length+' items';
   renderCards();
   updateStats();
 }
 
-// ══════════ QR GENERATION (FIXED) ══════════
-function makeCode(item){ return (document.getElementById('s-prefix').value||'SO')+'-'+String(item.id).padStart(3,'0'); }
-function makeQRText(item){
-  return 'SANKEN|'+makeCode(item)+'|'+item.desc+'|'+(document.getElementById('s-ship').value||'')+'|'+(document.getElementById('s-site').value||'')+'|sankenoverseas.com';
+// ---------- QR GENERATION (FIXED) ----------
+function makeCode(item) { return (document.getElementById('s-prefix').value||'SO')+'-'+String(item.id).padStart(3,'0'); }
+function makeQRText(item) {
+  return `SANKEN|${makeCode(item)}|${item.desc}|${document.getElementById('s-ship').value||''}|${document.getElementById('s-site').value||''}`;
 }
-function generateQRForItem(item, size, callback){
-  if(typeof QRCode === 'undefined'){
-    alert('QR library not loaded. Refresh or check internet.');
-    if(callback) callback();
-    return;
+function generateQRForItem(item, size, callback) {
+  if(typeof qrcode === 'undefined') { alert('QR library missing'); if(callback) callback(); return; }
+  const qr = qrcode(0, 'H');
+  qr.addData(makeQRText(item));
+  qr.make();
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const cells = qr.getModuleCount();
+  const cellSize = size / cells;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size,size);
+  ctx.fillStyle = '#000';
+  for(let row=0; row<cells; row++) {
+    for(let col=0; col<cells; col++) {
+      if(qr.isDark(row, col)) ctx.fillRect(col*cellSize, row*cellSize, cellSize, cellSize);
+    }
   }
-  var tmp = document.createElement('div');
-  tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-  document.body.appendChild(tmp);
-  try{
-    new QRCode(tmp, {
-      text: makeQRText(item),
-      width: size, height: size,
-      colorDark:'#000000', colorLight:'#ffffff',
-      correctLevel: QRCode.CorrectLevel.H
-    });
-    setTimeout(() => {
-      var canvas = tmp.querySelector('canvas');
-      var img = tmp.querySelector('img');
-      var url = null;
-      if(canvas){
-        url = canvas.toDataURL('image/png');
-      } else if(img){
-        url = img.src;
-        if(!url.startsWith('data:')){
-          var c = document.createElement('canvas');
-          c.width = img.width; c.height = img.height;
-          var ctx = c.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          url = c.toDataURL('image/png');
-        }
-      }
-      item.qrGenerated = true;
-      item.qrDataUrl = url;
-      document.body.removeChild(tmp);
-      if(callback) callback();
-    }, 150);
-  }catch(e){
-    console.error('QR error:', e);
-    try{document.body.removeChild(tmp);}catch(x){}
-    if(callback) callback();
-  }
+  item.qrGenerated = true;
+  item.qrDataUrl = canvas.toDataURL('image/png');
+  if(callback) callback();
 }
-function generateAll(){
-  var btn = document.getElementById('gen-btn'); btn.disabled = true;
-  var pw = document.getElementById('prog-wrap'); pw.style.display='block';
-  var pf = document.getElementById('prog-fill');
-  var idx = 0, total = items.length;
-  function next(){
-    if(idx >= total){ btn.disabled=false; btn.textContent='⚡ Generate All'; pw.style.display='none'; renderCards(); updateStats(); return; }
+function generateAll() {
+  const btn = document.getElementById('gen-btn'); btn.disabled = true;
+  const pw = document.getElementById('prog-wrap'); pw.style.display='block';
+  const pf = document.getElementById('prog-fill');
+  let idx = 0, total = items.length;
+  function next() {
+    if(idx >= total) { btn.disabled=false; btn.textContent='⚡ Generate All'; pw.style.display='none'; renderCards(); updateStats(); return; }
     generateQRForItem(items[idx], 300, () => {
       idx++; pf.style.width = Math.round(idx/total*100)+'%';
-      btn.textContent = 'Generating '+idx+'/'+total+'...';
-      updateStats(); setTimeout(next,20);
+      btn.textContent = `Generating ${idx}/${total}...`;
+      updateStats(); setTimeout(next, 10);
     });
   }
   next();
 }
-function generateSingle(id){
-  var item = items.find(x => x.id===id); if(!item) return;
+function generateSingle(id) {
+  const item = items.find(i => i.id===id); if(!item) return;
   generateQRForItem(item, 300, () => {
-    var w = document.getElementById('qr-box-'+id);
-    if(w && item.qrDataUrl) w.innerHTML = '<img src="'+item.qrDataUrl+'" style="width:78px;height:78px;" />';
+    const box = document.getElementById('qr-box-'+id);
+    if(box) box.innerHTML = `<img src="${item.qrDataUrl}" style="width:78px;height:78px;">`;
     updateStats();
   });
 }
 
-// ══════════ RENDER ══════════
-function renderCards(){
-  var grid = document.getElementById('items-grid');
-  var search = (document.getElementById('search-inp')?document.getElementById('search-inp').value:'').toLowerCase();
+// ---------- RENDER ----------
+function renderCards() {
+  const grid = document.getElementById('items-grid');
+  const search = document.getElementById('search-inp').value.toLowerCase();
   grid.innerHTML = '';
-  var shown = 0;
+  let shown = 0;
   items.forEach(item => {
     if(search && !item.desc.toLowerCase().includes(search)) return;
     shown++;
-    var code = makeCode(item);
-    var card = document.createElement('div');
+    const code = makeCode(item);
+    const card = document.createElement('div');
     card.className = 'icard'+(item.selected?' sel':'');
     card.id = 'card-'+item.id;
     card.innerHTML = `
@@ -789,7 +514,7 @@ function renderCards(){
       </div>
       <div class="ic-desc">${item.desc}</div>
       <div class="ic-qr"><div class="qr-box" id="qr-box-${item.id}">
-        ${item.qrGenerated && item.qrDataUrl ? '<img src="'+item.qrDataUrl+'" style="width:78px;height:78px;" />' : '<div class="qr-ph">◻</div>'}
+        ${item.qrGenerated && item.qrDataUrl ? `<img src="${item.qrDataUrl}" style="width:78px;height:78px;">` : '<div class="qr-ph">◻</div>'}
       </div></div>
       <div class="ic-acts">
         <div class="ic-btn" onclick="viewItem(${item.id})">👁 View</div>
@@ -799,117 +524,101 @@ function renderCards(){
       </div>`;
     grid.appendChild(card);
   });
-  if(shown===0){
-    var em = document.createElement('div');
-    em.style.cssText = 'grid-column:1/-1;text-align:center;padding:40px;color:var(--muted2);font-size:13px;font-weight:600;';
-    em.textContent = 'No items match your search.';
-    grid.appendChild(em);
-  }
+  if(!shown) grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No items match</div>';
 }
-function filterCards(){ renderCards(); }
-
-// ══════════ SELECT ══════════
-function toggleSel(id){
-  var item = items.find(x => x.id===id); if(!item) return;
+window.filterCards = renderCards;
+window.toggleSel = (id) => {
+  const item = items.find(i => i.id===id); if(!item) return;
   item.selected = !item.selected;
-  var card = document.getElementById('card-'+id);
-  var chk = document.getElementById('chk-'+id);
-  if(card) card.classList.toggle('sel', item.selected);
-  if(chk) chk.classList.toggle('on', item.selected);
+  document.getElementById('card-'+id)?.classList.toggle('sel', item.selected);
+  document.getElementById('chk-'+id)?.classList.toggle('on', item.selected);
   updateStats();
-}
-function selAll(){ items.forEach(i => i.selected=true); renderCards(); updateStats(); }
-function deselAll(){ items.forEach(i => i.selected=false); renderCards(); updateStats(); }
-function updateStats(){
+};
+window.selAll = () => { items.forEach(i => i.selected=true); renderCards(); updateStats(); };
+window.deselAll = () => { items.forEach(i => i.selected=false); renderCards(); updateStats(); };
+function updateStats() {
   document.getElementById('st-total').textContent = items.length;
   document.getElementById('st-gen').textContent = items.filter(i => i.qrGenerated).length;
   document.getElementById('st-sel').textContent = items.filter(i => i.selected).length;
   document.getElementById('st-printed').textContent = printedCount;
 }
 
-// ══════════ PRINT & DOWNLOAD ══════════
-function bulkPrint(){
-  var sel = items.filter(i => i.selected);
-  if(sel.length===0){ alert('Select items first.'); return; }
-  if(sel.some(i => !i.qrGenerated)){ alert('Generate QR codes first.'); return; }
-  var cols = parseInt(document.getElementById('s-cols').value)||3;
-  var grid = document.getElementById('print-grid');
-  grid.style.gridTemplateColumns = 'repeat('+cols+',1fr)';
+// ---------- PRINT & DOWNLOAD ----------
+window.bulkPrint = () => {
+  const sel = items.filter(i => i.selected && i.qrGenerated);
+  if(!sel.length) return alert('Select generated items.');
+  const cols = parseInt(document.getElementById('s-cols').value)||3;
+  const grid = document.getElementById('print-grid');
+  grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
   grid.innerHTML = '';
   sel.forEach(item => {
-    var label = document.createElement('div'); label.className='print-label';
-    label.innerHTML = `<div class="pl-qr"><img src="${item.qrDataUrl}" /></div>
-      <div class="pl-code">${makeCode(item)} · ${document.getElementById('s-ship').value}</div>
-      <div class="pl-desc">${item.desc}</div>
-      <div class="pl-company">Sanken Overseas Pvt Ltd</div>`;
-    grid.appendChild(label);
+    const div = document.createElement('div'); div.className='print-label';
+    div.innerHTML = `<div class="pl-qr"><img src="${item.qrDataUrl}"></div><div class="pl-code">${makeCode(item)} · ${document.getElementById('s-ship').value}</div><div class="pl-desc">${item.desc}</div><div class="pl-company">Sanken Overseas</div>`;
+    grid.appendChild(div);
   });
   printedCount += sel.length; updateStats();
-  var pa = document.getElementById('print-area'); pa.style.display='block';
-  setTimeout(() => { window.print(); setTimeout(() => pa.style.display='none', 500); }, 400);
-}
-function printSingleSelected(){
-  var sel = items.filter(i => i.selected && i.qrGenerated);
-  if(sel.length===0){ alert('Select and generate QRs first.'); return; }
-  var idx = 0;
-  function next(){ if(idx>=sel.length) return; printSingleItem(sel[idx].id, () => { idx++; setTimeout(next,1200); }); }
+  document.getElementById('print-area').style.display='block';
+  setTimeout(() => { window.print(); setTimeout(() => document.getElementById('print-area').style.display='none', 500); }, 400);
+};
+window.printSingleSelected = () => {
+  const sel = items.filter(i => i.selected && i.qrGenerated);
+  if(!sel.length) return alert('Select generated items.');
+  let idx=0;
+  const next = () => { if(idx>=sel.length) return; printSingleItem(sel[idx].id, () => { idx++; setTimeout(next,1200); }); };
   next();
-}
-function printSingleItem(id, cb){
-  var item = items.find(x => x.id===id); if(!item){ if(cb)cb(); return; }
-  function doPrint(){
-    document.getElementById('pls-code').textContent = makeCode(item)+' · '+(document.getElementById('s-ship').value||'');
+};
+window.printSingleItem = (id, cb) => {
+  const item = items.find(i => i.id===id); if(!item) return cb?.();
+  const doPrint = () => {
+    document.getElementById('pls-code').textContent = `${makeCode(item)} · ${document.getElementById('s-ship').value}`;
     document.getElementById('pls-desc').textContent = item.desc;
-    document.getElementById('pls-qr').innerHTML = '<img src="'+item.qrDataUrl+'" style="width:80mm;height:80mm;" />';
-    var pa = document.getElementById('print-area-single');
+    document.getElementById('pls-qr').innerHTML = `<img src="${item.qrDataUrl}" style="width:80mm;height:80mm;">`;
+    const pa = document.getElementById('print-area-single');
     pa.style.display='flex'; pa.style.alignItems='center'; pa.style.justifyContent='center';
-    document.getElementById('print-area').style.display='none';
-    setTimeout(() => { window.print(); setTimeout(() => { pa.style.display='none'; printedCount++; updateStats(); if(cb)cb(); }, 400); }, 500);
-  }
-  if(!item.qrGenerated){ generateQRForItem(item, 400, () => { doPrint(); }); } else { doPrint(); }
-}
-function dlSingle(id){
-  var item = items.find(x => x.id===id); if(!item) return;
-  function save(){ var a=document.createElement('a'); a.href=item.qrDataUrl; a.download=makeCode(item)+'_QR.png'; a.click(); }
-  if(!item.qrGenerated){ generateQRForItem(item, 300, () => { save(); }); } else { save(); }
-}
-function dlAll(){
-  var gen = items.filter(i => i.qrGenerated);
-  if(gen.length===0){ alert('Generate QR codes first.'); return; }
-  var idx=0;
-  function next(){ if(idx>=gen.length) return; var a=document.createElement('a'); a.href=gen[idx].qrDataUrl; a.download=makeCode(gen[idx])+'_QR.png'; a.click(); idx++; setTimeout(next,300); }
+    setTimeout(() => { window.print(); setTimeout(() => { pa.style.display='none'; printedCount++; updateStats(); cb?.(); }, 400); }, 500);
+  };
+  if(!item.qrGenerated) generateQRForItem(item, 400, doPrint); else doPrint();
+};
+window.dlSingle = (id) => {
+  const item = items.find(i => i.id===id); if(!item) return;
+  const save = () => { const a=document.createElement('a'); a.href=item.qrDataUrl; a.download=makeCode(item)+'.png'; a.click(); };
+  if(!item.qrGenerated) generateQRForItem(item, 300, save); else save();
+};
+window.dlAll = () => {
+  const gen = items.filter(i => i.qrGenerated);
+  if(!gen.length) return alert('Generate first.');
+  let idx=0;
+  const next = () => { if(idx>=gen.length) return; const a=document.createElement('a'); a.href=gen[idx].qrDataUrl; a.download=makeCode(gen[idx])+'.png'; a.click(); idx++; setTimeout(next,300); };
   next();
-}
-function viewItem(id){
-  var item = items.find(x => x.id===id); if(!item) return;
+};
+window.viewItem = (id) => {
+  const item = items.find(i => i.id===id); if(!item) return;
   currentModalItem = item;
   document.getElementById('m-desc').textContent = item.desc;
-  document.getElementById('m-code').textContent = makeCode(item)+' · '+(document.getElementById('s-ship').value||'');
-  var qDiv = document.getElementById('m-qr-canvas'); qDiv.innerHTML = '';
-  if(modalQRObj){ try{modalQRObj.clear();}catch(e){} modalQRObj=null; }
-  if(item.qrGenerated && item.qrDataUrl){
-    var img = document.createElement('img'); img.src=item.qrDataUrl; img.style.cssText='width:200px;height:200px;'; qDiv.appendChild(img);
+  document.getElementById('m-code').textContent = `${makeCode(item)} · ${document.getElementById('s-ship').value}`;
+  const qDiv = document.getElementById('m-qr-canvas'); qDiv.innerHTML = '';
+  if(item.qrDataUrl) {
+    const img = document.createElement('img'); img.src=item.qrDataUrl; img.style.width='200px'; img.style.height='200px';
+    qDiv.appendChild(img);
   } else {
-    try{ modalQRObj = new QRCode(qDiv, { text:makeQRText(item), width:200, height:200, colorDark:'#000000', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H }); }catch(e){ qDiv.textContent='QR error'; }
+    generateQRForItem(item, 200, () => { if(item.qrDataUrl) { const img=document.createElement('img'); img.src=item.qrDataUrl; img.style.width='200px'; qDiv.appendChild(img); } });
   }
   document.getElementById('view-modal').classList.add('open');
-}
-function closeModal(){ document.getElementById('view-modal').classList.remove('open'); }
-function dlModalQR(){ if(!currentModalItem||!currentModalItem.qrDataUrl){ alert('Generate QR first.'); return; } var a=document.createElement('a'); a.href=currentModalItem.qrDataUrl; a.download=makeCode(currentModalItem)+'_QR.png'; a.click(); }
-function printOneFromModal(){ if(!currentModalItem) return; closeModal(); setTimeout(() => printSingleItem(currentModalItem.id), 200); }
-function resetAll(){
-  if(!confirm('Reset all items?')) return;
-  items = []; printedCount = 0;
+};
+window.closeModal = () => document.getElementById('view-modal').classList.remove('open');
+window.dlModalQR = () => { if(currentModalItem?.qrDataUrl) { const a=document.createElement('a'); a.href=currentModalItem.qrDataUrl; a.download=makeCode(currentModalItem)+'.png'; a.click(); } };
+window.printOneFromModal = () => { if(currentModalItem) { closeModal(); setTimeout(() => printSingleItem(currentModalItem.id), 200); } };
+window.resetAll = () => {
+  if(!confirm('Reset?')) return;
+  items=[]; printedCount=0;
   document.getElementById('settings-bar').style.display='none';
   document.getElementById('stats-row').style.display='none';
   document.getElementById('toolbar').style.display='none';
-  document.getElementById('prog-wrap').style.display='none';
-  document.getElementById('uz-title').textContent = 'Drop Excel / CSV file here';
-  document.getElementById('uz-sub').textContent = 'Supports Purchase Order files with Description column';
-  document.getElementById('file-input').value = '';
-  document.getElementById('items-grid').innerHTML = `<div class="empty" id="empty-state"><div class="empty-ico">📋</div><div class="empty-t">Upload a PO file to start</div><div style="font-size:13px;font-weight:500;">Supports Excel (.xlsx) and CSV files</div></div>`;
+  document.getElementById('uz-title').textContent='Drop Excel / CSV file here';
+  document.getElementById('file-input').value='';
+  document.getElementById('items-grid').innerHTML = '<div class="empty"><div class="empty-ico">📋</div><div class="empty-t">Upload a file to start</div></div>';
   updateStats();
-}
+};
 </script>
 </body>
 </html>
