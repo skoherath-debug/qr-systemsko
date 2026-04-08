@@ -1,451 +1,892 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sanken Overseas · QR Generator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.min.js"></script>
-  <style>
-    :root{--bg:#08090d;--s1:#0f1117;--s2:#161b24;--s3:#1e2535;--gold:#f0a500;--gold2:#ffc94a;--golddim:rgba(240,165,0,0.12);--blue:#2196f3;--green:#00e676;--red:#ff3d3d;--cyan:#00bcd4;--text:#e8eaf0;--muted:#5a6478;--muted2:#8090a8;--border:rgba(255,255,255,0.07);--border2:rgba(240,165,0,0.25);}
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-    #login-screen{min-height:100vh;display:flex;align-items:stretch;}
-    .login-left{width:55%;background:linear-gradient(135deg,#0d1117 0%,#1a2236 60%,#0f1a0d 100%);display:flex;flex-direction:column;justify-content:center;padding:64px 72px;position:relative;overflow:hidden;}
-    .login-left::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(240,165,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(240,165,0,0.04) 1px,transparent 1px);background-size:48px 48px;}
-    .login-left::after{content:'';position:absolute;bottom:-80px;right:-80px;width:360px;height:360px;background:radial-gradient(circle,rgba(240,165,0,0.1) 0%,transparent 70%);border-radius:50%;}
-    .ll-brand{display:flex;align-items:center;gap:16px;margin-bottom:48px;position:relative;z-index:1;}
-    .ll-logo{width:54px;height:54px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:24px;color:#000;box-shadow:0 0 28px rgba(240,165,0,0.35);}
-    .ll-co{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;line-height:1.2;}
-    .ll-co small{display:block;font-family:'Rajdhani';font-size:11px;color:var(--muted2);font-weight:600;letter-spacing:3px;text-transform:uppercase;}
-    .ll-hero{font-family:'Bebas Neue';font-size:78px;line-height:0.88;letter-spacing:3px;margin-bottom:24px;position:relative;z-index:1;}
-    .ll-hero em{color:var(--gold);font-style:normal;text-shadow:0 0 40px rgba(240,165,0,0.4);}
-    .ll-desc{font-size:15px;color:var(--muted2);line-height:1.7;max-width:400px;margin-bottom:36px;position:relative;z-index:1;font-weight:500;}
-    .ll-pills{display:flex;flex-wrap:wrap;gap:8px;position:relative;z-index:1;}
-    .ll-pill{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--muted2);display:flex;align-items:center;gap:6px;font-weight:600;}
-    .ll-pill::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
-    .login-right{width:45%;background:var(--s1);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 48px;}
-    .lform{width:100%;max-width:360px;}
-    .lf-title{font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:4px;}
-    .lf-sub{font-size:13px;color:var(--muted2);margin-bottom:28px;font-weight:500;}
-    .lf-msg{display:none;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:600;}
-    .lf-msg.err{background:rgba(255,61,61,0.1);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
-    .lf-msg.ok{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--green);}
-    .lf-inp{width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;transition:border-color 0.2s;margin-bottom:12px;}
-    .lf-inp:focus{border-color:var(--gold);}
-    .lf-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:11px;font-family:'Bebas Neue';font-size:15px;letter-spacing:1.5px;cursor:pointer;margin-top:8px;transition:all 0.2s;}
-    .lf-btn:hover{background:var(--gold2);}
-    .lf-link{color:var(--gold);cursor:pointer;font-weight:600;text-decoration:underline;margin-left:5px;}
-    .lf-div{height:1px;background:var(--border);margin:20px 0;}
-    .lf-foot{font-size:11px;color:var(--muted);text-align:center;line-height:1.6;}
-    .lf-foot span{color:var(--gold);}
-    #reg-form{display:none;}
-    .reg-toggle{text-align:center;margin-top:16px;font-size:13px;}
-    #app{display:none;}
-    .nav{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(8,9,13,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);}
-    .nbrand{display:flex;align-items:center;gap:10px;}
-    .nlogo{width:30px;height:30px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#000;}
-    .nname{font-family:'Bebas Neue';font-size:17px;letter-spacing:1.5px;}
-    .nname small{display:block;font-family:'Rajdhani';font-size:10px;color:var(--muted2);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
-    .ntabs{display:flex;gap:2px;background:var(--s2);border-radius:9px;padding:3px;}
-    .ntab{padding:6px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--muted2);border:none;background:transparent;font-family:'Rajdhani';text-transform:uppercase;letter-spacing:0.5px;}
-    .ntab.active{background:var(--gold);color:#000;}
-    .ntab:hover:not(.active){color:var(--text);background:var(--s3);}
-    .nright{display:flex;align-items:center;gap:10px;}
-    .navatar{width:30px;height:30px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;cursor:pointer;}
-    .nsignout{background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:12px;color:var(--muted2);cursor:pointer;font-family:'Rajdhani';font-weight:600;transition:all 0.2s;}
-    .nsignout:hover{border-color:var(--red);color:var(--red);}
-    .screen{display:none;padding:24px;animation:fi 0.25s ease;}
-    .screen.active{display:block;}
-    @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-    .ptitle{font-family:'Bebas Neue';font-size:30px;letter-spacing:2px;margin-bottom:3px;}
-    .psub{color:var(--muted2);font-size:13px;margin-bottom:22px;font-weight:500;}
-    .upload-zone{border:2px dashed var(--border2);border-radius:14px;background:var(--s1);padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:20px;position:relative;}
-    .upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:var(--golddim);}
-    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-    .uz-icon{font-size:40px;margin-bottom:12px;}
-    .uz-title{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;margin-bottom:6px;}
-    .uz-sub{font-size:13px;color:var(--muted2);font-weight:500;margin-bottom:14px;}
-    .uz-fmts{display:flex;justify-content:center;gap:8px;}
-    .uz-fmt{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted2);font-weight:700;letter-spacing:1px;}
-    .settings-bar{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:10px;margin-bottom:18px;align-items:end;}
-    .sg{display:flex;flex-direction:column;gap:5px;}
-    .slbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);}
-    .si,.ss{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;transition:border-color 0.2s;appearance:none;}
-    .si:focus,.ss:focus{border-color:var(--gold);}
-    .abtn{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Bebas Neue';letter-spacing:1.5px;transition:all 0.2s;white-space:nowrap;align-self:end;}
-    .abtn.gold{background:var(--gold);color:#000;}
-    .abtn.gold:hover{background:var(--gold2);}
-    .abtn.outline{background:transparent;border:1px solid var(--border);color:var(--text);}
-    .abtn.outline:hover{background:var(--s2);}
-    .abtn:disabled{opacity:0.45;cursor:not-allowed;}
-    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
-    .scard{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;}
-    .scard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
-    .scard.g::before{background:var(--gold);}
-    .scard.b::before{background:var(--blue);}
-    .scard.gr::before{background:var(--green);}
-    .scard.c::before{background:var(--cyan);}
-    .sc-lbl{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:5px;}
-    .sc-val{font-family:'Bebas Neue';font-size:32px;line-height:1;}
-    .toolbar{display:flex;align-items:center;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
-    .tsearch{flex:1;min-width:180px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;}
-    .tbtn{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 15px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:5px;}
-    .tbtn:hover{background:var(--gold);color:#000;border-color:transparent;}
-    .tbtn.prim{background:var(--gold);color:#000;}
-    .prog-wrap{background:var(--s2);border-radius:4px;height:5px;margin-bottom:14px;display:none;overflow:hidden;}
-    .prog-fill{height:100%;background:var(--gold);border-radius:4px;transition:width 0.2s;}
-    .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
-    .icard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all 0.2s;}
-    .icard:hover{border-color:var(--gold);}
-    .icard.sel{border-color:var(--gold);background:var(--golddim);}
-    .ic-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
-    .ic-chk{width:18px;height:18px;border:2px solid var(--muted);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-    .ic-chk.on{background:var(--gold);border-color:var(--gold);}
-    .ic-chk.on::after{content:'✓';font-size:11px;color:#000;font-weight:700;}
-    .ic-code{font-family:'Bebas Neue';font-size:12px;color:var(--gold);background:var(--golddim);border:1px solid var(--border2);border-radius:5px;padding:2px 8px;}
-    .ic-desc{font-size:13px;font-weight:600;margin-bottom:10px;}
-    .qr-box{background:#fff;border-radius:7px;padding:6px;width:90px;height:90px;display:flex;align-items:center;justify-content:center;}
-    .qr-ph{width:78px;height:78px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#bbb;}
-    .ic-acts{display:flex;gap:6px;}
-    .ic-btn{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:7px 4px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text);text-align:center;}
-    .ic-btn:hover{background:var(--gold);color:#000;}
-    .empty{text-align:center;padding:70px 40px;color:var(--muted2);grid-column:1/-1;}
-    .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999;align-items:center;justify-content:center;}
-    .modal-ov.open{display:flex;}
-    .modal-box{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:28px;max-width:380px;width:95%;text-align:center;}
-    .modal-qr-wrap{background:#fff;border-radius:10px;padding:14px;display:inline-block;margin:14px 0;}
-    .m-desc{font-size:14px;font-weight:600;margin-bottom:3px;}
-    .m-code{font-family:'Bebas Neue';font-size:13px;color:var(--gold);margin-bottom:16px;}
-    .m-btns{display:flex;gap:8px;justify-content:center;}
-    .m-btn{border-radius:8px;padding:10px 20px;font-family:'Bebas Neue';font-size:13px;cursor:pointer;}
-    .admin-sec{font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:var(--muted2);margin:20px 0 10px;}
-    .admin-list{display:flex;flex-direction:column;gap:8px;}
-    .al-item{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border-radius:9px;padding:11px 14px;border:1px solid var(--border);}
-    .al-info{display:flex;align-items:center;gap:10px;}
-    .al-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';}
-    .al-badge{background:rgba(0,230,118,0.1);color:var(--green);border-radius:20px;padding:3px 10px;font-size:11px;}
-    .al-badge.pend{background:rgba(240,165,0,0.12);color:var(--gold);}
-    .al-act{border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;border:none;}
-    .al-act.approve{background:var(--green);color:#000;}
-    .al-act.deny{background:rgba(255,61,61,0.12);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
-    .add-user-form{background:var(--s2);border-radius:10px;padding:16px;margin-top:8px;}
-    .add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
-    .add-inp{background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);width:100%;}
-    .add-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:7px;padding:10px;font-family:'Bebas Neue';font-size:14px;cursor:pointer;}
-    #print-area,#print-area-single{display:none;}
-    @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:#fff!important;}#login-screen,nav,.upload-zone,.settings-bar,.stats-row,.toolbar,.prog-wrap,.ptitle,.psub,.items-grid,.modal-ov,#screen-admin{display:none!important;}#app{display:block!important;}#screen-generator{display:block!important;padding:0!important;}#print-area{display:block!important;width:210mm;margin:0 auto;padding:6mm;}}
-    .print-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm;}
-    .print-label{border:1.5px solid #000;border-radius:3mm;padding:4mm 3mm;background:#fff;}
-    .pl-qr{width:50mm;height:50mm;display:flex;justify-content:center;margin-bottom:2mm;}
-    .pl-qr img{width:50mm!important;height:50mm!important;}
-    .pl-code{font-family:monospace;font-size:7pt;color:#444;margin-bottom:2mm;}
-    .pl-desc{font-size:8pt;text-align:center;font-weight:700;}
-    .pl-company{font-size:6.5pt;color:#888;margin-top:2mm;}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanken Overseas · QR Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
+<style>
+/* ══════════════════════════════════════
+   SCREEN STYLES
+══════════════════════════════════════ */
+:root {
+  --bg:#08090d; --s1:#0f1117; --s2:#161b24; --s3:#1e2535;
+  --gold:#f0a500; --gold2:#ffc94a; --golddim:rgba(240,165,0,0.12);
+  --blue:#2196f3; --green:#00e676; --red:#ff3d3d; --cyan:#00bcd4;
+  --text:#e8eaf0; --muted:#5a6478; --muted2:#8090a8;
+  --border:rgba(255,255,255,0.07); --border2:rgba(240,165,0,0.25);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;align-items:stretch;}
+.login-left{width:55%;background:linear-gradient(135deg,#0d1117 0%,#1a2236 60%,#0f1a0d 100%);display:flex;flex-direction:column;justify-content:center;padding:64px 72px;position:relative;overflow:hidden;}
+.login-left::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(240,165,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(240,165,0,0.04) 1px,transparent 1px);background-size:48px 48px;}
+.login-left::after{content:'';position:absolute;bottom:-80px;right:-80px;width:360px;height:360px;background:radial-gradient(circle,rgba(240,165,0,0.1) 0%,transparent 70%);border-radius:50%;}
+.ll-brand{display:flex;align-items:center;gap:16px;margin-bottom:48px;position:relative;z-index:1;}
+.ll-logo{width:54px;height:54px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:24px;color:#000;box-shadow:0 0 28px rgba(240,165,0,0.35);}
+.ll-co{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;line-height:1.2;}
+.ll-co small{display:block;font-family:'Rajdhani';font-size:11px;color:var(--muted2);font-weight:600;letter-spacing:3px;text-transform:uppercase;}
+.ll-hero{font-family:'Bebas Neue';font-size:74px;line-height:0.9;letter-spacing:3px;margin-bottom:24px;position:relative;z-index:1;}
+.ll-hero em{color:var(--gold);font-style:normal;}
+.ll-desc{font-size:15px;color:var(--muted2);line-height:1.7;max-width:400px;margin-bottom:32px;position:relative;z-index:1;font-weight:500;}
+.ll-pills{display:flex;flex-wrap:wrap;gap:8px;position:relative;z-index:1;}
+.ll-pill{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--muted2);display:flex;align-items:center;gap:6px;font-weight:600;}
+.ll-pill::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+.login-right{width:45%;background:var(--s1);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 48px;}
+.lform{width:100%;max-width:360px;}
+.lf-brand{display:flex;align-items:center;gap:12px;margin-bottom:30px;}
+.lf-logo{width:44px;height:44px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:19px;color:#000;}
+.lf-title{font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:4px;}
+.lf-sub{font-size:13px;color:var(--muted2);margin-bottom:26px;font-weight:500;line-height:1.5;}
+.lf-msg{display:none;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:600;}
+.lf-msg.err{background:rgba(255,61,61,0.1);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
+.lf-msg.ok{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--green);}
+.lf-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);margin-bottom:6px;display:block;}
+.lf-inp{width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-size:16px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;transition:border-color 0.2s;margin-bottom:14px;}
+.lf-inp:focus{border-color:var(--gold);}
+.lf-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:12px;font-family:'Bebas Neue';font-size:16px;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;}
+.lf-btn:hover{background:var(--gold2);}
+.lf-div{height:1px;background:var(--border);margin:20px 0;}
+.lf-foot{font-size:11px;color:var(--muted);text-align:center;line-height:1.7;}
+.lf-foot span{color:var(--gold);}
+
+/* APP */
+#app{display:none;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(8,9,13,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);}
+.nbrand{display:flex;align-items:center;gap:10px;}
+.nlogo{width:30px;height:30px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#000;}
+.nname{font-family:'Bebas Neue';font-size:17px;letter-spacing:1.5px;}
+.nname small{display:block;font-family:'Rajdhani';font-size:10px;color:var(--muted2);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+.ntabs{display:flex;gap:2px;background:var(--s2);border-radius:9px;padding:3px;}
+.ntab{padding:6px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--muted2);border:none;background:transparent;font-family:'Rajdhani';text-transform:uppercase;letter-spacing:0.5px;}
+.ntab.active{background:var(--gold);color:#000;}
+.ntab:hover:not(.active){color:var(--text);background:var(--s3);}
+.nright{display:flex;align-items:center;gap:10px;}
+.nuser{font-size:12px;color:var(--muted2);font-weight:600;}
+.nsignout{background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:12px;color:var(--muted2);cursor:pointer;font-family:'Rajdhani';font-weight:600;transition:all 0.2s;}
+.nsignout:hover{border-color:var(--red);color:var(--red);}
+
+.screen{display:none;padding:24px;animation:fi 0.2s ease;}
+.screen.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.ptitle{font-family:'Bebas Neue';font-size:30px;letter-spacing:2px;margin-bottom:3px;}
+.psub{color:var(--muted2);font-size:13px;margin-bottom:22px;font-weight:500;}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border2);border-radius:14px;background:var(--s1);padding:36px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:20px;position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:var(--golddim);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.uz-icon{font-size:36px;margin-bottom:10px;}
+.uz-title{font-family:'Bebas Neue';font-size:19px;letter-spacing:2px;margin-bottom:5px;}
+.uz-sub{font-size:13px;color:var(--muted2);font-weight:500;margin-bottom:12px;}
+.uz-fmts{display:flex;justify-content:center;gap:8px;}
+.uz-fmt{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted2);font-weight:700;letter-spacing:1px;}
+
+/* SETTINGS */
+.settings-bar{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:10px;margin-bottom:18px;align-items:end;}
+.sg{display:flex;flex-direction:column;gap:5px;}
+.slbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);}
+.si,.ss{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;transition:border-color 0.2s;-webkit-appearance:none;}
+.si:focus,.ss:focus{border-color:var(--gold);}
+.abtn{padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Bebas Neue';letter-spacing:1.5px;transition:all 0.2s;white-space:nowrap;align-self:end;}
+.abtn.gold{background:var(--gold);color:#000;}
+.abtn.gold:hover{background:var(--gold2);}
+.abtn.outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.abtn.outline:hover{background:var(--s2);}
+.abtn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.scard{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.scard.g::before{background:var(--gold);}
+.scard.b::before{background:var(--blue);}
+.scard.gr::before{background:var(--green);}
+.scard.c::before{background:var(--cyan);}
+.sc-lbl{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:5px;}
+.sc-val{font-family:'Bebas Neue';font-size:32px;line-height:1;}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
+.tsearch{flex:1;min-width:180px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;}
+.tbtn{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:5px;white-space:nowrap;min-height:40px;}
+.tbtn:hover{background:var(--gold);color:#000;border-color:transparent;}
+.tbtn.prim{background:var(--gold);color:#000;border-color:transparent;}
+.tbtn.prim:hover{background:var(--gold2);}
+
+/* PROGRESS */
+.prog-wrap{background:var(--s2);border-radius:4px;height:5px;margin-bottom:14px;display:none;overflow:hidden;}
+.prog-fill{height:100%;background:var(--gold);border-radius:4px;transition:width 0.15s;}
+
+/* ITEM CARDS */
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+.icard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;transition:border-color 0.2s;}
+.icard:hover{border-color:rgba(240,165,0,0.4);}
+.icard.sel{border-color:var(--gold);background:var(--golddim);}
+.ic-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
+.ic-chk{width:18px;height:18px;border:2px solid var(--muted);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ic-chk.on{background:var(--gold);border-color:var(--gold);}
+.ic-chk.on::after{content:'✓';font-size:11px;color:#000;font-weight:700;}
+.ic-code{font-family:'Bebas Neue';font-size:12px;color:var(--gold);background:var(--golddim);border:1px solid var(--border2);border-radius:5px;padding:2px 8px;}
+.ic-desc{font-size:12px;font-weight:600;margin-bottom:10px;line-height:1.4;color:var(--text);}
+.qr-box{background:#fff;border-radius:6px;padding:5px;width:80px;height:80px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.qr-ph{width:70px;height:70px;background:#f5f5f5;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.ic-acts{display:flex;gap:5px;}
+.ic-btn{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:6px 3px;font-size:10px;font-weight:700;cursor:pointer;color:var(--text);text-align:center;transition:all 0.15s;font-family:'Rajdhani';}
+.ic-btn:hover{background:var(--gold);color:#000;border-color:transparent;}
+.empty{text-align:center;padding:60px 40px;color:var(--muted2);grid-column:1/-1;}
+.empty-ico{font-size:36px;margin-bottom:8px;}
+.empty-t{font-size:14px;font-weight:600;}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:999;align-items:center;justify-content:center;}
+.modal-ov.open{display:flex;}
+.modal-box{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:28px;max-width:360px;width:95%;text-align:center;}
+.modal-qr-wrap{background:#fff;border-radius:10px;padding:12px;display:inline-block;margin:12px 0;}
+.m-title{font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;margin-bottom:4px;}
+.m-desc{font-size:13px;font-weight:600;margin-bottom:3px;color:var(--text);}
+.m-code{font-family:'Bebas Neue';font-size:12px;color:var(--gold);margin-bottom:0;}
+.m-btns{display:flex;gap:8px;justify-content:center;margin-top:16px;}
+.m-btn{border-radius:8px;padding:10px 18px;font-family:'Bebas Neue';font-size:13px;letter-spacing:1px;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--text);transition:all 0.2s;}
+.m-btn:hover{background:var(--s3);}
+.m-btn.gold{background:var(--gold);color:#000;border:none;}
+.m-btn.gold:hover{background:var(--gold2);}
+
+/* ADMIN */
+.admin-sec{font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:var(--muted2);margin:22px 0 10px;}
+.admin-list{display:flex;flex-direction:column;gap:8px;}
+.al-item{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border-radius:9px;padding:12px 14px;border:1px solid var(--border);}
+.al-info{display:flex;align-items:center;gap:10px;}
+.al-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;color:#000;}
+.al-name{font-size:13px;font-weight:700;}
+.al-email{font-size:11px;color:var(--muted2);font-weight:500;}
+.al-badge{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;}
+.al-badge.active{background:rgba(0,230,118,0.1);color:var(--green);}
+.al-badge.admin{background:rgba(240,165,0,0.15);color:var(--gold);}
+.al-acts{display:flex;align-items:center;gap:8px;}
+.al-btn{border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:'Rajdhani';}
+.al-btn.revoke{background:rgba(255,61,61,0.1);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
+.add-form{background:var(--s2);border-radius:10px;padding:16px;border:1px solid var(--border);}
+.add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.add-inp{background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);width:100%;font-family:'Rajdhani';outline:none;}
+.add-inp:focus{border-color:var(--gold);}
+.add-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:7px;padding:11px;font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;cursor:pointer;transition:background 0.2s;}
+.add-btn:hover{background:var(--gold2);}
+
+/* ══════════════════════════════════════
+   PRINT LABEL STYLES  (screen + print)
+   Must be outside @media print so JS-
+   inserted content inherits them.
+══════════════════════════════════════ */
+#print-area {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #fff;
+  z-index: 9999;
+  overflow: auto;
+}
+#print-area-single {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #fff;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Grid for bulk print */
+.print-page {
+  width: 190mm;
+  margin: 0 auto;
+  padding: 5mm 0;
+}
+.print-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5mm;
+}
+
+/* Individual label — matches sample image exactly */
+.print-label {
+  border: 2px solid #111;
+  border-radius: 2mm;
+  background: #fff;
+  overflow: hidden;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  display: flex;
+  flex-direction: column;
+}
+.pl-qr-area {
+  padding: 4mm 4mm 2mm 4mm;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+}
+.pl-qr-area img {
+  width: 100%;
+  max-width: 80mm;
+  height: auto;
+  display: block;
+}
+.pl-divider {
+  height: 1.5px;
+  background: #222;
+  margin: 0 4mm;
+}
+.pl-info {
+  padding: 3mm 4mm 3.5mm 4mm;
+  background: #fff;
+}
+.pl-desc {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 8.5pt;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.pl-meta {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 6.5pt;
+  color: #666;
+  margin-top: 2mm;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Single label (print one-by-one) */
+.single-label {
+  border: 2.5px solid #111;
+  border-radius: 3mm;
+  background: #fff;
+  width: 140mm;
+  overflow: hidden;
+}
+.single-qr-area {
+  padding: 6mm 6mm 3mm 6mm;
+  display: flex;
+  justify-content: center;
+}
+.single-qr-area img {
+  width: 128mm;
+  height: 128mm;
+  display: block;
+}
+.single-divider {
+  height: 2px;
+  background: #222;
+  margin: 0 5mm;
+}
+.single-info {
+  padding: 4mm 6mm 5mm 6mm;
+}
+.single-desc {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11pt;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.5;
+}
+.single-meta {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 8pt;
+  color: #555;
+  margin-top: 2.5mm;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ══════════════════════════════════════
+   PRINT MEDIA OVERRIDES
+══════════════════════════════════════ */
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+
+  body > *:not(#print-area):not(#print-area-single) {
+    display: none !important;
+  }
+
+  #print-area {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  #print-area-single {
+    display: flex !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .print-page { width: 100%; padding: 0; }
+  .print-grid { grid-template-columns: 1fr 1fr; gap: 4mm; }
+
+  .print-label {
+    border: 2px solid #111 !important;
+    background: #fff !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+
+/* ══════════════════════════════════════
+   MOBILE & RESPONSIVE
+══════════════════════════════════════ */
+
+/* Tablet: hide left login panel, tighten settings */
+@media (max-width: 900px) {
+  .login-left { display: none; }
+  .login-right { width: 100%; border-left: none; padding: 40px 28px; }
+
+  .settings-bar {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .settings-bar .sg:nth-child(3) { grid-column: 1 / -1; }
+  .settings-bar .abtn { width: 100%; }
+
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .nuser { display: none; }
+}
+
+/* Mobile: full single-column layout */
+@media (max-width: 600px) {
+  /* Login */
+  .login-right { padding: 32px 20px; }
+  .lform { max-width: 100%; }
+  .lf-inp { font-size: 16px; padding: 14px; } /* prevents iOS zoom */
+  .lf-btn { padding: 15px; font-size: 18px; }
+
+  /* Nav */
+  .nav { padding: 0 14px; height: 50px; gap: 8px; }
+  .nname small { display: none; }
+  .nname { font-size: 14px; }
+  .ntab { padding: 6px 10px; font-size: 11px; }
+  .nsignout { padding: 5px 9px; font-size: 11px; }
+
+  /* Screen padding */
+  .screen { padding: 14px; }
+  .ptitle { font-size: 22px; }
+  .psub { font-size: 12px; margin-bottom: 14px; }
+
+  /* Upload zone */
+  .upload-zone { padding: 24px 16px; }
+  .uz-icon { font-size: 28px; margin-bottom: 8px; }
+  .uz-title { font-size: 15px; }
+  .uz-sub { font-size: 12px; }
+
+  /* Settings bar: all stacked */
+  .settings-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .settings-bar .abtn { width: 100%; padding: 13px; font-size: 15px; }
+
+  /* Stats: 2x2 */
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .sc-val { font-size: 26px; }
+  .sc-lbl { font-size: 10px; }
+
+  /* Toolbar: search full width, buttons wrap in 2 cols */
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+  .tsearch { grid-column: 1 / -1; min-width: 0; }
+  .tbtn {
+    justify-content: center;
+    padding: 11px 6px;
+    font-size: 11px;
+    gap: 3px;
+  }
+  .tbtn.prim { grid-column: 1 / -1; padding: 13px; font-size: 13px; }
+
+  /* Item cards: single column, larger touch targets */
+  .items-grid { grid-template-columns: 1fr; gap: 10px; }
+  .icard { padding: 14px; }
+  .ic-btn {
+    padding: 10px 3px;
+    font-size: 11px;
+    min-height: 40px;
+  }
+  .qr-box { width: 88px; height: 88px; }
+
+  /* Modal: full width */
+  .modal-box {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    padding: 24px 20px 32px;
+  }
+  .modal-ov.open { align-items: flex-end; }
+  .m-btns { flex-direction: column; gap: 8px; }
+  .m-btn { width: 100%; padding: 13px; }
+
+  /* Admin panel */
+  .al-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .al-acts { width: 100%; justify-content: space-between; }
+  .al-btn { padding: 8px 16px; font-size: 12px; }
+  .add-grid { grid-template-columns: 1fr; gap: 8px; }
+  .add-btn { padding: 14px; font-size: 16px; }
+  .add-inp { font-size: 16px; padding: 12px; } /* prevents iOS zoom */
+}
+
+/* Extra small phones */
+@media (max-width: 380px) {
+  .ntab { padding: 5px 8px; font-size: 10px; }
+  .toolbar { grid-template-columns: 1fr; }
+  .tbtn.prim { grid-column: auto; }
+}
+
+</style>
 </head>
 <body>
+
+<!-- ════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-left">
-    <div class="ll-brand"><div class="ll-logo">SO</div><div class="ll-co">Sanken Overseas Pvt Ltd<small>QR Asset Management</small></div></div>
+    <div class="ll-brand">
+      <div class="ll-logo">SO</div>
+      <div class="ll-co">Sanken Overseas Pvt Ltd<small>QR Asset Management</small></div>
+    </div>
     <div class="ll-hero">GENERATE.<br>TRACK.<br><em>DELIVER.</em></div>
-    <div class="ll-desc">QR codes for construction materials shipped from Sri Lanka to Maldives.</div>
-    <div class="ll-pills"><div class="ll-pill">Bulk QR generation</div><div class="ll-pill">A4 labels</div><div class="ll-pill">Admin PIN access</div></div>
+    <div class="ll-desc">QR code labels for construction materials shipped from Sri Lanka to Maldives. Authorised access only.</div>
+    <div class="ll-pills">
+      <div class="ll-pill">Secure access</div>
+      <div class="ll-pill">Bulk A4 printing</div>
+      <div class="ll-pill">High quality QR</div>
+    </div>
   </div>
   <div class="login-right">
     <div class="lform">
-      <div style="display:flex;gap:12px;margin-bottom:28px;">
-        <div style="width:42px;height:42px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;color:#000;">SO</div>
-        <div><div style="font-family:'Bebas Neue';font-size:16px;">Sanken Overseas</div><div style="font-size:10px;color:var(--muted2);">Authorised Access</div></div>
+      <div class="lf-brand">
+        <div class="lf-logo">SO</div>
+        <div>
+          <div style="font-family:'Bebas Neue';font-size:17px;letter-spacing:1px;">Sanken Overseas</div>
+          <div style="font-size:10px;color:var(--muted2);font-weight:600;">Authorised Personnel Only</div>
+        </div>
       </div>
-      <div class="lf-title">Enter PIN</div>
-      <div class="lf-sub">Use the PIN provided by your admin</div>
+      <div class="lf-title">Access System</div>
+      <div class="lf-sub">Enter your access code to continue.</div>
       <div class="lf-msg" id="lf-msg"></div>
-      <input class="lf-inp" id="login-pin" type="password" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" pattern="\d*" />
-      <button class="lf-btn" onclick="doLogin()">Sign In</button>
+      <input class="lf-inp" id="login-pin" type="password" placeholder="••••••" maxlength="10" inputmode="numeric" autocomplete="off" />
+      <button class="lf-btn" onclick="doLogin()">Enter</button>
       <div class="lf-div"></div>
-      <div class="lf-foot">Default admin PIN: <span>123456</span><br>Contact admin if you need access.</div>
+      <div class="lf-foot">
+        Contact your administrator to get access.
+      </div>
     </div>
   </div>
 </div>
 
+<!-- ════════════════════════════════════
+     MAIN APP
+════════════════════════════════════ -->
 <div id="app">
   <nav class="nav">
-    <div class="nbrand"><div class="nlogo">SO</div><div class="nname">Sanken Overseas <small>QR Generator</small></div></div>
+    <div class="nbrand">
+      <div class="nlogo">SO</div>
+      <div class="nname"><span>Sanken Overseas</span> <small>QR Label Generator</small></div>
+    </div>
     <div class="ntabs">
       <button class="ntab active" onclick="showTab('generator')">QR Generator</button>
-      <button class="ntab" id="admin-tab-btn" onclick="showTab('admin')">Admin Panel</button>
+      <button class="ntab" id="admin-tab-btn" style="display:none;" onclick="showTab('admin')">Admin Panel</button>
     </div>
     <div class="nright">
-      <div class="navatar" id="nav-avatar">AD</div>
+      <div class="nuser" id="nav-user"></div>
       <button class="nsignout" onclick="doSignOut()">Sign out</button>
     </div>
   </nav>
 
+  <!-- QR GENERATOR TAB -->
   <div id="screen-generator" class="screen active">
     <div class="ptitle">Bulk QR Code Generator</div>
-    <div class="psub">Upload PO file · Generate · Print</div>
+    <div class="psub">Upload PO file · Generate QR codes · Print A4 labels</div>
+
     <div class="upload-zone" id="upload-zone">
       <input type="file" id="file-input" accept=".xlsx,.xls,.csv" />
       <div class="uz-icon">📂</div>
       <div class="uz-title" id="uz-title">Drop Excel / CSV file here</div>
-      <div class="uz-sub" id="uz-sub">Supports Purchase Order files</div>
+      <div class="uz-sub" id="uz-sub">Auto-detects Description column from Purchase Order files</div>
       <div class="uz-fmts"><span class="uz-fmt">XLSX</span><span class="uz-fmt">XLS</span><span class="uz-fmt">CSV</span></div>
     </div>
+
     <div class="settings-bar" id="settings-bar" style="display:none;">
-      <div class="sg"><label class="slbl">Prefix</label><input class="si" id="s-prefix" value="SO-MV" /></div>
-      <div class="sg"><label class="slbl">Shipment</label><input class="si" id="s-ship" value="SO-2026-031" /></div>
-      <div class="sg"><label class="slbl">Site</label><input class="si" id="s-site" value="Hulhumalé Phase II" /></div>
-      <div class="sg"><label class="slbl">Labels/row</label><select class="ss" id="s-cols"><option value="3">3</option><option value="2">2</option><option value="4">4</option></select></div>
+      <div class="sg"><label class="slbl">Code Prefix</label><input class="si" id="s-prefix" value="SO-MV" /></div>
+      <div class="sg"><label class="slbl">Shipment Ref</label><input class="si" id="s-ship" value="SO-2026-031" /></div>
+      <div class="sg"><label class="slbl">Site / Project</label><input class="si" id="s-site" value="Hulhumalé Phase II" /></div>
+      <div class="sg"><label class="slbl">Print columns</label>
+        <select class="ss" id="s-cols">
+          <option value="2" selected>2 columns (A4 default)</option>
+          <option value="3">3 columns</option>
+          <option value="1">1 column (large)</option>
+        </select>
+      </div>
       <button class="abtn gold" id="gen-btn" onclick="generateAll()">⚡ Generate All</button>
       <button class="abtn outline" onclick="resetAll()">↺ Reset</button>
     </div>
+
     <div class="stats-row" id="stats-row" style="display:none;">
-      <div class="scard g"><div class="sc-lbl">Total</div><div class="sc-val g" id="st-total">0</div></div>
-      <div class="scard gr"><div class="sc-lbl">Generated</div><div class="sc-val gr" id="st-gen">0</div></div>
-      <div class="scard b"><div class="sc-lbl">Selected</div><div class="sc-val b" id="st-sel">0</div></div>
-      <div class="scard c"><div class="sc-lbl">Printed</div><div class="sc-val c" id="st-printed">0</div></div>
+      <div class="scard g"><div class="sc-lbl">Total Items</div><div class="sc-val" id="st-total">0</div></div>
+      <div class="scard gr"><div class="sc-lbl">QR Generated</div><div class="sc-val" id="st-gen">0</div></div>
+      <div class="scard b"><div class="sc-lbl">Selected</div><div class="sc-val" id="st-sel">0</div></div>
+      <div class="scard c"><div class="sc-lbl">Printed</div><div class="sc-val" id="st-printed">0</div></div>
     </div>
+
     <div class="toolbar" id="toolbar" style="display:none;">
-      <input class="tsearch" id="search-inp" placeholder="Search..." oninput="filterCards()" />
-      <button class="tbtn" onclick="selAll()">☑ All</button>
+      <input class="tsearch" id="search-inp" placeholder="Search items..." oninput="renderCards()" />
+      <button class="tbtn" onclick="selAll()">☑ Select All</button>
       <button class="tbtn" onclick="deselAll()">☐ None</button>
-      <button class="tbtn prim" onclick="bulkPrint()">🖨 Bulk print</button>
-      <button class="tbtn" onclick="printSingleSelected()">📄 Print one</button>
-      <button class="tbtn" onclick="dlAll()">⬇ Download all</button>
+      <button class="tbtn prim" onclick="bulkPrint()">🖨 Bulk Print A4</button>
+      <button class="tbtn" onclick="printSelectedOneByOne()">📄 Print One-by-One</button>
+      <button class="tbtn" onclick="dlAll()">⬇ Download PNGs</button>
     </div>
-    <div class="prog-wrap" id="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+
+    <div class="prog-wrap" id="prog-wrap">
+      <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+
     <div class="items-grid" id="items-grid">
-      <div class="empty" id="empty-state"><div class="empty-ico">📋</div><div class="empty-t">Upload a file to start</div></div>
+      <div class="empty" id="empty-state">
+        <div class="empty-ico">📋</div>
+        <div class="empty-t">Upload a Purchase Order file to begin</div>
+      </div>
     </div>
   </div>
 
+  <!-- ADMIN TAB -->
   <div id="screen-admin" class="screen">
     <div class="ptitle">Admin Panel</div>
-    <div class="psub">Manage users · Approve requests · Issue PINs</div>
+    <div class="psub">Manage authorised users · Grant or revoke access</div>
     <div style="max-width:680px;">
-      <div class="admin-sec">PENDING REQUESTS</div>
-      <div class="admin-list" id="adm-pending"></div>
-      <div class="admin-sec">APPROVED USERS</div>
-      <div class="admin-list" id="adm-approved"></div>
-      <div class="admin-sec">ADD NEW USER (with PIN)</div>
-      <div class="add-user-form">
+      <div class="admin-sec">AUTHORISED USERS</div>
+      <div class="admin-list" id="adm-list"></div>
+
+      <div class="admin-sec">ADD AUTHORISED USER</div>
+      <div class="add-form">
         <div class="add-grid">
           <input class="add-inp" id="add-name" placeholder="Full name" />
-          <input class="add-inp" id="add-email" placeholder="Email (optional)" />
+          <input class="add-inp" id="add-pin" type="password" placeholder="Access code (min 4 digits)" maxlength="10" />
         </div>
         <div class="add-grid">
-          <input class="add-inp" id="add-pin" placeholder="6-digit PIN" maxlength="6" />
-          <input class="add-inp" id="add-role" placeholder="Role" value="Staff" />
+          <input class="add-inp" id="add-role" placeholder="Role (e.g. Staff, Supervisor)" value="Staff" />
+          <div></div>
         </div>
-        <button class="add-btn" onclick="adminAddUser()">+ ADD & APPROVE USER</button>
+        <button class="add-btn" onclick="adminAddUser()">+ Add User</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- VIEW MODAL -->
 <div class="modal-ov" id="view-modal" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
-    <div style="font-family:'Bebas Neue';font-size:18px;">QR CODE</div>
+    <div class="m-title">QR Code Preview</div>
     <div class="m-desc" id="m-desc"></div>
     <div class="m-code" id="m-code"></div>
-    <div class="modal-qr-wrap"><div id="m-qr-canvas"></div></div>
+    <div class="modal-qr-wrap"><div id="m-qr-div"></div></div>
     <div class="m-btns">
-      <button class="m-btn close" onclick="closeModal()">Close</button>
-      <button class="m-btn dl" onclick="dlModalQR()">⬇ Download</button>
-      <button class="m-btn dl" style="background:var(--blue);" onclick="printOneFromModal()">🖨 Print</button>
+      <button class="m-btn" onclick="closeModal()">Close</button>
+      <button class="m-btn gold" onclick="dlModalQR()">⬇ Download</button>
+      <button class="m-btn" style="background:var(--blue);color:#fff;border-color:var(--blue);" onclick="printOneFromModal()">🖨 Print</button>
     </div>
   </div>
 </div>
 
-<div id="print-area"><div class="print-grid" id="print-grid"></div></div>
-<div id="print-area-single"><div class="print-label-single" id="print-label-single"><div class="pls-qr" id="pls-qr"></div><div class="pls-code" id="pls-code"></div><div class="pls-desc" id="pls-desc"></div><div class="pls-co">Sanken Overseas</div></div></div>
+<!-- PRINT AREAS (hidden from screen, shown only during print) -->
+<div id="print-area">
+  <div class="print-page">
+    <div class="print-grid" id="print-grid"></div>
+  </div>
+</div>
 
+<div id="print-area-single">
+  <div class="single-label" id="single-label">
+    <div class="single-qr-area"><img id="single-qr-img" src="" alt="QR"></div>
+    <div class="single-divider"></div>
+    <div class="single-info">
+      <div class="single-desc" id="single-desc"></div>
+      <div class="single-meta">
+        <span id="single-code"></span>
+        <span>Sanken Overseas</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════ -->
 <script>
-// ---------- USER STORAGE (PIN-based) ----------
-const STORAGE_KEY = 'sanken_users_pin';
-let users = [];
+'use strict';
 
-function loadUsers() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) { try { users = JSON.parse(stored); } catch(e) { users = []; } }
-  if (!users.length) {
-    users.push({ pin:'123456', name:'Administrator', email:'admin@sanken.com', role:'Admin', approved:true, initials:'AD', color:'#ff3d3d' });
+// ─── AUTH STORE (PIN-based) ───────────────────────────────────────────────────
+const AUTH_KEY = 'sanken_auth_v3';
+let authUsers = [];
+
+function loadAuth() {
+  try { authUsers = JSON.parse(localStorage.getItem(AUTH_KEY) || '[]'); } catch(e) { authUsers = []; }
+  // Ensure default admin always exists
+  if (!authUsers.find(u => u.pin === '123456')) {
+    authUsers.unshift({ name: 'Administrator', pin: '123456', role: 'Admin', addedAt: new Date().toISOString() });
   }
-  saveUsers();
+  saveAuth();
 }
-function saveUsers() { localStorage.setItem(STORAGE_KEY, JSON.stringify(users)); }
+function saveAuth() { localStorage.setItem(AUTH_KEY, JSON.stringify(authUsers)); }
 
-// ---------- GLOBAL STATE ----------
+// ─── APP STATE ────────────────────────────────────────────────────────────────
 let items = [];
 let printedCount = 0;
 let currentModalItem = null;
 let currentUser = null;
-let isAdmin = false;
 
-// ---------- INIT ----------
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  loadUsers();
-  const fileInput = document.getElementById('file-input');
-  fileInput.addEventListener('change', e => { if(e.target.files[0]) readFile(e.target.files[0]); });
+  loadAuth();
+
+  document.getElementById('file-input').addEventListener('change', e => {
+    if (e.target.files[0]) readFile(e.target.files[0]);
+  });
+
   const zone = document.getElementById('upload-zone');
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
   zone.addEventListener('drop', e => {
     e.preventDefault(); zone.classList.remove('drag');
-    if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
   });
-  document.getElementById('login-pin').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+  document.getElementById('login-pin').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
 });
 
-// ---------- LOGIN ----------
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
 function doLogin() {
   const pin = document.getElementById('login-pin').value.trim();
-  const user = users.find(u => u.pin === pin);
-  const msg = document.getElementById('lf-msg');
-  if (!user) { msg.className='lf-msg err'; msg.textContent='Invalid PIN.'; msg.style.display='block'; return; }
-  if (!user.approved) { msg.className='lf-msg err'; msg.textContent='Account pending approval.'; msg.style.display='block'; return; }
-  msg.style.display='none';
+  const user = authUsers.find(u => u.pin === pin);
+  if (!pin || !user) {
+    showLoginMsg('err', 'Access denied. Contact your administrator.');
+    return;
+  }
   currentUser = user;
-  isAdmin = (user.role === 'Admin' || user.pin === '123456');
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.getElementById('nav-avatar').textContent = user.initials;
-  document.getElementById('nav-avatar').style.background = user.color;
-  document.getElementById('admin-tab-btn').style.display = isAdmin ? '' : 'none';
+  document.getElementById('lf-msg').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('nav-user').textContent = user.name + ' (' + user.role + ')';
+  document.getElementById('admin-tab-btn').style.display = (user.role === 'Admin') ? '' : 'none';
   showTab('generator');
-  document.getElementById('login-pin').value='';
+  document.getElementById('login-pin').value = '';
 }
+
+function showLoginMsg(type, text) {
+  const msg = document.getElementById('lf-msg');
+  msg.className = 'lf-msg ' + type;
+  msg.textContent = text;
+  msg.style.display = 'block';
+}
+
 function doSignOut() {
-  currentUser=null; isAdmin=false;
-  document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
 }
+
+// ─── TAB SWITCHING ────────────────────────────────────────────────────────────
 function showTab(t) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(b => b.classList.remove('active'));
-  document.getElementById('screen-'+t).classList.add('active');
+  document.getElementById('screen-' + t).classList.add('active');
   document.querySelectorAll('.ntab').forEach(b => {
-    if(t==='generator' && b.textContent.includes('QR')) b.classList.add('active');
-    if(t==='admin' && b.textContent.includes('Admin')) b.classList.add('active');
+    if (t === 'generator' && b.textContent.includes('QR'))    b.classList.add('active');
+    if (t === 'admin'     && b.textContent.includes('Admin')) b.classList.add('active');
   });
-  if(t==='admin') renderAdminPanel();
+  if (t === 'admin') renderAdminPanel();
 }
 
-// ---------- ADMIN PANEL ----------
+// ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
 function renderAdminPanel() {
-  const pending = users.filter(u => !u.approved);
-  const approved = users.filter(u => u.approved);
-  const pDiv = document.getElementById('adm-pending');
-  const aDiv = document.getElementById('adm-approved');
-  pDiv.innerHTML = pending.length ? '' : '<div style="padding:10px;color:var(--muted2);">No pending requests</div>';
-  pending.forEach(u => {
-    const d = document.createElement('div'); d.className='al-item';
-    d.innerHTML = `<div class="al-info"><div class="al-av" style="background:var(--golddim);">${u.initials||'?'}</div><div><div>${u.name}</div><div>${u.email||''} · ${u.role}</div></div></div>
-      <div><span class="al-badge pend">Pending</span>
-      <button class="al-act approve" onclick="approveUser('${u.pin}')">✓ Approve</button>
-      <button class="al-act deny" onclick="denyUser('${u.pin}')">✕ Deny</button></div>`;
-    pDiv.appendChild(d);
-  });
-  aDiv.innerHTML='';
-  approved.forEach(u => {
-    const d = document.createElement('div'); d.className='al-item';
-    d.innerHTML = `<div class="al-info"><div class="al-av" style="background:${u.color};">${u.initials}</div><div><div>${u.name}</div><div>${u.email||''} · ${u.role} · PIN: ${u.pin}</div></div></div>
-      <div><span class="al-badge">✓ Active</span>
-      <button class="al-act deny" onclick="revokeUser('${u.pin}')">Revoke</button></div>`;
-    aDiv.appendChild(d);
+  const list = document.getElementById('adm-list');
+  list.innerHTML = '';
+  authUsers.forEach(u => {
+    const isAdmin = u.role === 'Admin' || u.email === 'admin@sanken.com';
+    const colors  = ['#f0a500','#2196f3','#00bcd4','#7c6fff','#00e676'];
+    const color   = isAdmin ? '#f0a500' : colors[u.email.charCodeAt(0) % colors.length];
+    const initials = u.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    const div = document.createElement('div');
+    div.className = 'al-item';
+    div.innerHTML = `
+      <div class="al-info">
+        <div class="al-av" style="background:${color};">${initials}</div>
+        <div>
+          <div class="al-name">${escHtml(u.name)}</div>
+          <div class="al-email">${escHtml(u.email)}</div>
+        </div>
+      </div>
+      <div class="al-acts">
+        <span class="al-badge ${isAdmin ? 'admin' : 'active'}">${isAdmin ? '★ Admin' : '✓ Staff'}</span>
+        ${!isAdmin ? `<button class="al-btn revoke" onclick="revokeUser('${escAttr(u.email)}')">Revoke</button>` : ''}
+      </div>`;
+    list.appendChild(div);
   });
 }
-window.approveUser = (pin) => { const u=users.find(u=>u.pin===pin); if(u){u.approved=true;saveUsers();renderAdminPanel();} };
-window.denyUser = (pin) => { users=users.filter(u=>u.pin!==pin); saveUsers(); renderAdminPanel(); };
-window.revokeUser = (pin) => { if(pin==='123456') return alert('Cannot revoke default admin'); if(confirm('Revoke access?')){users=users.filter(u=>u.pin!==pin);saveUsers();renderAdminPanel();} };
-window.adminAddUser = () => {
-  const name=document.getElementById('add-name').value.trim();
-  const email=document.getElementById('add-email').value.trim();
-  const pin=document.getElementById('add-pin').value.trim();
-  const role=document.getElementById('add-role').value.trim()||'Staff';
-  if(!name||!pin||pin.length<4) return alert('Name and PIN (min 4 digits) required.');
-  if(users.find(u=>u.pin===pin)) return alert('PIN already exists.');
-  const initials=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-  const colors=['#f0a500','#2196f3','#00bcd4','#7c6fff','#00e676'];
-  users.push({pin,name,email,role,approved:true,initials,color:colors[Math.floor(Math.random()*colors.length)]});
-  saveUsers();
-  document.getElementById('add-name').value=document.getElementById('add-email').value=document.getElementById('add-pin').value='';
+
+window.revokeUser = (pin) => {
+  if (pin === '123456') { alert('Cannot revoke default admin.'); return; }
+  const u = authUsers.find(x => x.pin === pin);
+  if (!confirm('Revoke access for ' + (u ? u.name : pin) + '?')) return;
+  authUsers = authUsers.filter(x => x.pin !== pin);
+  saveAuth();
   renderAdminPanel();
 };
 
-// ---------- FILE READING ----------
+window.adminAddUser = () => {
+  const name = document.getElementById('add-name').value.trim();
+  const pin  = document.getElementById('add-pin').value.trim();
+  const role = document.getElementById('add-role').value.trim() || 'Staff';
+  if (!name || !pin || pin.length < 4) {
+    alert('Name and access code (min 4 digits) are required.');
+    return;
+  }
+  if (authUsers.find(u => u.pin === pin)) {
+    alert('This access code is already in use. Choose a different one.');
+    return;
+  }
+  authUsers.push({ name, pin, role, addedAt: new Date().toISOString() });
+  saveAuth();
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-pin').value  = '';
+  document.getElementById('add-role').value = 'Staff';
+  renderAdminPanel();
+};
+
+// ─── FILE READING ─────────────────────────────────────────────────────────────
 function readFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
   const reader = new FileReader();
-  if(ext === 'csv') {
+
+  if (ext === 'csv') {
     reader.onload = e => {
-      const lines = e.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
-      const start = lines[0].toLowerCase().includes('desc') ? 1 : 0;
-      const descs = lines.slice(start).map(l=>l.replace(/^["']|["']$/g,'')).filter(Boolean);
+      const lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
+      const start = lines[0].toLowerCase().includes('desc') || lines[0].toLowerCase().includes('item') ? 1 : 0;
+      const descs = lines.slice(start).map(l => l.replace(/^["']|["']$/g, '')).filter(l => l.length > 2);
       loadItems(descs, file.name);
     };
     reader.readAsText(file);
   } else {
     reader.onload = e => {
-      const wb = XLSX.read(e.target.result, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      const wb   = XLSX.read(e.target.result, { type: 'array' });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
       const headers = data[0] || [];
+
+      // Find description / item column
       let descCol = 0;
-      headers.forEach((h,i) => { if(String(h).toLowerCase().includes('desc')||String(h).toLowerCase().includes('item')) descCol=i; });
-      const startRow = headers.length && isNaN(headers[0]) ? 1 : 0;
+      headers.forEach((h, i) => {
+        const hl = String(h).toLowerCase();
+        if (hl.includes('desc') || hl.includes('item') || hl.includes('material')) descCol = i;
+      });
+
+      const startRow = (headers.length && isNaN(Number(headers[descCol]))) ? 1 : 0;
       const descs = [];
-      for(let r=startRow; r<data.length; r++) {
-        const v = data[r][descCol];
-        if(v && String(v).trim().length>2) descs.push(String(v).trim());
+      for (let r = startRow; r < data.length; r++) {
+        const v = String(data[r][descCol] || '').trim();
+        if (v.length > 2) descs.push(v);
       }
       loadItems(descs, file.name);
     };
     reader.readAsArrayBuffer(file);
   }
 }
+
 function loadItems(descs, fname) {
-  items = descs.map((d,i) => ({ id:i+1, desc:d, selected:true, qrGenerated:false, qrDataUrl:null }));
-  document.getElementById('empty-state').style.display='none';
-  document.getElementById('settings-bar').style.display='grid';
-  document.getElementById('stats-row').style.display='grid';
-  document.getElementById('toolbar').style.display='flex';
-  document.getElementById('uz-title').textContent = '✅ '+fname+' loaded';
-  document.getElementById('uz-sub').textContent = items.length+' items';
+  items = descs.map((d, i) => ({
+    id: i + 1,
+    desc: d,
+    selected: true,
+    qrGenerated: false,
+    qrDataUrl: null
+  }));
+
+  document.getElementById('settings-bar').style.display = 'grid';
+  document.getElementById('stats-row').style.display    = 'grid';
+  document.getElementById('toolbar').style.display      = 'flex';
+  document.getElementById('uz-title').textContent = '✅ ' + fname + ' loaded';
+  document.getElementById('uz-sub').textContent   = items.length + ' items found';
+
   renderCards();
   updateStats();
 }
 
-// ---------- QR GENERATION (FIXED) ----------
+// ─── QR GENERATION ────────────────────────────────────────────────────────────
 function makeCode(item) {
-  return (document.getElementById('s-prefix').value||'SO')+'-'+String(item.id).padStart(3,'0');
+  const prefix = document.getElementById('s-prefix').value || 'SO';
+  return prefix + '-' + String(item.id).padStart(3, '0');
 }
 
-// Keep QR payload short to avoid capacity overflow
-function makeQRText(item) {
+function makeQRPayload(item) {
+  // Compact payload: CODE | truncated-desc | shipment | site
   const code = makeCode(item);
   const ship = document.getElementById('s-ship').value || '';
   const site = document.getElementById('s-site').value || '';
-  // Truncate description to 80 chars max to stay within QR capacity
-  const desc = item.desc.length > 80 ? item.desc.substring(0, 80) : item.desc;
+  const desc = item.desc.length > 100 ? item.desc.substring(0, 100) : item.desc;
   return `${code}|${desc}|${ship}|${site}`;
 }
 
-function generateQRForItem(item, size, callback) {
-  // Guard: library must be loaded
+/**
+ * Generates a high-quality QR code.
+ * Canvas size: 800×800 px for sharp print output.
+ * Cascades through error correction levels to handle long payloads.
+ */
+function generateQRForItem(item, canvasSize, callback) {
   if (typeof qrcode === 'undefined') {
     console.error('qrcode-generator library not loaded');
-    if (callback) callback(false);
+    callback && callback(false);
     return;
   }
 
-  const text = makeQRText(item);
-
-  // Try type numbers from 0 (auto) up to 10 with descending error correction
-  // 'M' (15% recovery) is a good balance; fall back to 'L' (7%) if still too long
-  const attempts = [
+  const text = makeQRPayload(item);
+  // Cascade: try highest quality first, fall back if data too long
+  const cascade = [
+    { type: 0,  ecl: 'H' },
+    { type: 0,  ecl: 'Q' },
     { type: 0,  ecl: 'M' },
     { type: 0,  ecl: 'L' },
     { type: 10, ecl: 'M' },
@@ -455,58 +896,61 @@ function generateQRForItem(item, size, callback) {
   ];
 
   let qr = null;
-  for (const attempt of attempts) {
+  for (const opt of cascade) {
     try {
-      qr = qrcode(attempt.type, attempt.ecl);
-      qr.addData(text);
+      qr = qrcode(opt.type, opt.ecl);
+      qr.addData(text, 'Byte');
       qr.make();
-      break; // success
+      break;
     } catch (e) {
       qr = null;
     }
   }
 
   if (!qr) {
-    console.error('QR generation failed for:', text);
-    if (callback) callback(false);
+    console.error('QR generation failed for item', item.id, text);
+    callback && callback(false);
     return;
   }
 
-  // Render to canvas
   const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width  = canvasSize;
+  canvas.height = canvasSize;
   const ctx = canvas.getContext('2d');
-  const cells = qr.getModuleCount();
-  const cellSize = size / cells;
 
+  // White background
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+  const cells    = qr.getModuleCount();
+  const cellSize = canvasSize / cells;
+
+  // Render modules with sub-pixel precision to avoid bleeding
   ctx.fillStyle = '#000000';
   for (let row = 0; row < cells; row++) {
     for (let col = 0; col < cells; col++) {
       if (qr.isDark(row, col)) {
-        ctx.fillRect(
-          Math.floor(col * cellSize),
-          Math.floor(row * cellSize),
-          Math.ceil(cellSize),
-          Math.ceil(cellSize)
-        );
+        const x = Math.round(col * cellSize);
+        const y = Math.round(row * cellSize);
+        const w = Math.round((col + 1) * cellSize) - x;
+        const h = Math.round((row + 1) * cellSize) - y;
+        ctx.fillRect(x, y, w, h);
       }
     }
   }
 
   item.qrGenerated = true;
-  item.qrDataUrl = canvas.toDataURL('image/png');
-  if (callback) callback(true);
+  item.qrDataUrl   = canvas.toDataURL('image/png');
+  callback && callback(true);
 }
 
 function generateAll() {
   const btn = document.getElementById('gen-btn');
+  const pw  = document.getElementById('prog-wrap');
+  const pf  = document.getElementById('prog-fill');
   btn.disabled = true;
-  const pw = document.getElementById('prog-wrap');
   pw.style.display = 'block';
-  const pf = document.getElementById('prog-fill');
+
   let idx = 0;
   const total = items.length;
 
@@ -519,12 +963,12 @@ function generateAll() {
       updateStats();
       return;
     }
-    generateQRForItem(items[idx], 300, () => {
+    generateQRForItem(items[idx], 800, () => {
       idx++;
-      pf.style.width = Math.round(idx / total * 100) + '%';
-      btn.textContent = `Generating ${idx}/${total}...`;
+      pf.style.width   = Math.round(idx / total * 100) + '%';
+      btn.textContent  = `Generating ${idx} / ${total}…`;
       updateStats();
-      setTimeout(next, 10);
+      setTimeout(next, 8);
     });
   }
   next();
@@ -533,21 +977,22 @@ function generateAll() {
 function generateSingle(id) {
   const item = items.find(i => i.id === id);
   if (!item) return;
-  generateQRForItem(item, 300, (ok) => {
+  generateQRForItem(item, 800, ok => {
     if (ok) {
-      const box = document.getElementById('qr-box-' + id);
-      if (box) box.innerHTML = `<img src="${item.qrDataUrl}" style="width:78px;height:78px;">`;
+      const box = document.getElementById('qrbox-' + id);
+      if (box) box.innerHTML = `<img src="${item.qrDataUrl}" style="width:70px;height:70px;">`;
     }
     updateStats();
   });
 }
 
-// ---------- RENDER ----------
+// ─── CARD RENDERING ──────────────────────────────────────────────────────────
 function renderCards() {
-  const grid = document.getElementById('items-grid');
+  const grid   = document.getElementById('items-grid');
   const search = document.getElementById('search-inp').value.toLowerCase();
   grid.innerHTML = '';
   let shown = 0;
+
   items.forEach(item => {
     if (search && !item.desc.toLowerCase().includes(search)) return;
     shown++;
@@ -557,140 +1002,209 @@ function renderCards() {
     card.id = 'card-' + item.id;
     card.innerHTML = `
       <div class="ic-top">
-        <div class="ic-chk${item.selected?' on':''}" onclick="toggleSel(${item.id})" id="chk-${item.id}"></div>
-        <div class="ic-code">${code}</div>
+        <div class="ic-chk${item.selected ? ' on' : ''}" id="chk-${item.id}" onclick="toggleSel(${item.id})"></div>
+        <div class="ic-code">${escHtml(code)}</div>
       </div>
-      <div class="ic-desc">${item.desc}</div>
-      <div class="ic-qr"><div class="qr-box" id="qr-box-${item.id}">
+      <div class="ic-desc">${escHtml(item.desc.length > 80 ? item.desc.substring(0,80) + '…' : item.desc)}</div>
+      <div class="qr-box" id="qrbox-${item.id}">
         ${item.qrGenerated && item.qrDataUrl
-          ? `<img src="${item.qrDataUrl}" style="width:78px;height:78px;">`
+          ? `<img src="${item.qrDataUrl}" style="width:70px;height:70px;">`
           : '<div class="qr-ph">◻</div>'}
-      </div></div>
+      </div>
       <div class="ic-acts">
         <div class="ic-btn" onclick="viewItem(${item.id})">👁 View</div>
         <div class="ic-btn" onclick="generateSingle(${item.id})">⚡ QR</div>
-        <div class="ic-btn" onclick="printSingleItem(${item.id})">🖨 Print</div>
+        <div class="ic-btn" onclick="printOneSingle(${item.id})">🖨 Print</div>
         <div class="ic-btn" onclick="dlSingle(${item.id})">⬇ Save</div>
       </div>`;
     grid.appendChild(card);
   });
-  if (!shown) grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No items match</div>';
+
+  if (!shown) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-ico">🔍</div><div class="empty-t">No items match your search</div></div>`;
+  }
 }
-window.filterCards = renderCards;
-window.toggleSel = (id) => {
+
+window.toggleSel = id => {
   const item = items.find(i => i.id === id); if (!item) return;
   item.selected = !item.selected;
   document.getElementById('card-' + id)?.classList.toggle('sel', item.selected);
-  document.getElementById('chk-' + id)?.classList.toggle('on', item.selected);
+  document.getElementById('chk-'  + id)?.classList.toggle('on',  item.selected);
   updateStats();
 };
-window.selAll = () => { items.forEach(i => i.selected = true); renderCards(); updateStats(); };
+window.selAll   = () => { items.forEach(i => i.selected = true);  renderCards(); updateStats(); };
 window.deselAll = () => { items.forEach(i => i.selected = false); renderCards(); updateStats(); };
 
 function updateStats() {
-  document.getElementById('st-total').textContent = items.length;
-  document.getElementById('st-gen').textContent = items.filter(i => i.qrGenerated).length;
-  document.getElementById('st-sel').textContent = items.filter(i => i.selected).length;
+  document.getElementById('st-total').textContent   = items.length;
+  document.getElementById('st-gen').textContent     = items.filter(i => i.qrGenerated).length;
+  document.getElementById('st-sel').textContent     = items.filter(i => i.selected).length;
   document.getElementById('st-printed').textContent = printedCount;
 }
 
-// ---------- PRINT & DOWNLOAD ----------
+// ─── PRINT: BULK A4 ──────────────────────────────────────────────────────────
 window.bulkPrint = () => {
   const sel = items.filter(i => i.selected && i.qrGenerated);
-  if (!sel.length) return alert('Select generated items first.');
-  const cols = parseInt(document.getElementById('s-cols').value) || 3;
+  if (!sel.length) {
+    alert('Please select items that have been generated first.\nUse "⚡ Generate All" then select items.');
+    return;
+  }
+
+  const cols = parseInt(document.getElementById('s-cols').value) || 2;
+  const ship = document.getElementById('s-ship').value || '';
   const grid = document.getElementById('print-grid');
-  grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
   grid.innerHTML = '';
+
   sel.forEach(item => {
-    const div = document.createElement('div'); div.className = 'print-label';
-    div.innerHTML = `<div class="pl-qr"><img src="${item.qrDataUrl}"></div>
-      <div class="pl-code">${makeCode(item)} · ${document.getElementById('s-ship').value}</div>
-      <div class="pl-desc">${item.desc}</div>
-      <div class="pl-company">Sanken Overseas</div>`;
+    const div = document.createElement('div');
+    div.className = 'print-label';
+    div.innerHTML = `
+      <div class="pl-qr-area">
+        <img src="${item.qrDataUrl}" alt="QR">
+      </div>
+      <div class="pl-divider"></div>
+      <div class="pl-info">
+        <div class="pl-desc">${escHtml(item.desc)}</div>
+        <div class="pl-meta">
+          <span>${escHtml(makeCode(item))} · ${escHtml(ship)}</span>
+          <span>Sanken Overseas</span>
+        </div>
+      </div>`;
     grid.appendChild(div);
   });
-  printedCount += sel.length; updateStats();
-  document.getElementById('print-area').style.display = 'block';
-  setTimeout(() => { window.print(); setTimeout(() => document.getElementById('print-area').style.display = 'none', 500); }, 400);
+
+  printedCount += sel.length;
+  updateStats();
+
+  // Show print area → print → hide
+  const pa = document.getElementById('print-area');
+  pa.style.display = 'block';
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { pa.style.display = 'none'; }, 600);
+  }, 450);
 };
 
-window.printSingleSelected = () => {
+// ─── PRINT: ONE-BY-ONE (selected items) ─────────────────────────────────────
+window.printSelectedOneByOne = () => {
   const sel = items.filter(i => i.selected && i.qrGenerated);
-  if (!sel.length) return alert('Select generated items first.');
+  if (!sel.length) {
+    alert('Please select generated items first.');
+    return;
+  }
   let idx = 0;
-  const next = () => { if (idx >= sel.length) return; printSingleItem(sel[idx].id, () => { idx++; setTimeout(next, 1200); }); };
-  next();
-};
-
-window.printSingleItem = (id, cb) => {
-  const item = items.find(i => i.id === id); if (!item) return cb?.();
-  const doPrint = () => {
-    document.getElementById('pls-code').textContent = `${makeCode(item)} · ${document.getElementById('s-ship').value}`;
-    document.getElementById('pls-desc').textContent = item.desc;
-    document.getElementById('pls-qr').innerHTML = `<img src="${item.qrDataUrl}" style="width:80mm;height:80mm;">`;
-    const pa = document.getElementById('print-area-single');
-    pa.style.display = 'flex'; pa.style.alignItems = 'center'; pa.style.justifyContent = 'center';
-    setTimeout(() => { window.print(); setTimeout(() => { pa.style.display = 'none'; printedCount++; updateStats(); cb?.(); }, 400); }, 500);
+  const printNext = () => {
+    if (idx >= sel.length) return;
+    printOneSingle(sel[idx].id, () => { idx++; setTimeout(printNext, 1500); });
   };
-  if (!item.qrGenerated) generateQRForItem(item, 400, doPrint); else doPrint();
+  printNext();
 };
 
-window.dlSingle = (id) => {
+// ─── PRINT: SINGLE ITEM ──────────────────────────────────────────────────────
+window.printOneSingle = (id, cb) => {
+  const item = items.find(i => i.id === id); if (!item) { cb && cb(); return; }
+
+  const doPrint = () => {
+    const ship = document.getElementById('s-ship').value || '';
+    document.getElementById('single-qr-img').src   = item.qrDataUrl;
+    document.getElementById('single-desc').textContent = item.desc;
+    document.getElementById('single-code').textContent = makeCode(item) + ' · ' + ship;
+
+    const pa = document.getElementById('print-area-single');
+    pa.style.display        = 'flex';
+    pa.style.alignItems     = 'center';
+    pa.style.justifyContent = 'center';
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        pa.style.display = 'none';
+        printedCount++;
+        updateStats();
+        cb && cb();
+      }, 600);
+    }, 450);
+  };
+
+  if (!item.qrGenerated) generateQRForItem(item, 800, doPrint);
+  else doPrint();
+};
+
+// ─── DOWNLOAD ────────────────────────────────────────────────────────────────
+window.dlSingle = id => {
   const item = items.find(i => i.id === id); if (!item) return;
-  const save = () => { const a = document.createElement('a'); a.href = item.qrDataUrl; a.download = makeCode(item) + '.png'; a.click(); };
-  if (!item.qrGenerated) generateQRForItem(item, 300, save); else save();
+  const save = () => { dl(item.qrDataUrl, makeCode(item) + '_QR.png'); };
+  if (!item.qrGenerated) generateQRForItem(item, 800, save); else save();
 };
 
 window.dlAll = () => {
   const gen = items.filter(i => i.qrGenerated);
-  if (!gen.length) return alert('Generate QR codes first.');
+  if (!gen.length) { alert('Generate QR codes first.'); return; }
   let idx = 0;
   const next = () => {
     if (idx >= gen.length) return;
-    const a = document.createElement('a'); a.href = gen[idx].qrDataUrl; a.download = makeCode(gen[idx]) + '.png'; a.click();
-    idx++; setTimeout(next, 300);
+    dl(gen[idx].qrDataUrl, makeCode(gen[idx]) + '_QR.png');
+    idx++; setTimeout(next, 350);
   };
   next();
 };
 
-window.viewItem = (id) => {
+function dl(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl; a.download = filename; a.click();
+}
+
+// ─── VIEW MODAL ──────────────────────────────────────────────────────────────
+window.viewItem = id => {
   const item = items.find(i => i.id === id); if (!item) return;
   currentModalItem = item;
+
   document.getElementById('m-desc').textContent = item.desc;
-  document.getElementById('m-code').textContent = `${makeCode(item)} · ${document.getElementById('s-ship').value}`;
-  const qDiv = document.getElementById('m-qr-canvas'); qDiv.innerHTML = '';
+  document.getElementById('m-code').textContent = makeCode(item) + ' · ' + (document.getElementById('s-ship').value || '');
+
+  const qDiv = document.getElementById('m-qr-div');
+  qDiv.innerHTML = '';
+
   const showImg = () => {
     if (item.qrDataUrl) {
-      const img = document.createElement('img'); img.src = item.qrDataUrl;
-      img.style.width = '200px'; img.style.height = '200px';
+      const img = document.createElement('img');
+      img.src = item.qrDataUrl;
+      img.style.cssText = 'width:220px;height:220px;display:block;';
       qDiv.appendChild(img);
     }
   };
-  if (!item.qrGenerated) generateQRForItem(item, 300, showImg); else showImg();
+
+  if (!item.qrGenerated) generateQRForItem(item, 800, showImg); else showImg();
   document.getElementById('view-modal').classList.add('open');
 };
 
-window.closeModal = () => document.getElementById('view-modal').classList.remove('open');
-window.dlModalQR = () => {
-  if (currentModalItem?.qrDataUrl) {
-    const a = document.createElement('a'); a.href = currentModalItem.qrDataUrl;
-    a.download = makeCode(currentModalItem) + '.png'; a.click();
-  }
-};
-window.printOneFromModal = () => { if (currentModalItem) { closeModal(); setTimeout(() => printSingleItem(currentModalItem.id), 200); } };
+window.closeModal   = () => document.getElementById('view-modal').classList.remove('open');
+window.dlModalQR    = () => { if (currentModalItem?.qrDataUrl) dl(currentModalItem.qrDataUrl, makeCode(currentModalItem) + '_QR.png'); };
+window.printOneFromModal = () => { if (currentModalItem) { closeModal(); setTimeout(() => printOneSingle(currentModalItem.id), 200); } };
 
+// ─── RESET ───────────────────────────────────────────────────────────────────
 window.resetAll = () => {
-  if (!confirm('Reset all items?')) return;
+  if (!confirm('Reset all items? This cannot be undone.')) return;
   items = []; printedCount = 0;
   document.getElementById('settings-bar').style.display = 'none';
-  document.getElementById('stats-row').style.display = 'none';
-  document.getElementById('toolbar').style.display = 'none';
+  document.getElementById('stats-row').style.display    = 'none';
+  document.getElementById('toolbar').style.display      = 'none';
   document.getElementById('uz-title').textContent = 'Drop Excel / CSV file here';
-  document.getElementById('file-input').value = '';
-  document.getElementById('items-grid').innerHTML = '<div class="empty"><div class="empty-ico">📋</div><div class="empty-t">Upload a file to start</div></div>';
+  document.getElementById('uz-sub').textContent   = 'Auto-detects Description column from Purchase Order files';
+  document.getElementById('file-input').value     = '';
+  document.getElementById('items-grid').innerHTML = `<div class="empty" id="empty-state"><div class="empty-ico">📋</div><div class="empty-t">Upload a Purchase Order file to begin</div></div>`;
   updateStats();
 };
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+}
 </script>
 </body>
 </html>
