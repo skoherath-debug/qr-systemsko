@@ -2,408 +2,1056 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-<title>Sanken Overseas — QR with GPS Tracking</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanken Overseas Pvt Ltd — QR Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-  --bg: #08090d; --s1: #0f1117; --s2: #161b24;
-  --gold: #f0a500; --gold2: #ffc94a; --golddim: rgba(240,165,0,0.12);
-  --text: #e8eaf0; --muted: #5a6478; --border: rgba(255,255,255,0.07);
+/* ── VARIABLES ── */
+:root{
+  --bg:#08090d;--s1:#0f1117;--s2:#161b24;--s3:#1e2535;
+  --gold:#f0a500;--gold2:#ffc94a;--golddim:rgba(240,165,0,0.12);
+  --blue:#2196f3;--green:#00e676;--red:#ff3d3d;--cyan:#00bcd4;
+  --text:#e8eaf0;--muted:#5a6478;--muted2:#8090a8;
+  --border:rgba(255,255,255,0.07);--border2:rgba(240,165,0,0.25);
 }
-body { font-family: 'Rajdhani', sans-serif; background: var(--bg); color: var(--text); }
-.nav { display: flex; justify-content: space-between; padding: 0 20px; height: 54px; background: #08090d; border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap; }
-.tab-bar { display: flex; gap: 4px; background: var(--s2); border-radius: 30px; padding: 4px; }
-.tab { padding: 6px 16px; border-radius: 30px; font-size: 12px; font-weight: 700; cursor: pointer; color: #8090a8; }
-.tab.active { background: var(--gold); color: #000; }
-.main { padding: 20px; max-width: 1300px; margin: auto; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-.upload-zone { border: 2px dashed #f0a500; border-radius: 16px; background: #0f1117; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 24px; position: relative; }
-.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.settings-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; margin-bottom: 22px; }
-.sinp, .ssel { background: #161b24; border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 10px; color: white; }
-.genbtn { background: var(--gold); color: #000; border: none; border-radius: 8px; padding: 11px 20px; font-family: 'Bebas Neue'; cursor: pointer; }
-.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 22px; }
-.stat { background: #0f1117; border-radius: 10px; padding: 12px; }
-.sval { font-family: 'Bebas Neue'; font-size: 28px; color: var(--gold); }
-.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.tbtn { background: #161b24; border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 8px 14px; cursor: pointer; color: white; }
-.tbtn:hover { background: var(--gold); color: black; }
-.items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 16px; }
-.item-card { background: #0f1117; border-radius: 13px; padding: 16px; border: 1px solid rgba(255,255,255,0.07); }
-.item-card.selected { border-color: var(--gold); background: rgba(240,165,0,0.1); }
-.card-check { width: 18px; height: 18px; border: 2px solid #5a6478; border-radius: 4px; cursor: pointer; }
-.card-check.checked { background: var(--gold); border-color: var(--gold); }
-.card-check.checked::after { content: '✓'; display: block; text-align: center; font-size: 11px; color: black; }
-.qr-wrapper { background: white; border-radius: 8px; padding: 8px; width: 130px; height: 130px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; }
-.qr-placeholder { width: 114px; height: 114px; background: #1e1e2a; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 24px; }
-.qr-data { background: #1e1e2a; border-radius: 6px; padding: 8px; font-size: 10px; font-family: monospace; word-break: break-all; margin-top: 8px; }
-.card-actions { display: flex; gap: 6px; margin-top: 10px; }
-.card-btn { flex:1; background: #161b24; border-radius: 7px; padding: 6px; text-align: center; cursor: pointer; font-size: 11px; }
-.scanner-container { background: #0f1117; border-radius: 20px; padding: 20px; margin-bottom: 24px; }
-#reader { width: 100%; max-width: 500px; margin: auto; border-radius: 12px; overflow: hidden; }
-.scan-details { background: #161b24; border-radius: 12px; padding: 12px; margin-top: 16px; font-size: 13px; display: none; }
-.supabase-config { background: #161b24; border-radius: 16px; padding: 16px; margin-bottom: 20px; }
-.log-entry { border-bottom: 1px solid #2a2a2a; padding: 12px; font-size: 12px; }
-.progress-bar { height: 4px; background: #161b24; margin: 12px 0; display: none; }
-.progress-fill { width: 0%; height: 100%; background: var(--gold); }
-.modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center; }
-.modal-content { background: var(--s1); border-radius: 20px; padding: 24px; max-width: 90%; width: 400px; text-align: center; border: 1px solid var(--gold); }
-.modal-close { background: var(--gold); color: #000; border: none; padding: 8px 20px; border-radius: 8px; margin-top: 12px; cursor: pointer; }
-.test-qr { text-align: center; margin: 20px 0; cursor: pointer; }
-@media (max-width:700px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ══════════ LOGIN ══════════ */
+#login-screen{min-height:100vh;display:flex;align-items:stretch;}
+.login-left{
+  width:55%;background:linear-gradient(135deg,#0d1117 0%,#1a2236 60%,#0f1a0d 100%);
+  display:flex;flex-direction:column;justify-content:center;padding:64px 72px;position:relative;overflow:hidden;
+}
+.login-left::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(240,165,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(240,165,0,0.04) 1px,transparent 1px);background-size:48px 48px;}
+.login-left::after{content:'';position:absolute;bottom:-80px;right:-80px;width:360px;height:360px;background:radial-gradient(circle,rgba(240,165,0,0.1) 0%,transparent 70%);border-radius:50%;}
+.ll-brand{display:flex;align-items:center;gap:16px;margin-bottom:48px;position:relative;z-index:1;}
+.ll-logo{width:54px;height:54px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:24px;color:#000;box-shadow:0 0 28px rgba(240,165,0,0.35);}
+.ll-co{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;line-height:1.2;}
+.ll-co small{display:block;font-family:'Rajdhani';font-size:11px;color:var(--muted2);font-weight:600;letter-spacing:3px;text-transform:uppercase;}
+.ll-hero{font-family:'Bebas Neue';font-size:78px;line-height:0.88;letter-spacing:3px;margin-bottom:24px;position:relative;z-index:1;}
+.ll-hero em{color:var(--gold);font-style:normal;text-shadow:0 0 40px rgba(240,165,0,0.4);}
+.ll-desc{font-size:15px;color:var(--muted2);line-height:1.7;max-width:400px;margin-bottom:36px;position:relative;z-index:1;font-weight:500;}
+.ll-pills{display:flex;flex-wrap:wrap;gap:8px;position:relative;z-index:1;}
+.ll-pill{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--muted2);display:flex;align-items:center;gap:6px;font-weight:600;}
+.ll-pill::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+.login-right{width:45%;background:var(--s1);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 48px;}
+.lform{width:100%;max-width:360px;}
+.lf-title{font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:4px;}
+.lf-sub{font-size:13px;color:var(--muted2);margin-bottom:28px;font-weight:500;}
+.lf-msg{display:none;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:600;}
+.lf-msg.err{background:rgba(255,61,61,0.1);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
+.lf-msg.ok{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--green);}
+/* user cards */
+.user-cards{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
+.ucard{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--border);border-radius:11px;padding:12px 16px;cursor:pointer;transition:all 0.2s;}
+.ucard:hover{border-color:var(--gold);background:var(--golddim);transform:translateX(3px);}
+.ucard.admin-card:hover{border-color:var(--red);background:rgba(255,61,61,0.06);}
+.uav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#fff;flex-shrink:0;letter-spacing:1px;}
+.uinfo{flex:1;}
+.uname{font-size:14px;font-weight:700;margin-bottom:1px;}
+.urole{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.uemail{font-size:11px;color:var(--muted2);font-weight:500;}
+.uarrow{font-size:16px;color:var(--muted2);}
+.ucard:hover .uarrow{color:var(--gold);}
+/* admin pass prompt */
+#admin-pw-box{display:none;background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:14px;}
+.lf-inp{width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;transition:border-color 0.2s;}
+.lf-inp:focus{border-color:var(--gold);}
+.lf-inp::placeholder{color:var(--muted);}
+.lf-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:11px;font-family:'Bebas Neue';font-size:15px;letter-spacing:1.5px;cursor:pointer;margin-top:8px;transition:all 0.2s;}
+.lf-btn:hover{background:var(--gold2);}
+.lf-div{height:1px;background:var(--border);margin:20px 0;}
+.lf-foot{font-size:11px;color:var(--muted);text-align:center;line-height:1.6;}
+.lf-foot span{color:var(--gold);}
+
+/* ══════════ APP ══════════ */
+#app{display:none;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(8,9,13,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);}
+.nbrand{display:flex;align-items:center;gap:10px;}
+.nlogo{width:30px;height:30px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#000;}
+.nname{font-family:'Bebas Neue';font-size:17px;letter-spacing:1.5px;}
+.nname small{display:block;font-family:'Rajdhani';font-size:10px;color:var(--muted2);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+.ntabs{display:flex;gap:2px;background:var(--s2);border-radius:9px;padding:3px;}
+.ntab{padding:6px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--muted2);border:none;background:transparent;font-family:'Rajdhani';text-transform:uppercase;letter-spacing:0.5px;}
+.ntab.active{background:var(--gold);color:#000;}
+.ntab:hover:not(.active){color:var(--text);background:var(--s3);}
+.nright{display:flex;align-items:center;gap:10px;}
+.navatar{width:30px;height:30px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;cursor:pointer;}
+.nsignout{background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:12px;color:var(--muted2);cursor:pointer;font-family:'Rajdhani';font-weight:600;transition:all 0.2s;}
+.nsignout:hover{border-color:var(--red);color:var(--red);}
+
+/* SCREENS */
+.screen{display:none;padding:24px;animation:fi 0.25s ease;}
+.screen.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.ptitle{font-family:'Bebas Neue';font-size:30px;letter-spacing:2px;margin-bottom:3px;}
+.psub{color:var(--muted2);font-size:13px;margin-bottom:22px;font-weight:500;}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border2);border-radius:14px;background:var(--s1);padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:20px;position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:var(--golddim);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.uz-icon{font-size:40px;margin-bottom:12px;}
+.uz-title{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;margin-bottom:6px;}
+.uz-sub{font-size:13px;color:var(--muted2);font-weight:500;margin-bottom:14px;}
+.uz-fmts{display:flex;justify-content:center;gap:8px;}
+.uz-fmt{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted2);font-weight:700;letter-spacing:1px;}
+
+/* SETTINGS */
+.settings-bar{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:10px;margin-bottom:18px;align-items:end;}
+.sg{display:flex;flex-direction:column;gap:5px;}
+.slbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);}
+.si,.ss{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;transition:border-color 0.2s;appearance:none;}
+.si:focus,.ss:focus{border-color:var(--gold);}
+.abtn{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Bebas Neue';letter-spacing:1.5px;transition:all 0.2s;white-space:nowrap;align-self:end;}
+.abtn.gold{background:var(--gold);color:#000;}
+.abtn.gold:hover{background:var(--gold2);transform:translateY(-1px);}
+.abtn.outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.abtn.outline:hover{background:var(--s2);}
+.abtn:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.scard{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.scard.g::before{background:var(--gold);}
+.scard.b::before{background:var(--blue);}
+.scard.gr::before{background:var(--green);}
+.scard.c::before{background:var(--cyan);}
+.sc-lbl{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:5px;}
+.sc-val{font-family:'Bebas Neue';font-size:32px;line-height:1;}
+.sc-val.g{color:var(--gold);}
+.sc-val.b{color:var(--blue);}
+.sc-val.gr{color:var(--green);}
+.sc-val.c{color:var(--cyan);}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
+.tsearch{flex:1;min-width:180px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;}
+.tsearch:focus{border-color:var(--gold);}
+.tbtn{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 15px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:5px;}
+.tbtn:hover{background:var(--gold);color:#000;border-color:transparent;}
+.tbtn.prim{background:var(--gold);color:#000;border-color:transparent;}
+.tbtn.prim:hover{background:var(--gold2);}
+
+/* PROGRESS */
+.prog-wrap{background:var(--s2);border-radius:4px;height:5px;margin-bottom:14px;display:none;overflow:hidden;}
+.prog-fill{height:100%;background:var(--gold);border-radius:4px;transition:width 0.2s;}
+
+/* SCREEN GRID */
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.icard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all 0.2s;position:relative;}
+.icard:hover{border-color:var(--gold);}
+.icard.sel{border-color:var(--gold);background:var(--golddim);}
+.ic-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;}
+.ic-chk{width:18px;height:18px;border:2px solid var(--muted);border-radius:4px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-top:2px;}
+.ic-chk.on{background:var(--gold);border-color:var(--gold);}
+.ic-chk.on::after{content:'✓';font-size:11px;color:#000;font-weight:700;}
+.ic-code{font-family:'Bebas Neue';font-size:12px;color:var(--gold);background:var(--golddim);border:1px solid var(--border2);border-radius:5px;padding:2px 8px;flex-shrink:0;letter-spacing:1px;}
+.ic-desc{font-size:13px;font-weight:600;line-height:1.4;margin-bottom:10px;}
+.ic-qr{display:flex;justify-content:center;margin-bottom:10px;}
+.qr-box{background:#fff;border-radius:7px;padding:6px;width:90px;height:90px;display:flex;align-items:center;justify-content:center;}
+.qr-ph{width:78px;height:78px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:24px;}
+.ic-acts{display:flex;gap:6px;}
+.ic-btn{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:7px 4px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all 0.2s;text-align:center;text-transform:uppercase;}
+.ic-btn:hover{background:var(--gold);color:#000;border-color:transparent;}
+
+/* EMPTY */
+.empty{text-align:center;padding:70px 40px;color:var(--muted2);grid-column:1/-1;}
+.empty-ico{font-size:56px;margin-bottom:16px;opacity:0.35;}
+.empty-t{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;margin-bottom:6px;}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999;align-items:center;justify-content:center;}
+.modal-ov.open{display:flex;}
+.modal-box{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:28px;max-width:380px;width:95%;text-align:center;}
+.modal-qr-wrap{background:#fff;border-radius:10px;padding:14px;display:inline-block;margin:14px 0;}
+.m-desc{font-size:14px;font-weight:600;margin-bottom:3px;line-height:1.4;}
+.m-code{font-family:'Bebas Neue';font-size:13px;color:var(--gold);letter-spacing:1.5px;margin-bottom:16px;}
+.m-btns{display:flex;gap:8px;justify-content:center;}
+.m-btn{border-radius:8px;padding:10px 20px;font-family:'Bebas Neue';font-size:13px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.m-btn.close{background:var(--s2);border:1px solid var(--border);color:var(--text);}
+.m-btn.dl{background:var(--gold);border:none;color:#000;}
+
+/* ADMIN MODAL */
+.admin-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:998;align-items:center;justify-content:center;}
+.admin-ov.open{display:flex;}
+.admin-box{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:32px;width:640px;max-width:97vw;max-height:88vh;overflow-y:auto;}
+.admin-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.admin-title{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:var(--gold);}
+.admin-close{background:rgba(255,61,61,0.12);border:1px solid rgba(255,61,61,0.3);color:var(--red);border-radius:8px;padding:7px 16px;cursor:pointer;font-family:'Rajdhani';font-weight:700;font-size:13px;}
+.admin-sec{font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:var(--muted2);margin-bottom:10px;margin-top:20px;}
+.admin-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+.al-item{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border-radius:9px;padding:11px 14px;border:1px solid var(--border);}
+.al-info{display:flex;align-items:center;gap:10px;}
+.al-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:12px;flex-shrink:0;}
+.al-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+.al-email{font-size:11px;color:var(--muted2);}
+.al-btns{display:flex;gap:7px;align-items:center;}
+.al-badge{background:rgba(0,230,118,0.1);color:var(--green);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;}
+.al-badge.pend{background:rgba(240,165,0,0.12);color:var(--gold);}
+.al-act{border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani';border:none;transition:all 0.2s;}
+.al-act.approve{background:var(--green);color:#000;}
+.al-act.deny{background:rgba(255,61,61,0.12);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
+.al-act.revoke{background:rgba(255,61,61,0.08);border:1px solid rgba(255,61,61,0.2);color:var(--red);}
+.add-user-form{background:var(--s2);border-radius:10px;padding:16px;border:1px solid var(--border);margin-top:8px;}
+.add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.add-inp{background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;}
+.add-inp:focus{border-color:var(--gold);}
+.add-inp::placeholder{color:var(--muted);}
+.add-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:7px;padding:10px;font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;cursor:pointer;}
+
+/* ════════════════ PRINT STYLES ════════════════ */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  body{background:#fff!important;color:#000!important;margin:0;padding:0;}
+  #login-screen,#app .nav,#app .screen:not(#screen-generator),
+  .upload-zone,.settings-bar,.stats-row,.toolbar,.prog-wrap,
+  .ptitle,.psub,.items-grid,.modal-ov,.admin-ov{display:none!important;}
+  #screen-generator.active{display:block!important;padding:0!important;}
+  #print-area{display:block!important;}
+  #print-area-single{display:none;}
+}
+
+/* PRINT AREA — hidden on screen */
+#print-area{display:none;}
+#print-area-single{display:none;}
+
+/* A4 BULK — 3 labels per row, fits perfectly */
+@media print{
+  #print-area{
+    width:210mm;
+    margin:0 auto;
+    padding:8mm;
+  }
+  .print-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:5mm;
+  }
+  .print-label{
+    border:1.5px solid #000;
+    border-radius:3mm;
+    padding:4mm;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    break-inside:avoid;
+    background:#fff;
+    width:100%;
+  }
+  .print-label .pl-qr{
+    width:42mm;
+    height:42mm;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:3mm;
+  }
+  .print-label .pl-qr img,
+  .print-label .pl-qr canvas{
+    width:42mm!important;
+    height:42mm!important;
+  }
+  .print-label .pl-code{
+    font-family:monospace;
+    font-size:7pt;
+    color:#555;
+    margin-bottom:2mm;
+    letter-spacing:1px;
+  }
+  .print-label .pl-desc{
+    font-family:Arial,sans-serif;
+    font-size:7.5pt;
+    text-align:center;
+    line-height:1.35;
+    color:#000;
+    font-weight:600;
+    word-break:break-word;
+  }
+  .print-label .pl-company{
+    font-family:Arial,sans-serif;
+    font-size:6pt;
+    color:#888;
+    margin-top:2mm;
+    letter-spacing:0.5px;
+  }
+}
+
+/* Single print */
+@media print{
+  #print-area-single.printing{
+    display:flex!important;
+    align-items:center;
+    justify-content:center;
+    width:210mm;
+    height:297mm;
+    margin:0 auto;
+  }
+  #print-area-single.printing .print-label-single{
+    border:2px solid #000;
+    border-radius:5mm;
+    padding:10mm;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    width:100mm;
+  }
+  #print-area-single.printing .pls-qr{
+    width:80mm;height:80mm;
+    display:flex;align-items:center;justify-content:center;margin-bottom:6mm;
+  }
+  #print-area-single.printing .pls-qr img,
+  #print-area-single.printing .pls-qr canvas{width:80mm!important;height:80mm!important;}
+  #print-area-single.printing .pls-code{font-family:monospace;font-size:9pt;color:#555;margin-bottom:3mm;letter-spacing:1px;}
+  #print-area-single.printing .pls-desc{font-family:Arial;font-size:11pt;text-align:center;line-height:1.4;font-weight:700;color:#000;}
+  #print-area-single.printing .pls-co{font-family:Arial;font-size:7pt;color:#999;margin-top:4mm;}
+}
 </style>
 </head>
 <body>
-<nav><div style="display:flex; gap:10px; align-items:center;"><div style="background:var(--gold); width:30px; height:30px; border-radius:6px;"></div><strong>Sanken Overseas — QR with GPS</strong></div><div class="tab-bar"><div class="tab active" data-tab="generator">📦 QR Gen</div><div class="tab" data-tab="scanner">📷 Scan & GPS</div><div class="tab" data-tab="logs">📜 Cloud Logs</div></div></nav>
-<div class="main">
-<div id="tab-generator" class="tab-content active">
-<div class="upload-zone" id="upload-zone"><input type="file" id="file-input" accept=".xlsx,.xls,.csv" /><div>📂 Drop or click to upload PO file</div><div style="font-size:12px; margin-top:8px;">Auto-detects description column</div><div style="margin-top:12px;"><div style="background:var(--gold); display:inline-block; padding:8px 24px; border-radius:8px;">Browse File</div></div></div>
-<div class="settings-bar"><input class="sinp" id="prefix-inp" value="SO-MV" placeholder="Prefix"><input class="sinp" id="shipment-inp" value="SO-2026-031" placeholder="Shipment"><input class="sinp" id="site-inp" value="Hulhumalé" placeholder="Site"><select class="ssel" id="qr-size"><option value="300">300px</option><option value="400" selected>400px</option><option value="500">500px</option></select><button class="genbtn" id="gen-all-btn" disabled>⚡ Generate ALL QRs</button><button class="genbtn" id="gen-selected-btn" disabled>📌 Generate Selected</button></div>
-<div class="stats-row"><div class="stat"><div>Total items</div><div class="sval" id="stat-total">0</div></div><div class="stat"><div>QRs generated</div><div class="sval" id="stat-generated">0</div></div><div class="stat"><div>Selected</div><div class="sval" id="stat-selected">0</div></div><div class="stat"><div>Ready</div><div class="sval" id="stat-ready">0</div></div></div>
-<div class="toolbar"><input class="tsearch" id="search-inp" placeholder="Search..."><button class="tbtn" id="select-all-btn">Select all</button><button class="tbtn" id="deselect-all-btn">Deselect all</button><button class="tbtn" id="print-btn">🖨 Print selected</button><button class="tbtn" id="download-all-qr">⬇ Download all QRs</button><button class="tbtn" id="clear-qr-btn">Clear QR data</button></div>
-<div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-<div class="items-grid" id="items-grid"><div style="text-align:center; padding:60px;">Upload Excel/CSV file</div></div>
+
+<!-- ══════════════════ LOGIN ══════════════════ -->
+<div id="login-screen">
+  <div class="login-left">
+    <div class="ll-brand">
+      <div class="ll-logo">SO</div>
+      <div class="ll-co">Sanken Overseas Pvt Ltd<small>QR Asset Management System</small></div>
+    </div>
+    <div class="ll-hero">GENERATE.<br>TRACK.<br><em>DELIVER.</em></div>
+    <div class="ll-desc">QR code generation and asset tracking for construction materials and equipment shipped from Sri Lanka to Maldives project sites.</div>
+    <div class="ll-pills">
+      <div class="ll-pill">Bulk QR generation</div>
+      <div class="ll-pill">A4 print-ready labels</div>
+      <div class="ll-pill">PO file upload</div>
+      <div class="ll-pill">Shipment tracking</div>
+      <div class="ll-pill">Admin access control</div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="lform">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
+        <div style="width:42px;height:42px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;color:#000;flex-shrink:0;">SO</div>
+        <div>
+          <div style="font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;">Sanken Overseas Pvt Ltd</div>
+          <div style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:2px;font-weight:700;">Authorised Access Only</div>
+        </div>
+      </div>
+
+      <div class="lf-title">Select Account</div>
+      <div class="lf-sub">Choose your name to sign in</div>
+
+      <div class="lf-msg" id="lf-msg"></div>
+
+      <div class="user-cards" id="user-cards">
+        <!-- cards injected by JS -->
+      </div>
+
+      <!-- Admin password box -->
+      <div id="admin-pw-box">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);margin-bottom:10px;">🔧 Admin Password</div>
+        <input class="lf-inp" id="admin-pw-inp" type="password" placeholder="Enter admin password" />
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="lf-btn" style="flex:1;background:var(--red);" onclick="doAdminLogin()">Enter Admin Panel</button>
+          <button onclick="document.getElementById('admin-pw-box').style.display='none'" style="background:var(--s3);border:1px solid var(--border);color:var(--muted2);border-radius:8px;padding:10px 14px;font-family:'Rajdhani';font-size:13px;cursor:pointer;font-weight:600;">Cancel</button>
+        </div>
+      </div>
+
+      <div class="lf-div"></div>
+      <div class="lf-foot">Access restricted to authorised <span>Sanken Overseas Pvt Ltd</span> personnel only.<br>Contact admin for access: <span>herath.t@sankenoverseas.com</span></div>
+    </div>
+  </div>
 </div>
-<div id="tab-scanner" class="tab-content">
-<div class="supabase-config"><div><strong>☁️ Supabase Cloud Storage (auto‑connect)</strong></div><div id="supabase-status" style="font-size:12px; margin-top:8px;"></div></div>
-<div class="scanner-container"><div style="text-align:center;">📱 Scan QR code → GPS location captured & saved to cloud</div><div id="reader"></div><div style="margin-top:12px; display:flex; gap:8px;"><button id="start-scanner" class="genbtn" style="flex:1;">▶ Start Camera</button><button id="stop-scanner" class="genbtn" style="flex:1; background:#333;">⏹ Stop Camera</button><button id="toggle-torch" class="genbtn" style="flex:1;">🔦 Torch</button></div><div class="scan-details" id="scan-details"><strong>📄 Scanned data:</strong><br><span id="scanned-text"></span></div></div>
-<div class="test-qr" id="test-qr-btn" style="text-align:center; margin-top:20px;"><span style="background:var(--gold); padding:8px 20px; border-radius:30px;">🔍 Test Scan: Show large QR (first item)</span></div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div id="app">
+  <nav class="nav">
+    <div class="nbrand">
+      <div class="nlogo">SO</div>
+      <div class="nname">Sanken Overseas <small>QR Generator</small></div>
+    </div>
+    <div class="ntabs">
+      <button class="ntab active" onclick="showTab('generator')">QR Generator</button>
+      <button class="ntab" onclick="showTab('admin')">Admin Panel</button>
+    </div>
+    <div class="nright">
+      <div class="navatar" id="nav-avatar">HT</div>
+      <button class="nsignout" onclick="doSignOut()">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- ── GENERATOR SCREEN ── -->
+  <div id="screen-generator" class="screen active">
+    <div class="ptitle">Bulk QR Code Generator</div>
+    <div class="psub">Upload your Purchase Order Excel file · Generate QR codes · Print A4 labels</div>
+
+    <!-- UPLOAD -->
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" />
+      <div class="uz-icon">📂</div>
+      <div class="uz-title" id="uz-title">Drop Excel / CSV file here</div>
+      <div class="uz-sub" id="uz-sub">Supports Purchase Order files with Description column</div>
+      <div class="uz-fmts"><span class="uz-fmt">XLSX</span><span class="uz-fmt">XLS</span><span class="uz-fmt">CSV</span></div>
+      <div style="margin-top:14px;">
+        <span style="background:var(--gold);color:#000;border-radius:8px;padding:9px 24px;font-family:'Bebas Neue';font-size:14px;letter-spacing:1.5px;cursor:pointer;">Browse File</span>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="settings-bar" id="settings-bar" style="display:none;">
+      <div class="sg"><label class="slbl">Item code prefix</label><input class="si" id="s-prefix" value="SO-MV" /></div>
+      <div class="sg"><label class="slbl">Shipment ref</label><input class="si" id="s-ship" value="SO-2026-031" /></div>
+      <div class="sg"><label class="slbl">Site / Project</label><input class="si" id="s-site" value="Hulhumalé Phase II" /></div>
+      <div class="sg"><label class="slbl">Labels per A4 row</label>
+        <select class="ss" id="s-cols">
+          <option value="3" selected>3 per row (recommended)</option>
+          <option value="2">2 per row (larger)</option>
+          <option value="4">4 per row (compact)</option>
+        </select>
+      </div>
+      <button class="abtn gold" id="gen-btn" onclick="generateAll()">⚡ Generate All</button>
+      <button class="abtn outline" onclick="resetAll()">↺ Reset</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row" style="display:none;">
+      <div class="scard g"><div class="sc-lbl">Total items</div><div class="sc-val g" id="st-total">0</div></div>
+      <div class="scard gr"><div class="sc-lbl">QRs generated</div><div class="sc-val gr" id="st-gen">0</div></div>
+      <div class="scard b"><div class="sc-lbl">Selected</div><div class="sc-val b" id="st-sel">0</div></div>
+      <div class="scard c"><div class="sc-lbl">Printed labels</div><div class="sc-val c" id="st-printed">0</div></div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar" id="toolbar" style="display:none;">
+      <input class="tsearch" id="search-inp" placeholder="🔍  Search items..." oninput="filterCards()" />
+      <button class="tbtn" onclick="selAll()">☑ All</button>
+      <button class="tbtn" onclick="deselAll()">☐ None</button>
+      <button class="tbtn prim" onclick="bulkPrint()">🖨 Bulk print (A4)</button>
+      <button class="tbtn" onclick="printSingleSelected()">📄 Print one by one</button>
+      <button class="tbtn" onclick="dlAll()">⬇ Download all PNGs</button>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="prog-wrap" id="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+
+    <!-- CARDS -->
+    <div class="items-grid" id="items-grid">
+      <div class="empty" id="empty-state">
+        <div class="empty-ico">📋</div>
+        <div class="empty-t">Upload a PO file to start</div>
+        <div style="font-size:13px;font-weight:500;">Supports Excel (.xlsx) and CSV files</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN SCREEN (in-page) ── -->
+  <div id="screen-admin" class="screen">
+    <div class="ptitle">Admin Panel</div>
+    <div class="psub">Manage authorised users · Add or revoke access</div>
+    <div style="max-width:680px;">
+      <div class="admin-sec">PENDING REQUESTS</div>
+      <div class="admin-list" id="adm-pending"></div>
+      <div class="admin-sec">AUTHORISED USERS</div>
+      <div class="admin-list" id="adm-approved"></div>
+      <div class="admin-sec">ADD USER MANUALLY</div>
+      <div class="add-user-form">
+        <div class="add-grid">
+          <input class="add-inp" id="add-name" placeholder="Full name" />
+          <input class="add-inp" id="add-email" placeholder="Email address" />
+        </div>
+        <input class="add-inp" id="add-role" placeholder="Role / Department" style="width:100%;margin-bottom:9px;" />
+        <button class="add-btn" onclick="addUser()">+ ADD & AUTHORISE USER</button>
+      </div>
+    </div>
+  </div>
 </div>
-<div id="tab-logs" class="tab-content"><div style="display:flex; justify-content:space-between; margin-bottom:16px;"><h3>📋 Cloud Scan History (with GPS)</h3><button id="export-logs-btn" class="tbtn">⬇ Export CSV</button></div><div id="logs-container" style="background:#0f1117; border-radius:16px; padding:12px; max-height:500px; overflow:auto;"><div style="text-align:center; padding:40px;">Loading cloud logs...</div></div></div>
+
+<!-- VIEW MODAL -->
+<div class="modal-ov" id="view-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div style="font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;margin-bottom:4px;">QR CODE</div>
+    <div class="m-desc" id="m-desc"></div>
+    <div class="m-code" id="m-code"></div>
+    <div class="modal-qr-wrap"><div id="m-qr-canvas"></div></div>
+    <div class="m-btns">
+      <button class="m-btn close" onclick="closeModal()">Close</button>
+      <button class="m-btn dl" onclick="dlModalQR()">⬇ Download</button>
+      <button class="m-btn dl" style="background:var(--blue);" onclick="printOneFromModal()">🖨 Print</button>
+    </div>
+  </div>
 </div>
-<div id="qr-modal" class="modal"><div class="modal-content"><strong>QR Code Data</strong><div style="margin:16px 0; font-family:monospace; word-break:break-all;" id="modal-data"></div><div id="modal-location" style="margin-top:8px; font-size:12px; color:var(--gold);"></div><button class="modal-close" onclick="closeModal()">Close</button></div></div>
+
+<!-- PRINT AREA — BULK A4 -->
+<div id="print-area">
+  <div class="print-grid" id="print-grid"></div>
+</div>
+
+<!-- PRINT AREA — SINGLE -->
+<div id="print-area-single">
+  <div class="print-label-single" id="print-label-single">
+    <div class="pls-qr" id="pls-qr"></div>
+    <div class="pls-code" id="pls-code"></div>
+    <div class="pls-desc" id="pls-desc"></div>
+    <div class="pls-co">Sanken Overseas Pvt Ltd</div>
+  </div>
+</div>
 
 <script>
-// ---------- SUPABASE CREDENTIALS (replace fake key) ----------
-const SUPABASE_URL = "https://gcmjdippsyqcyfpamnnp.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbWpkaXBwc3lxY3lmcGFtbm5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzI5MTQsImV4cCI6MjA5MTE0ODkxNH0.O8rnGW9jUL3H2th6rwihxfFuSx3bHeNAB_iN7VYOpu4";
-// IMPORTANT: Replace with your actual Supabase anon public key.
+// ══════════ STATE ══════════
+var approvedUsers = [
+  {name:'Herath Thilanka', email:'herath.t@sankenoverseas.com', role:'Project Manager', initials:'HT', color:'#f0a500'},
+  {name:'Saman Perera',    email:'saman.p@sankenoverseas.com',  role:'Logistics Officer', initials:'SP', color:'#2196f3'},
+  {name:'Nimal De Silva',  email:'nimal.d@sankenoverseas.com',  role:'Site Engineer',    initials:'ND', color:'#00bcd4'},
+  {name:'Amara Kumari',    email:'amara.k@sankenoverseas.com',  role:'QA Inspector',     initials:'AK', color:'#00e676'}
+];
+var pendingUsers = [];
+var items = [];
+var printedCount = 0;
+var currentModalItem = null;
+var modalQRObj = null;
+var currentUser = null;
+var isAdmin = false;
 
-let supabaseClient = null;
-async function initSupabase() {
-  try {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { error } = await supabaseClient.from('scans').select('id', { count: 'exact', head: true });
-    if (!error) {
-      document.getElementById('supabase-status').innerHTML = '✅ Connected to Supabase (cloud storage active)';
-      loadLogsFromSupabase();
-      return true;
-    } else throw error;
-  } catch(e) {
-    supabaseClient = null;
-    document.getElementById('supabase-status').innerHTML = '❌ Connection failed. Check anon key.';
-    return false;
-  }
-}
-async function loadLogsFromSupabase() {
-  if (!supabaseClient) return;
-  const { data, error } = await supabaseClient.from('scans').select('*').order('timestamp', { ascending: false });
-  if (error) return;
-  const container = document.getElementById('logs-container');
-  if (!data || data.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px;">No scans yet</div>'; return; }
-  container.innerHTML = data.map(log => `<div class="log-entry"><div>🕒 ${new Date(log.timestamp).toLocaleString()}</div><div><strong>QR Data:</strong> ${log.qr_raw || '-'}</div><div><strong>Item Code:</strong> ${log.item_code || '?'}</div><div><strong>Description:</strong> ${log.description || '-'}</div><div><strong>📍 Location:</strong> ${log.address || (log.lat ? `${log.lat},${log.lng}` : 'No GPS')}</div></div>`).join('');
-}
-async function addScanToSupabase(scan) { if (supabaseClient) { await supabaseClient.from('scans').insert([scan]); loadLogsFromSupabase(); } }
+// ══════════ BOOT ══════════
+window.addEventListener('DOMContentLoaded', function(){
+  renderLoginCards();
+  document.getElementById('file-input').addEventListener('change', function(e){
+    if(e.target.files[0]) readFile(e.target.files[0]);
+  });
+  var zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',function(){zone.classList.remove('drag');});
+  zone.addEventListener('drop',function(e){
+    e.preventDefault();zone.classList.remove('drag');
+    if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+  });
+  document.getElementById('admin-pw-inp').addEventListener('keydown',function(e){if(e.key==='Enter')doAdminLogin();});
+});
 
-// ---------- QR GENERATION (High quality, H error correction, quiet zone) ----------
-let items = [];
-let isGenerating = false;
-
-function generateQRDataURL(text, pixelSize) {
-  try {
-    let version = 10;
-    if (text.length > 150) version = 12;
-    if (text.length > 200) version = 14;
-    const qr = qrcode(version, 'H');
-    qr.addData(text);
-    qr.make();
-    const moduleCount = qr.getModuleCount();
-    const quietZone = 4;
-    const totalModules = moduleCount + 2 * quietZone;
-    const scale = pixelSize / totalModules;
-    const canvas = document.createElement('canvas');
-    canvas.width = pixelSize;
-    canvas.height = pixelSize;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, pixelSize, pixelSize);
-    ctx.fillStyle = '#000000';
-    for (let row = 0; row < moduleCount; row++) {
-      for (let col = 0; col < moduleCount; col++) {
-        if (qr.isDark(row, col)) {
-          const x = (col + quietZone) * scale;
-          const y = (row + quietZone) * scale;
-          ctx.fillRect(x, y, scale, scale);
-        }
-      }
-    }
-    return canvas.toDataURL('image/png');
-  } catch(e) { return null; }
+// ══════════ LOGIN ══════════
+function renderLoginCards(){
+  var c = document.getElementById('user-cards');
+  c.innerHTML = '';
+  approvedUsers.forEach(function(u){
+    var d = document.createElement('div');
+    d.className = 'ucard';
+    d.onclick = function(){ loginAs(u); };
+    d.innerHTML =
+      '<div class="uav" style="background:'+u.color+';color:'+(u.color==='#00e676'?'#000':'#fff')+';">'+u.initials+'</div>'+
+      '<div class="uinfo"><div class="uname">'+u.name+'</div><div class="urole">'+u.role+'</div><div class="uemail">'+u.email+'</div></div>'+
+      '<div class="uarrow">→</div>';
+    c.appendChild(d);
+  });
+  // Admin card
+  var adm = document.createElement('div');
+  adm.className = 'ucard admin-card';
+  adm.onclick = function(){
+    var box = document.getElementById('admin-pw-box');
+    box.style.display = box.style.display==='none'||!box.style.display ? 'block':'none';
+    if(box.style.display==='block') document.getElementById('admin-pw-inp').focus();
+  };
+  adm.innerHTML =
+    '<div class="uav" style="background:#ff3d3d;">🔧</div>'+
+    '<div class="uinfo"><div class="uname">Admin Panel</div><div class="urole" style="color:var(--red)">Manage user access</div><div class="uemail">admin@sankenoverseas.com</div></div>'+
+    '<div class="uarrow" style="color:var(--red)">→</div>';
+  c.appendChild(adm);
 }
 
-async function generateQRForItem(item, updateUI=true) {
-  const prefix = document.getElementById('prefix-inp').value.trim() || 'SO';
-  const shipment = document.getElementById('shipment-inp').value.trim() || 'SHIP';
-  const site = document.getElementById('site-inp').value.trim() || 'SITE';
-  const code = `${prefix}-${String(item.id).padStart(3,'0')}`;
-  const qrText = `SANKEN|${code}|${item.desc.substring(0,80)}|${shipment}|${site}`;
-  const size = parseInt(document.getElementById('qr-size').value) || 400;
-  const dataUrl = generateQRDataURL(qrText, size);
-  if (dataUrl) {
-    item.qrGenerated = true;
-    item.qrDataUrl = dataUrl;
-    item.code = code;
-    item.qrText = qrText;
+function loginAs(u){
+  currentUser = u;
+  isAdmin = false;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('nav-avatar').textContent = u.initials;
+  document.getElementById('nav-avatar').style.background = u.color;
+  document.getElementById('nav-avatar').style.color = u.color==='#00e676'?'#000':'#fff';
+  // Hide admin tab for non-admins
+  document.querySelectorAll('.ntab').forEach(function(t){
+    if(t.textContent.includes('Admin')) t.style.display='none';
+  });
+  showTab('generator');
+}
+
+function doAdminLogin(){
+  var pw = document.getElementById('admin-pw-inp').value;
+  if(pw==='admin123'||pw==='sanken123'){
+    isAdmin = true;
+    currentUser = {name:'Administrator', initials:'AD', color:'#ff3d3d'};
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('nav-avatar').textContent='AD';
+    document.getElementById('nav-avatar').style.background='#ff3d3d';
+    document.getElementById('nav-avatar').style.color='#fff';
+    document.querySelectorAll('.ntab').forEach(function(t){ t.style.display=''; });
+    showTab('admin');
+    renderAdminPanel();
   } else {
-    item.qrGenerated = false;
-    item.qrDataUrl = null;
-    item.qrText = null;
+    var box = document.getElementById('admin-pw-box');
+    box.style.border='1px solid rgba(255,61,61,0.5)';
+    setTimeout(function(){box.style.border='1px solid var(--border2)';},1500);
+    document.getElementById('admin-pw-inp').value='';
   }
-  if (updateUI) {
-    const wrap = document.getElementById(`qr-wrap-${item.id}`);
-    const dataSpan = document.getElementById(`qr-data-${item.id}`);
-    if (wrap && item.qrDataUrl) wrap.innerHTML = `<img src="${item.qrDataUrl}" style="width:114px;height:114px;" />`;
-    else if (wrap) wrap.innerHTML = '<div class="qr-placeholder">⚠️</div>';
-    if (dataSpan && item.qrText) dataSpan.innerText = item.qrText;
+}
+
+function doSignOut(){
+  currentUser=null; isAdmin=false;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('admin-pw-box').style.display='none';
+  document.getElementById('admin-pw-inp').value='';
+}
+
+// ══════════ TABS ══════════
+function showTab(t){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.ntab').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('screen-'+t).classList.add('active');
+  document.querySelectorAll('.ntab').forEach(function(b){
+    if(t==='generator'&&b.textContent.includes('QR')) b.classList.add('active');
+    if(t==='admin'&&b.textContent.includes('Admin')) b.classList.add('active');
+  });
+  if(t==='admin') renderAdminPanel();
+}
+
+// ══════════ ADMIN PANEL ══════════
+function renderAdminPanel(){
+  var pList = document.getElementById('adm-pending');
+  var aList = document.getElementById('adm-approved');
+  pList.innerHTML = '';
+  aList.innerHTML = '';
+
+  if(pendingUsers.length===0){
+    pList.innerHTML='<div style="font-size:13px;color:var(--muted2);padding:10px 0;font-weight:600;">No pending requests</div>';
+  } else {
+    pendingUsers.forEach(function(u,i){
+      var d=document.createElement('div'); d.className='al-item';
+      d.innerHTML='<div class="al-info"><div class="al-av" style="background:var(--golddim);border:1px solid var(--border2);color:var(--gold);">'+u.initials+'</div>'+
+        '<div><div class="al-name">'+u.name+'</div><div class="al-email">'+u.email+' · '+u.role+'</div></div></div>'+
+        '<div class="al-btns"><span class="al-badge pend">Pending</span>'+
+        '<button class="al-act approve" onclick="approveUser('+i+')">✓ Approve</button>'+
+        '<button class="al-act deny" onclick="denyUser('+i+')">✕ Deny</button></div>';
+      pList.appendChild(d);
+    });
   }
+
+  approvedUsers.forEach(function(u,i){
+    var d=document.createElement('div'); d.className='al-item';
+    d.innerHTML='<div class="al-info"><div class="al-av" style="background:'+u.color+';color:'+(u.color==='#00e676'?'#000':'#fff')+';">'+u.initials+'</div>'+
+      '<div><div class="al-name">'+u.name+'</div><div class="al-email">'+u.email+' · '+u.role+'</div></div></div>'+
+      '<div class="al-btns"><span class="al-badge">✓ Active</span>'+
+      '<button class="al-act revoke" onclick="revokeUser('+i+')">Revoke</button></div>';
+    aList.appendChild(d);
+  });
+}
+
+function approveUser(i){
+  var u=pendingUsers.splice(i,1)[0];
+  u.initials=u.name.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
+  var cols=['#f0a500','#2196f3','#00bcd4','#7c6fff'];
+  u.color=cols[approvedUsers.length%cols.length];
+  approvedUsers.push(u);
+  renderAdminPanel();
+  renderLoginCards();
+  alert('✅ '+u.name+' approved. They can now sign in.');
+}
+function denyUser(i){
+  var u=pendingUsers.splice(i,1)[0];
+  renderAdminPanel();
+  alert(u.name+' request denied.');
+}
+function revokeUser(i){
+  if(confirm('Revoke access for '+approvedUsers[i].name+'?')){
+    approvedUsers.splice(i,1);
+    renderAdminPanel();
+    renderLoginCards();
+  }
+}
+function addUser(){
+  var name=document.getElementById('add-name').value.trim();
+  var email=document.getElementById('add-email').value.trim().toLowerCase();
+  var role=document.getElementById('add-role').value.trim()||'Staff';
+  if(!name||!email){alert('Please enter name and email.');return;}
+  var initials=name.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
+  var cols=['#f0a500','#2196f3','#00bcd4','#7c6fff','#00e676'];
+  var u={name:name,email:email,role:role,initials:initials,color:cols[approvedUsers.length%cols.length]};
+  approvedUsers.push(u);
+  document.getElementById('add-name').value='';
+  document.getElementById('add-email').value='';
+  document.getElementById('add-role').value='';
+  renderAdminPanel();
+  renderLoginCards();
+  alert('✅ '+name+' added and authorised!');
+}
+
+// ══════════ FILE READING ══════════
+function readFile(file){
+  var ext=file.name.split('.').pop().toLowerCase();
+  var reader=new FileReader();
+  if(ext==='csv'){
+    reader.onload=function(e){
+      var lines=e.target.result.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+      var start=lines[0].toLowerCase().includes('desc')?1:0;
+      var descs=lines.slice(start).map(function(l){return l.replace(/^["']|["']$/g,'');}).filter(Boolean);
+      loadItems(descs,file.name);
+    };
+    reader.readAsText(file);
+  } else {
+    reader.onload=function(e){
+      try{
+        var wb=XLSX.read(e.target.result,{type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        var headers=data[0]||[];
+        var descCol=0;
+        for(var i=0;i<headers.length;i++){
+          var h=String(headers[i]).toLowerCase();
+          if(h.includes('desc')||h.includes('item')||h.includes('name')){descCol=i;break;}
+        }
+        var startRow=(headers.length>0&&isNaN(headers[0])&&headers[0]!=='')?1:0;
+        var descs=[];
+        for(var r=startRow;r<data.length;r++){
+          var v=data[r][descCol];
+          if(v&&String(v).trim().length>2) descs.push(String(v).trim());
+        }
+        loadItems(descs,file.name);
+      }catch(err){alert('Error reading file: '+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function loadItems(descs,fname){
+  items=descs.map(function(d,i){
+    return{id:i+1,desc:d,selected:true,qrGenerated:false,qrDataUrl:null};
+  });
+  document.getElementById('empty-state').style.display='none';
+  document.getElementById('settings-bar').style.display='grid';
+  document.getElementById('stats-row').style.display='grid';
+  document.getElementById('toolbar').style.display='flex';
+  document.getElementById('uz-title').textContent='✅ '+fname+' loaded';
+  document.getElementById('uz-sub').textContent=descs.length+' items found. Set options below then click Generate All.';
+  renderCards();
   updateStats();
-  return !!dataUrl;
 }
 
-function getCurrentCode(item) { return `${document.getElementById('prefix-inp').value.trim() || 'SO'}-${String(item.id).padStart(3,'0')}`; }
-function updateStats() {
-  document.getElementById('stat-total').innerText = items.length;
-  document.getElementById('stat-generated').innerText = items.filter(i=>i.qrGenerated).length;
-  document.getElementById('stat-selected').innerText = items.filter(i=>i.selected).length;
-  document.getElementById('stat-ready').innerText = items.filter(i=>i.qrGenerated).length;
+// ══════════ QR GENERATION ══════════
+function makeCode(item){
+  return (document.getElementById('s-prefix').value||'SO')+'-'+String(item.id).padStart(3,'0');
+}
+function makeQRText(item){
+  var code=makeCode(item);
+  var ship=document.getElementById('s-ship').value||'';
+  var site=document.getElementById('s-site').value||'';
+  return 'SANKEN|'+code+'|'+item.desc+'|'+ship+'|'+site+'|sankenoverseas.com';
 }
 
-function renderCards() {
-  const grid = document.getElementById('items-grid');
-  const search = document.getElementById('search-inp').value.toLowerCase();
-  if (!items.length) { grid.innerHTML = '<div style="text-align:center; padding:60px;">Upload Excel/CSV file</div>'; return; }
-  grid.innerHTML = '';
-  items.forEach(item => {
-    if (search && !item.desc.toLowerCase().includes(search)) return;
-    const currentCode = getCurrentCode(item);
-    const shipment = document.getElementById('shipment-inp').value;
-    const site = document.getElementById('site-inp').value;
-    const qrTextDisplay = item.qrText ? item.qrText : (item.qrGenerated ? 'Encoded data ready' : 'Not generated');
-    const card = document.createElement('div');
-    card.className = `item-card ${item.selected ? 'selected' : ''}`;
-    card.innerHTML = `
-      <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-        <div class="card-check ${item.selected ? 'checked' : ''}" data-id="${item.id}"></div>
-        <div style="background:rgba(240,165,0,0.2); padding:2px 8px; border-radius:12px;">${escapeHtml(currentCode)}</div>
-      </div>
-      <div style="font-weight:600; margin-bottom:10px;">${escapeHtml(item.desc)}</div>
-      <div class="qr-wrapper" id="qr-wrap-${item.id}">${item.qrGenerated && item.qrDataUrl ? `<img src="${item.qrDataUrl}" style="width:114px;height:114px;" />` : '<div class="qr-placeholder">◻</div>'}</div>
-      <div class="qr-data" id="qr-data-${item.id}">${escapeHtml(qrTextDisplay)}</div>
-      <div style="font-size:11px; margin:8px 0;">Shipment: ${escapeHtml(shipment)} | Site: ${escapeHtml(site)}</div>
-      <div class="card-actions"><div class="card-btn" data-action="view" data-id="${item.id}">👁 View</div><div class="card-btn" data-action="gen" data-id="${item.id}">⚡ Gen</div><div class="card-btn" data-action="save" data-id="${item.id}">⬇ Save</div></div>
-    `;
+function generateQRForItem(item, size, callback){
+  var tmp=document.createElement('div');
+  tmp.style.cssText='position:absolute;left:-9999px;top:-9999px;';
+  document.body.appendChild(tmp);
+  try{
+    new QRCode(tmp,{
+      text:makeQRText(item),
+      width:size, height:size,
+      colorDark:'#000000', colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.H
+    });
+    setTimeout(function(){
+      var canvas=tmp.querySelector('canvas');
+      var img=tmp.querySelector('img');
+      var url=null;
+      if(canvas) url=canvas.toDataURL('image/png');
+      else if(img) url=img.src;
+      item.qrGenerated=true;
+      item.qrDataUrl=url;
+      document.body.removeChild(tmp);
+      if(callback) callback();
+    },60);
+  }catch(e){
+    try{document.body.removeChild(tmp);}catch(x){}
+    if(callback) callback();
+  }
+}
+
+function generateAll(){
+  var btn=document.getElementById('gen-btn');
+  btn.disabled=true;
+  var pw=document.getElementById('prog-wrap');
+  var pf=document.getElementById('prog-fill');
+  pw.style.display='block';
+  var idx=0; var total=items.length;
+  function next(){
+    if(idx>=total){
+      btn.disabled=false;
+      btn.textContent='⚡ Generate All';
+      pw.style.display='none';
+      renderCards();
+      updateStats();
+      return;
+    }
+    var item=items[idx];
+    generateQRForItem(item,300,function(){
+      idx++;
+      pf.style.width=Math.round(idx/total*100)+'%';
+      btn.textContent='Generating '+idx+'/'+total+'...';
+      updateStats();
+      setTimeout(next,20);
+    });
+  }
+  next();
+}
+
+function generateSingle(id){
+  var item=items.find(function(x){return x.id===id;});
+  if(!item) return;
+  generateQRForItem(item,300,function(){
+    var wrap=document.getElementById('qr-box-'+id);
+    if(wrap&&item.qrDataUrl){
+      wrap.innerHTML='<img src="'+item.qrDataUrl+'" style="width:78px;height:78px;" />';
+    }
+    updateStats();
+  });
+}
+
+// ══════════ RENDER CARDS ══════════
+function renderCards(){
+  var grid=document.getElementById('items-grid');
+  var search=(document.getElementById('search-inp')?document.getElementById('search-inp').value:'').toLowerCase();
+  grid.innerHTML='';
+  var shown=0;
+  items.forEach(function(item){
+    if(search&&!item.desc.toLowerCase().includes(search)) return;
+    shown++;
+    var code=makeCode(item);
+    var card=document.createElement('div');
+    card.className='icard'+(item.selected?' sel':'');
+    card.id='card-'+item.id;
+    card.innerHTML=
+      '<div class="ic-top">'+
+        '<div class="ic-chk'+(item.selected?' on':'')+'" onclick="toggleSel('+item.id+')" id="chk-'+item.id+'"></div>'+
+        '<div class="ic-code">'+code+'</div>'+
+      '</div>'+
+      '<div class="ic-desc">'+item.desc+'</div>'+
+      '<div class="ic-qr"><div class="qr-box" id="qr-box-'+item.id+'">'+
+        (item.qrGenerated&&item.qrDataUrl
+          ? '<img src="'+item.qrDataUrl+'" style="width:78px;height:78px;" />'
+          : '<div class="qr-ph">◻</div>')+
+      '</div></div>'+
+      '<div class="ic-acts">'+
+        '<div class="ic-btn" onclick="viewItem('+item.id+')">👁 View</div>'+
+        '<div class="ic-btn" onclick="generateSingle('+item.id+')">⚡ QR</div>'+
+        '<div class="ic-btn" onclick="printSingleItem('+item.id+')">🖨 Print</div>'+
+        '<div class="ic-btn" onclick="dlSingle('+item.id+')">⬇ Save</div>'+
+      '</div>';
     grid.appendChild(card);
   });
-  attachCardEvents();
-}
-function attachCardEvents() {
-  document.querySelectorAll('.card-check').forEach(el => el.addEventListener('click', (e) => { let id = parseInt(el.dataset.id); let item = items.find(i=>i.id===id); if(item){ item.selected=!item.selected; renderCards(); updateStats(); } }));
-  document.querySelectorAll('.card-btn').forEach(btn => btn.addEventListener('click', async (e) => {
-    let id = parseInt(btn.dataset.id);
-    let item = items.find(i=>i.id===id);
-    if(!item) return;
-    if(btn.dataset.action === 'view') { if(!item.qrGenerated) await generateQRForItem(item,true); if(item.qrDataUrl){ let w=window.open(); w.document.write(`<body style="margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#000;"><img src="${item.qrDataUrl}" style="max-width:90%;"></body>`); } else alert("Generate first"); }
-    else if(btn.dataset.action === 'gen') { await generateQRForItem(item,true); renderCards(); updateStats(); }
-    else if(btn.dataset.action === 'save') { if(item.qrDataUrl){ let a=document.createElement('a'); a.href=item.qrDataUrl; a.download=`${getCurrentCode(item)}.png`; a.click(); } else alert("Generate first"); }
-  }));
-}
-async function generateAllQR() {
-  if(!items.length || isGenerating) return;
-  isGenerating=true;
-  const btn=document.getElementById('gen-all-btn');
-  const prog=document.getElementById('progress-bar');
-  const fill=document.getElementById('progress-fill');
-  prog.style.display='block';
-  for(let i=0;i<items.length;i++){
-    await generateQRForItem(items[i],true);
-    fill.style.width=`${((i+1)/items.length)*100}%`;
-    btn.innerText=`⚡ ${i+1}/${items.length}`;
-    updateStats();
-  }
-  prog.style.display='none';
-  btn.innerText='⚡ Generate ALL QRs';
-  isGenerating=false;
-  renderCards();
-}
-async function generateSelectedQR() {
-  const selected = items.filter(i=>i.selected);
-  if(!selected.length) return alert("No items selected");
-  const prog=document.getElementById('progress-bar');
-  const fill=document.getElementById('progress-fill');
-  prog.style.display='block';
-  for(let i=0;i<selected.length;i++){
-    await generateQRForItem(selected[i],true);
-    fill.style.width=`${((i+1)/selected.length)*100}%`;
-  }
-  prog.style.display='none';
-  renderCards();
-  alert(`Generated ${selected.length} QR codes`);
-}
-function downloadAllQR() { const qrItems=items.filter(i=>i.qrGenerated); if(!qrItems.length) return alert("No QR generated"); let idx=0; function next(){ if(idx>=qrItems.length) return; let a=document.createElement('a'); a.href=qrItems[idx].qrDataUrl; a.download=`${getCurrentCode(qrItems[idx])}.png`; a.click(); idx++; setTimeout(next,400); } next(); }
-function clearQRCodes() { items.forEach(i=>{i.qrGenerated=false; i.qrDataUrl=null; i.qrText=null;}); renderCards(); updateStats(); }
-function selectAll() { items.forEach(i=>i.selected=true); renderCards(); updateStats(); }
-function deselectAll() { items.forEach(i=>i.selected=false); renderCards(); updateStats(); }
-function printSelected() { window.print(); }
-function loadItems(descs, filename) {
-  items = descs.map((desc,idx)=>({id:idx+1, desc:desc.trim(), selected:true, qrGenerated:false, qrDataUrl:null, code:'', qrText:null}));
-  renderCards(); updateStats();
-  document.getElementById('gen-all-btn').disabled=false;
-  document.getElementById('gen-selected-btn').disabled=false;
-  document.querySelector('.upload-zone div:first-child').innerHTML = `✅ ${filename} (${items.length} items)`;
-}
-function readExcelFile(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const wb = XLSX.read(e.target.result, {type:'array'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(ws, {header:1});
-    let descCol=0;
-    if(data[0]) for(let i=0;i<data[0].length;i++) if(String(data[0][i]).toLowerCase().includes('desc')||String(data[0][i]).toLowerCase().includes('item')){ descCol=i; break; }
-    const startRow = (data[0] && String(data[0][descCol]).toLowerCase().includes('desc')) ? 1 : 0;
-    const descs = [];
-    for(let r=startRow; r<data.length; r++) if(data[r][descCol] && String(data[r][descCol]).trim()) descs.push(String(data[r][descCol]).trim());
-    if(descs.length) loadItems(descs, file.name);
-    else alert("No description column found");
-  };
-  reader.readAsArrayBuffer(file);
-}
-// ---------- QR SCANNER with GPS location ----------
-let html5QrCode = null;
-let torchEnabled = false;
-async function startScanner() {
-  if(html5QrCode) await stopScanner();
-  html5QrCode = new Html5Qrcode("reader");
-  const config = {
-    fps: 20,
-    qrbox: { width: 350, height: 350 },
-    aspectRatio: 1.0,
-    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-  };
-  try {
-    await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
-    document.getElementById("scan-details").style.display = "block";
-  } catch(err) { alert("Camera error: "+err+"\nPlease grant camera permissions."); }
-}
-async function stopScanner() { if(html5QrCode) { await html5QrCode.stop(); html5QrCode.clear(); html5QrCode=null; } document.getElementById("scan-details").style.display = "none"; }
-async function toggleTorch() {
-  if(!html5QrCode) { alert("Start camera first"); return; }
-  torchEnabled = !torchEnabled;
-  try { await html5QrCode.applyVideoConstraints({ advanced: [{ torch: torchEnabled }] }); } catch(e) { alert("Torch not supported"); torchEnabled=false; }
-}
-async function onScanSuccess(decodedText) {
-  await stopScanner();
-  // Show modal with QR data first
-  document.getElementById("modal-data").innerText = decodedText;
-  document.getElementById("modal-location").innerHTML = "📍 Getting location...";
-  document.getElementById("qr-modal").style.display = "flex";
-  
-  // Parse QR
-  let itemCode = "Unknown", description = "";
-  const parts = decodedText.split('|');
-  if(parts[0] === "SANKEN" && parts[1]) itemCode = parts[1];
-  if(parts[2]) description = parts[2];
-  
-  // Get GPS location
-  if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      let address = "";
-      try {
-        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`);
-        const geoData = await geoRes.json();
-        address = geoData.display_name || `${lat},${lng}`;
-      } catch(e) { address = `${lat},${lng}`; }
-      document.getElementById("modal-location").innerHTML = `📍 ${address}`;
-      const scanRecord = {
-        timestamp: new Date().toISOString(),
-        lat, lng, address,
-        item_code: itemCode,
-        description: description,
-        qr_raw: decodedText
-      };
-      await addScanToSupabase(scanRecord);
-    }, async (error) => {
-      document.getElementById("modal-location").innerHTML = "⚠️ Location permission denied or unavailable.";
-      const scanRecord = {
-        timestamp: new Date().toISOString(),
-        lat: null, lng: null, address: "Location not provided",
-        item_code: itemCode,
-        description: description,
-        qr_raw: decodedText
-      };
-      await addScanToSupabase(scanRecord);
-    });
-  } else {
-    document.getElementById("modal-location").innerHTML = "❌ Geolocation not supported by browser.";
-    const scanRecord = {
-      timestamp: new Date().toISOString(),
-      lat: null, lng: null, address: "GPS not supported",
-      item_code: itemCode,
-      description: description,
-      qr_raw: decodedText
-    };
-    await addScanToSupabase(scanRecord);
+  if(shown===0){
+    var em=document.createElement('div');
+    em.style.cssText='grid-column:1/-1;text-align:center;padding:40px;color:var(--muted2);font-size:13px;font-weight:600;';
+    em.textContent='No items match your search.';
+    grid.appendChild(em);
   }
 }
-function closeModal() { document.getElementById("qr-modal").style.display = "none"; }
 
-function showTestQR() {
-  if(!items.length || !items[0].qrGenerated) {
-    alert("Please generate at least one QR code first.");
+function filterCards(){renderCards();}
+
+// ══════════ SELECT ══════════
+function toggleSel(id){
+  var item=items.find(function(x){return x.id===id;});
+  if(!item) return;
+  item.selected=!item.selected;
+  var card=document.getElementById('card-'+id);
+  var chk=document.getElementById('chk-'+id);
+  if(card) card.classList.toggle('sel',item.selected);
+  if(chk) chk.classList.toggle('on',item.selected);
+  updateStats();
+}
+function selAll(){items.forEach(function(i){i.selected=true;});renderCards();updateStats();}
+function deselAll(){items.forEach(function(i){i.selected=false;});renderCards();updateStats();}
+
+function updateStats(){
+  document.getElementById('st-total').textContent=items.length;
+  document.getElementById('st-gen').textContent=items.filter(function(i){return i.qrGenerated;}).length;
+  document.getElementById('st-sel').textContent=items.filter(function(i){return i.selected;}).length;
+  document.getElementById('st-printed').textContent=printedCount;
+}
+
+// ══════════ BULK PRINT A4 ══════════
+function bulkPrint(){
+  var sel=items.filter(function(i){return i.selected;});
+  if(sel.length===0){alert('Please select items first.');return;}
+  var notGen=sel.filter(function(i){return !i.qrGenerated;});
+  if(notGen.length>0){
+    alert('Please generate QR codes first (click ⚡ Generate All).');
     return;
   }
-  const qrDataUrl = items[0].qrDataUrl;
-  const win = window.open();
-  win.document.write(`
-    <html><head><title>Test QR - Scan with your phone</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>body { margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#000; } img { max-width:95%; height:auto; }</style>
-    </head><body><img src="${qrDataUrl}" /></body></html>
-  `);
+
+  var cols=parseInt(document.getElementById('s-cols').value)||3;
+  var grid=document.getElementById('print-grid');
+  grid.style.gridTemplateColumns='repeat('+cols+',1fr)';
+  grid.innerHTML='';
+
+  sel.forEach(function(item){
+    var code=makeCode(item);
+    var label=document.createElement('div');
+    label.className='print-label';
+    label.innerHTML=
+      '<div class="pl-qr"><img src="'+item.qrDataUrl+'" /></div>'+
+      '<div class="pl-code">'+code+' · '+document.getElementById('s-ship').value+'</div>'+
+      '<div class="pl-desc">'+item.desc+'</div>'+
+      '<div class="pl-company">Sanken Overseas Pvt Ltd</div>';
+    grid.appendChild(label);
+  });
+
+  printedCount+=sel.length;
+  updateStats();
+  setTimeout(function(){window.print();},300);
 }
 
-function exportLogsCSV() { if(!supabaseClient) { alert("Supabase not connected"); return; } supabaseClient.from('scans').select('*').then(({data,error})=>{ if(error||!data.length){ alert("No logs"); return; } let csv="Timestamp,Latitude,Longitude,Address,ItemCode,Description,FullQR\n"; data.forEach(l=>{ csv+=`"${l.timestamp}",${l.lat??""},${l.lng??""},"${(l.address||"").replace(/"/g,'""')}","${l.item_code}","${(l.description||"").replace(/"/g,'""')}","${(l.qr_raw||"").replace(/"/g,'""')}"\n`; }); const blob=new Blob([csv],{type:"text/csv"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`qr_scans_${new Date().toISOString().slice(0,19)}.csv`; a.click(); }); }
-function escapeHtml(s) { return String(s).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+// ══════════ PRINT ONE BY ONE ══════════
+function printSingleSelected(){
+  var sel=items.filter(function(i){return i.selected&&i.qrGenerated;});
+  if(sel.length===0){alert('Select and generate QRs first.');return;}
+  var idx=0;
+  function printNext(){
+    if(idx>=sel.length) return;
+    printSingleItem(sel[idx].id,function(){
+      idx++;
+      setTimeout(printNext,1200);
+    });
+  }
+  printNext();
+}
 
-// Event listeners
-document.getElementById('file-input').addEventListener('change', e=>{ if(e.target.files[0]) readExcelFile(e.target.files[0]); });
-const zone=document.getElementById('upload-zone');
-zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('dragover'); });
-zone.addEventListener('dragleave', ()=> zone.classList.remove('dragover'));
-zone.addEventListener('drop', e=>{ e.preventDefault(); zone.classList.remove('dragover'); if(e.dataTransfer.files[0]) readExcelFile(e.dataTransfer.files[0]); });
-document.getElementById('gen-all-btn').addEventListener('click', generateAllQR);
-document.getElementById('gen-selected-btn').addEventListener('click', generateSelectedQR);
-document.getElementById('select-all-btn').addEventListener('click', selectAll);
-document.getElementById('deselect-all-btn').addEventListener('click', deselectAll);
-document.getElementById('print-btn').addEventListener('click', printSelected);
-document.getElementById('download-all-qr').addEventListener('click', downloadAllQR);
-document.getElementById('clear-qr-btn').addEventListener('click', clearQRCodes);
-document.getElementById('search-inp').addEventListener('input', renderCards);
-document.getElementById('start-scanner').addEventListener('click', startScanner);
-document.getElementById('stop-scanner').addEventListener('click', stopScanner);
-document.getElementById('toggle-torch').addEventListener('click', toggleTorch);
-document.getElementById('test-qr-btn').addEventListener('click', showTestQR);
-document.getElementById('export-logs-btn').addEventListener('click', exportLogsCSV);
-document.querySelectorAll('.tab').forEach(tab=>{ tab.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active'); document.querySelectorAll('.tab-content').forEach(tc=>tc.classList.remove('active')); document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active'); if(tab.dataset.tab==='scanner' && html5QrCode) stopScanner(); if(tab.dataset.tab==='logs') loadLogsFromSupabase(); }); });
-initSupabase();
+function printSingleItem(id, cb){
+  var item=items.find(function(x){return x.id===id;});
+  if(!item){if(cb)cb();return;}
+
+  function doPrint(){
+    var code=makeCode(item);
+    document.getElementById('pls-code').textContent=code+' · '+(document.getElementById('s-ship').value||'');
+    document.getElementById('pls-desc').textContent=item.desc;
+    var qrDiv=document.getElementById('pls-qr');
+    qrDiv.innerHTML='<img src="'+item.qrDataUrl+'" style="width:80mm;height:80mm;" />';
+    var pa=document.getElementById('print-area-single');
+    pa.classList.add('printing');
+    // Hide bulk print area
+    document.getElementById('print-area').style.display='none';
+    setTimeout(function(){
+      window.print();
+      pa.classList.remove('printing');
+      document.getElementById('print-area').style.display='none';
+      printedCount++;
+      updateStats();
+      if(cb) cb();
+    },400);
+  }
+
+  if(!item.qrGenerated){
+    generateQRForItem(item,400,function(){
+      var wrap=document.getElementById('qr-box-'+id);
+      if(wrap&&item.qrDataUrl) wrap.innerHTML='<img src="'+item.qrDataUrl+'" style="width:78px;height:78px;" />';
+      doPrint();
+    });
+  } else {
+    doPrint();
+  }
+}
+
+// ══════════ VIEW MODAL ══════════
+function viewItem(id){
+  var item=items.find(function(x){return x.id===id;});
+  if(!item) return;
+  currentModalItem=item;
+  var code=makeCode(item);
+  document.getElementById('m-desc').textContent=item.desc;
+  document.getElementById('m-code').textContent=code+' · '+(document.getElementById('s-ship').value||'');
+  var qDiv=document.getElementById('m-qr-canvas');
+  qDiv.innerHTML='';
+  if(modalQRObj){try{modalQRObj.clear();}catch(e){}modalQRObj=null;}
+  if(item.qrGenerated&&item.qrDataUrl){
+    var img=document.createElement('img');
+    img.src=item.qrDataUrl;
+    img.style.cssText='width:200px;height:200px;';
+    qDiv.appendChild(img);
+  } else {
+    try{
+      modalQRObj=new QRCode(qDiv,{
+        text:makeQRText(item),width:200,height:200,
+        colorDark:'#000000',colorLight:'#ffffff',
+        correctLevel:QRCode.CorrectLevel.H
+      });
+    }catch(e){qDiv.textContent='QR generation error';}
+  }
+  document.getElementById('view-modal').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('view-modal').classList.remove('open');
+}
+function dlModalQR(){
+  if(!currentModalItem||!currentModalItem.qrDataUrl){alert('Generate QR first.');return;}
+  var a=document.createElement('a');
+  a.href=currentModalItem.qrDataUrl;
+  a.download=makeCode(currentModalItem)+'_QR.png';
+  a.click();
+}
+function printOneFromModal(){
+  if(!currentModalItem) return;
+  closeModal();
+  setTimeout(function(){printSingleItem(currentModalItem.id);},200);
+}
+
+// ══════════ DOWNLOAD ══════════
+function dlSingle(id){
+  var item=items.find(function(x){return x.id===id;});
+  if(!item) return;
+  function doSave(){
+    var a=document.createElement('a');
+    a.href=item.qrDataUrl;
+    a.download=makeCode(item)+'_QR.png';
+    a.click();
+  }
+  if(!item.qrGenerated){
+    generateQRForItem(item,300,function(){
+      var w=document.getElementById('qr-box-'+id);
+      if(w) w.innerHTML='<img src="'+item.qrDataUrl+'" style="width:78px;height:78px;"/>';
+      updateStats();
+      doSave();
+    });
+  } else { doSave(); }
+}
+
+function dlAll(){
+  var gen=items.filter(function(i){return i.qrGenerated&&i.qrDataUrl;});
+  if(gen.length===0){alert('Please generate QR codes first.');return;}
+  var idx=0;
+  function next(){
+    if(idx>=gen.length) return;
+    var a=document.createElement('a');
+    a.href=gen[idx].qrDataUrl;
+    a.download=makeCode(gen[idx])+'_QR.png';
+    a.click();
+    idx++;
+    setTimeout(next,300);
+  }
+  next();
+}
+
+function resetAll(){
+  if(!confirm('Reset all items and QR codes?')) return;
+  items=[];
+  document.getElementById('settings-bar').style.display='none';
+  document.getElementById('stats-row').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.getElementById('uz-title').textContent='Drop Excel / CSV file here';
+  document.getElementById('uz-sub').textContent='Supports Purchase Order files with Description column';
+  document.getElementById('items-grid').innerHTML='<div class="empty" id="empty-state"><div class="empty-ico">📋</div><div class="empty-t">Upload a PO file to start</div><div style="font-size:13px;font-weight:500;">Supports Excel (.xlsx) and CSV files</div></div>';
+  document.getElementById('file-input').value='';
+}
 </script>
 </body>
 </html>
