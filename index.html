@@ -745,55 +745,74 @@ function showTab(t) {
 function renderAdminPanel() {
   const list = document.getElementById('adm-list');
   list.innerHTML = '';
+
+  const palette = ['#2196f3','#00bcd4','#7c6fff','#00e676','#ff9800','#e91e63','#03a9f4'];
+
   authUsers.forEach(u => {
-    const isAdmin = u.role === 'Admin' || u.email === 'admin@sanken.com';
-    const colors  = ['#f0a500','#2196f3','#00bcd4','#7c6fff','#00e676'];
-    const color   = isAdmin ? '#f0a500' : colors[u.email.charCodeAt(0) % colors.length];
-    const initials = u.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    const isAdmin  = (u.role === 'Admin');
+    const ci       = u.pin.split('').reduce(function(a,c){ return a + c.charCodeAt(0); }, 0) % palette.length;
+    const color    = isAdmin ? '#f0a500' : palette[ci];
+    const initials = u.name.split(' ').map(function(w){ return w[0] || ''; }).join('').substring(0,2).toUpperCase() || '??';
+    const added    = u.addedAt ? new Date(u.addedAt).toLocaleDateString() : '';
+
     const div = document.createElement('div');
     div.className = 'al-item';
-    div.innerHTML = `
-      <div class="al-info">
-        <div class="al-av" style="background:${color};">${initials}</div>
-        <div>
-          <div class="al-name">${escHtml(u.name)}</div>
-          <div class="al-email">${escHtml(u.email)}</div>
-        </div>
-      </div>
-      <div class="al-acts">
-        <span class="al-badge ${isAdmin ? 'admin' : 'active'}">${isAdmin ? '★ Admin' : '✓ Staff'}</span>
-        ${!isAdmin ? `<button class="al-btn revoke" onclick="revokeUser('${escAttr(u.email)}')">Revoke</button>` : ''}
-      </div>`;
+    div.setAttribute('data-pin', u.pin);
+
+    div.innerHTML =
+      '<div class="al-info">' +
+        '<div class="al-av" style="background:' + color + ';">' + initials + '</div>' +
+        '<div>' +
+          '<div class="al-name">' + escHtml(u.name) + '</div>' +
+          '<div class="al-email">' + escHtml(u.role) + (added ? ' &nbsp;·&nbsp; ' + added : '') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="al-acts">' +
+        '<span class="al-badge ' + (isAdmin ? 'admin' : 'active') + '">' + (isAdmin ? '★ Admin' : '✓ ' + escHtml(u.role)) + '</span>' +
+        (!isAdmin ? '<button class="al-btn revoke" onclick="removeUser('' + escAttr(u.pin) + '')">✕ Remove</button>' : '') +
+      '</div>';
+
     list.appendChild(div);
   });
+
+  if (authUsers.filter(function(u){ return u.role !== 'Admin'; }).length === 0) {
+    var note = document.createElement('div');
+    note.style.cssText = 'padding:14px;color:var(--muted2);font-size:13px;text-align:center;';
+    note.textContent = 'No staff users yet. Add one below.';
+    list.appendChild(note);
+  }
 }
 
-window.revokeUser = (pin) => {
-  if (pin === '123456') { alert('Cannot revoke default admin.'); return; }
-  const u = authUsers.find(x => x.pin === pin);
-  if (!confirm('Revoke access for ' + (u ? u.name : pin) + '?')) return;
-  authUsers = authUsers.filter(x => x.pin !== pin);
+window.removeUser = function(pin) {
+  if (pin === '123456') { alert('Cannot remove the default admin.'); return; }
+  var u = authUsers.find(function(x){ return x.pin === pin; });
+  if (!u) return;
+  if (!confirm('Remove ' + u.name + ' from the system?')) return;
+  authUsers = authUsers.filter(function(x){ return x.pin !== pin; });
   saveAuth();
   renderAdminPanel();
 };
 
-window.adminAddUser = () => {
-  const name = document.getElementById('add-name').value.trim();
-  const pin  = document.getElementById('add-pin').value.trim();
-  const role = document.getElementById('add-role').value.trim() || 'Staff';
-  if (!name || !pin || pin.length < 4) {
-    alert('Name and access code (min 4 digits) are required.');
+window.adminAddUser = function() {
+  var name = document.getElementById('add-name').value.trim();
+  var pin  = document.getElementById('add-pin').value.trim();
+  var role = document.getElementById('add-role').value.trim() || 'Staff';
+
+  if (!name) { alert('Please enter the person\'s name.'); return; }
+  if (!pin || pin.length < 4) { alert('Access code must be at least 4 digits.'); return; }
+  if (!/^[0-9]+$/.test(pin)) { alert('Access code must be numbers only.'); return; }
+  if (authUsers.find(function(u){ return u.pin === pin; })) {
+    alert('That access code is already in use. Please choose a different one.');
     return;
   }
-  if (authUsers.find(u => u.pin === pin)) {
-    alert('This access code is already in use. Choose a different one.');
-    return;
-  }
-  authUsers.push({ name, pin, role, addedAt: new Date().toISOString() });
+
+  authUsers.push({ name: name, pin: pin, role: role, addedAt: new Date().toISOString() });
   saveAuth();
+
   document.getElementById('add-name').value = '';
   document.getElementById('add-pin').value  = '';
   document.getElementById('add-role').value = 'Staff';
+
   renderAdminPanel();
 };
 
