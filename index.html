@@ -681,7 +681,7 @@ function showTab(t) {
   if (t === 'admin')   renderAdminPanel();
 }
 
-// ─── ADMIN PANEL ───────────────────────────────────────────────────────────────
+// ─── ADMIN PANEL ──────────────────────────────────────────────────────────────────────────────
 function renderAdminPanel() {
   var list = document.getElementById('adm-list');
   list.innerHTML = '';
@@ -690,24 +690,56 @@ function renderAdminPanel() {
   authUsers.forEach(function(u) {
     var ci    = u.pin.split('').reduce(function(a,c){ return a + c.charCodeAt(0); }, 0) % palette.length;
     var color = u.isAdmin ? '#f0a500' : palette[ci];
-    var ini   = u.name.split(' ').map(function(w){ return w[0]||''; }).join('').substring(0,2).toUpperCase() || '??';
+    var ini   = u.name.split(' ').map(function(w){ return w[0] || ''; }).join('').substring(0,2).toUpperCase() || '??';
     var added = u.addedAt ? new Date(u.addedAt).toLocaleDateString() : '';
 
-    var div = document.createElement('div');
-    div.className = 'al-item';
-    div.innerHTML =
-      '<div class="al-info">' +
-        '<div class="al-av" style="background:' + color + ';">' + esc(ini) + '</div>' +
-        '<div class="al-detail">' +
-          '<div class="al-name">' + esc(u.name) + '</div>' +
-          '<div class="al-sub">' + esc(u.role) + (added ? ' · ' + added : '') + '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="al-acts">' +
-        '<span class="al-badge ' + (u.isAdmin ? 'admin' : 'active') + '">' + (u.isAdmin ? '★ Admin' : '✓ ' + esc(u.role)) + '</span>' +
-        (!u.isAdmin ? '<button class="al-btn rm" onclick="removeUser(\'' + escA(u.pin) + '\')">\u2715 Remove</button>' : '') +
-      '</div>';
-    list.appendChild(div);
+    var row = document.createElement('div');
+    row.className = 'al-item';
+
+    var infoDiv = document.createElement('div');
+    infoDiv.className = 'al-info';
+
+    var av = document.createElement('div');
+    av.className = 'al-av';
+    av.style.background = color;
+    av.textContent = ini;
+
+    var detail = document.createElement('div');
+    detail.className = 'al-detail';
+
+    var nameEl = document.createElement('div');
+    nameEl.className = 'al-name';
+    nameEl.textContent = u.name;
+
+    var subEl = document.createElement('div');
+    subEl.className = 'al-sub';
+    subEl.textContent = u.role + (added ? ' · ' + added : '');
+
+    detail.appendChild(nameEl);
+    detail.appendChild(subEl);
+    infoDiv.appendChild(av);
+    infoDiv.appendChild(detail);
+    row.appendChild(infoDiv);
+
+    var actsDiv = document.createElement('div');
+    actsDiv.className = 'al-acts';
+
+    var badge = document.createElement('span');
+    badge.className = 'al-badge ' + (u.isAdmin ? 'admin' : 'active');
+    badge.textContent = u.isAdmin ? '★ Admin' : '✓ ' + u.role;
+    actsDiv.appendChild(badge);
+
+    if (!u.isAdmin) {
+      var btn = document.createElement('button');
+      btn.className = 'al-btn rm';
+      btn.textContent = '✕ Remove';
+      btn.dataset.pin = u.pin;
+      btn.addEventListener('click', handleRemoveClick);
+      actsDiv.appendChild(btn);
+    }
+
+    row.appendChild(actsDiv);
+    list.appendChild(row);
   });
 
   if (authUsers.filter(function(u){ return !u.isAdmin; }).length === 0) {
@@ -721,33 +753,33 @@ function renderAdminPanel() {
   renderScanTable();
 }
 
-window.removeUser = function(pin) {
-  var u = authUsers.find(function(x){ return x.pin === pin; });
+function handleRemoveClick() {
+  var pin = this.dataset.pin;
+  var u   = authUsers.find(function(x){ return x.pin === pin; });
   if (!u || u.isAdmin) return;
-  if (!confirm('Remove ' + u.name + '?')) return;
+  if (!confirm('Remove ' + u.name + ' from the system?')) return;
   authUsers = authUsers.filter(function(x){ return x.pin !== pin; });
   saveAuth();
   renderAdminPanel();
-};
+}
 
 window.adminAddUser = function() {
   var name = document.getElementById('add-name').value.trim();
   var pin  = document.getElementById('add-pin').value.trim();
   var role = document.getElementById('add-role').value.trim() || 'Staff';
-  if (!name)                      { alert('Name required.'); return; }
-  if (!pin || pin.length < 4)     { alert('Access code must be at least 4 digits.'); return; }
-  if (!/^[0-9]+$/.test(pin))      { alert('Numbers only.'); return; }
-  if (pin === ADMIN_PIN)          { alert('That code is not allowed.'); return; }
+  if (!name)                 { alert('Name required.'); return; }
+  if (!pin || pin.length < 4){ alert('Access code must be at least 4 digits.'); return; }
+  if (!/^[0-9]+$/.test(pin)) { alert('Numbers only.'); return; }
+  if (pin === ADMIN_PIN)     { alert('That code is not allowed.'); return; }
   if (authUsers.find(function(u){ return u.pin === pin; })) { alert('Code already in use.'); return; }
 
-  authUsers.push({ name:name, pin:pin, role:role, isAdmin:false, addedAt:new Date().toISOString() });
+  authUsers.push({ name: name, pin: pin, role: role, isAdmin: false, addedAt: new Date().toISOString() });
   saveAuth();
   document.getElementById('add-name').value = '';
   document.getElementById('add-pin').value  = '';
   document.getElementById('add-role').value = 'Staff';
   renderAdminPanel();
 };
-
 // ─── SCAN TABLE ────────────────────────────────────────────────────────────────
 function renderScanTable() {
   var filter = (document.getElementById('rpt-filter') || { value:'' }).value.toLowerCase();
