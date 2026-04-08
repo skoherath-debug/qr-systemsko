@@ -548,6 +548,17 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
         <div class="pkey pkey-enter" data-k="enter">Enter</div>
       </div>
       <div class="pin-foot">Contact your administrator to get access.</div>
+      <div style="margin-top:18px;text-align:center;">
+        <button onclick="toggleSetup()" style="background:transparent;border:none;color:var(--muted2);font-size:12px;font-family:Rajdhani,sans-serif;font-weight:600;cursor:pointer;text-decoration:underline;letter-spacing:.3px;">
+          &#9881; Setup this device
+        </button>
+      </div>
+      <div id="setup-panel" style="display:none;margin-top:14px;">
+        <div style="font-size:11px;color:var(--muted2);font-weight:600;margin-bottom:8px;text-align:center;">Paste the setup code from your administrator:</div>
+        <textarea id="setup-code-input" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:monospace;font-size:12px;color:var(--text);resize:none;height:70px;outline:none;" placeholder="Paste setup code here..."></textarea>
+        <button onclick="importSetupCode()" style="width:100%;margin-top:8px;background:var(--gold);color:#000;border:none;border-radius:9px;padding:12px;font-family:Bebas Neue,sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Import &amp; Save</button>
+        <div id="setup-msg" style="display:none;margin-top:8px;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;text-align:center;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -683,13 +694,29 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
           <div class="add-user-card">
             <div class="add-fields">
               <input class="add-inp" id="add-name" placeholder="Full name" autocomplete="off">
-              <input class="add-inp" id="add-pin" type="password" placeholder="Access code (min 4 digits)" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password">
+              <input class="add-inp" id="add-pin" type="tel" placeholder="e.g. 1234" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
             </div>
             <div class="add-fields" style="margin-top:0">
               <input class="add-inp" id="add-role" placeholder="Role" value="Staff">
               <div></div>
             </div>
             <button class="add-submit" id="add-submit-btn">+ Authorise User</button>
+          </div>
+        </div>
+
+        <div class="admin-panel-sec">
+          <div class="section-label">DEVICE SYNC</div>
+          <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:18px;">
+            <div style="font-size:13px;color:var(--muted2);font-weight:600;margin-bottom:14px;line-height:1.6;">
+              Each device has its own storage. Use <strong style="color:var(--text)">Export Setup Code</strong> to get a code,
+              then open this app on any other device and tap <strong style="color:var(--text)">Setup this device</strong> on the login screen to import all users.
+            </div>
+            <button class="add-submit" onclick="exportSetupCode()" style="margin-bottom:10px;">&#8648; Export Setup Code</button>
+            <div id="export-code-box" style="display:none;margin-top:10px;">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);font-weight:700;margin-bottom:6px;">Copy this code &amp; paste on each new device:</div>
+              <div id="export-code-text" style="background:var(--s3);border:1px solid var(--border2);border-radius:9px;padding:12px 14px;font-family:monospace;font-size:12px;color:var(--gold);word-break:break-all;letter-spacing:.5px;cursor:pointer;" onclick="copyExportCode()" title="Tap to copy"></div>
+              <div style="font-size:11px;color:var(--muted2);margin-top:6px;text-align:center;">Tap the code to copy</div>
+            </div>
           </div>
         </div>
 
@@ -1574,6 +1601,70 @@ window.resetAll = function() {
   document.getElementById('items-grid').innerHTML = '<div class="grid-empty"><div class="grid-empty-icon">&#128203;</div><div>Upload a file to begin</div></div>';
   updateStats();
 };
+
+// ─── DEVICE SYNC ─────────────────────────────────────────────────────────────
+window.exportSetupCode = function() {
+  var staff = authUsers.filter(function(u) { return !u.isAdmin; });
+  if (!staff.length) { alert('No staff users to export yet. Add users first.'); return; }
+  var payload = btoa(unescape(encodeURIComponent(JSON.stringify(staff))));
+  document.getElementById('export-code-text').textContent = payload;
+  document.getElementById('export-code-box').style.display = 'block';
+};
+
+window.copyExportCode = function() {
+  var code = document.getElementById('export-code-text').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(function() { alert('Code copied to clipboard!'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = code; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    alert('Code copied!');
+  }
+};
+
+window.toggleSetup = function() {
+  var p = document.getElementById('setup-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+};
+
+window.importSetupCode = function() {
+  var code = (document.getElementById('setup-code-input').value || '').trim();
+  var msg  = document.getElementById('setup-msg');
+  if (!code) { showSetupMsg('error', 'Please paste the setup code.'); return; }
+  try {
+    var imported = JSON.parse(decodeURIComponent(escape(atob(code))));
+    if (!Array.isArray(imported) || !imported.length) throw new Error('empty');
+    // Validate each entry has required fields
+    imported.forEach(function(u) {
+      if (!u.name || !u.pin) throw new Error('invalid');
+    });
+    // Merge: keep existing staff, add new ones (no duplicates)
+    var existing = authUsers.filter(function(u) { return !u.isAdmin; });
+    imported.forEach(function(u) {
+      u.isAdmin = false;
+      if (!existing.find(function(e) { return e.pin === u.pin; })) {
+        existing.push(u);
+      }
+    });
+    // Re-build authUsers
+    authUsers = authUsers.filter(function(u) { return u.isAdmin; });
+    existing.forEach(function(u) { authUsers.push(u); });
+    saveAuth();
+    showSetupMsg('ok', '\u2713 ' + imported.length + ' user(s) imported! You can now log in.');
+    document.getElementById('setup-code-input').value = '';
+  } catch(e) {
+    showSetupMsg('error', 'Invalid setup code. Get a fresh one from your admin.');
+  }
+};
+
+function showSetupMsg(type, text) {
+  var m = document.getElementById('setup-msg');
+  m.style.display = 'block';
+  m.style.background = type === 'ok' ? 'rgba(0,230,118,.1)' : 'rgba(255,68,68,.1)';
+  m.style.border     = type === 'ok' ? '1px solid rgba(0,230,118,.3)' : '1px solid rgba(255,68,68,.3)';
+  m.style.color      = type === 'ok' ? 'var(--green)' : 'var(--red)';
+  m.textContent      = text;
+}
 
 // ─── UTILS ───────────────────────────────────────────────────────────────────
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
