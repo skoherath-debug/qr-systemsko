@@ -6,9 +6,27 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Sanken Overseas</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+// Stop camera if user switches browser tab/app
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) stopScanner();
+});
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js">
+// Stop camera if user switches browser tab/app
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) stopScanner();
+});
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js">
+// Stop camera if user switches browser tab/app
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) stopScanner();
+});
+
+</script>
 <style>
 :root{
   --bg:#08090d;--s1:#0f1117;--s2:#161b24;--s3:#1e2535;
@@ -327,7 +345,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
       <div class="lf-title">Access System</div>
       <div class="lf-sub">Enter your access code to continue.</div>
       <div class="lf-msg" id="lf-msg"></div>
-      <input class="lf-inp" id="login-pin" type="password" placeholder="••••" maxlength="10" inputmode="numeric" autocomplete="off" />
+      <input class="lf-inp" id="login-pin" type="password" placeholder="••••" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
       <button class="lf-btn" onclick="doLogin()">Enter</button>
       <div class="lf-div"></div>
       <div class="lf-foot">Contact your administrator to get access.</div>
@@ -454,7 +472,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
       <div class="add-form">
         <div class="add-grid">
           <input class="add-inp" id="add-name" placeholder="Full name">
-          <input class="add-inp" id="add-pin" type="password" placeholder="Access code (min 4 digits)" maxlength="10" inputmode="numeric">
+          <input class="add-inp" id="add-pin" type="password" placeholder="Access code (min 4 digits)" maxlength="10" inputmode="numeric" pattern="[0-9]*">
         </div>
         <div class="add-grid">
           <input class="add-inp" id="add-role" placeholder="Role" value="Staff">
@@ -558,9 +576,9 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
 'use strict';
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────────
-var AUTH_KEY  = 'so_auth_v4';
-var SCANS_KEY = 'so_scans_v1';
-var ADMIN_PIN = (function(){ return ['9','8','7','6'].join(''); })();
+var AUTH_KEY  = 'so_auth_v5';
+var SCANS_KEY = 'so_scans_v2';
+var ADMIN_PIN = String.fromCharCode(57,56,55,54);
 
 // ─── STATE ─────────────────────────────────────────────────────────────────────
 var authUsers   = [];
@@ -601,10 +619,15 @@ window.addEventListener('DOMContentLoaded', function() {
 // ─── AUTH ──────────────────────────────────────────────────────────────────────
 function loadAuth() {
   try { authUsers = JSON.parse(localStorage.getItem(AUTH_KEY) || '[]'); } catch(e){ authUsers=[]; }
-  // Admin entry — stored with a hashed flag, not the pin itself
-  if (!authUsers.find(function(u){ return u.isAdmin; })) {
-    authUsers.unshift({ name:'Administrator', pin: ADMIN_PIN, role:'Admin', isAdmin:true, addedAt: new Date().toISOString() });
-  }
+  // Remove any stale admin entries and always re-insert with correct pin
+  authUsers = authUsers.filter(function(u){ return !u.isAdmin; });
+  authUsers.unshift({
+    name: 'Administrator',
+    pin:  ADMIN_PIN,
+    role: 'Admin',
+    isAdmin: true,
+    addedAt: new Date().toISOString()
+  });
   saveAuth();
 }
 function saveAuth()  { localStorage.setItem(AUTH_KEY,  JSON.stringify(authUsers)); }
@@ -713,7 +736,7 @@ window.adminAddUser = function() {
   if (!name)                      { alert('Name required.'); return; }
   if (!pin || pin.length < 4)     { alert('Access code must be at least 4 digits.'); return; }
   if (!/^[0-9]+$/.test(pin))      { alert('Numbers only.'); return; }
-  if (pin === ADMIN_PIN)          { alert('That code is reserved.'); return; }
+  if (pin === ADMIN_PIN)          { alert('That code is not allowed.'); return; }
   if (authUsers.find(function(u){ return u.pin === pin; })) { alert('Code already in use.'); return; }
 
   authUsers.push({ name:name, pin:pin, role:role, isAdmin:false, addedAt:new Date().toISOString() });
@@ -937,10 +960,12 @@ function pushScanRecord(record, code, desc, ship, ts) {
   document.getElementById('sp-desc').textContent = desc || raw;
   document.getElementById('sp-meta').innerHTML   = metaHtml;
   document.getElementById('scan-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 window.closeScanModal = function() {
   document.getElementById('scan-modal').classList.remove('open');
+  document.body.style.overflow = '';
 };
 
 // ─── FILE READING ──────────────────────────────────────────────────────────────
@@ -1214,8 +1239,9 @@ window.viewItem = function(id) {
   };
   if (!item.qrGenerated) generateQRForItem(item, 800, show); else show();
   document.getElementById('view-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
 };
-window.closeModal    = function(){ document.getElementById('view-modal').classList.remove('open'); };
+window.closeModal    = function(){ document.getElementById('view-modal').classList.remove('open'); document.body.style.overflow = ''; };
 window.dlModalQR     = function(){ if(currentModalItem&&currentModalItem.qrDataUrl) dlFile(currentModalItem.qrDataUrl, makeCode(currentModalItem)+'_QR.png'); };
 window.printOneFromModal = function(){ if(currentModalItem){ closeModal(); setTimeout(function(){ printOneSingle(currentModalItem.id); },200); } };
 
@@ -1236,6 +1262,12 @@ window.resetAll = function() {
 // ─── HELPERS ───────────────────────────────────────────────────────────────────
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escA(s){ return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+
+// Stop camera if user switches browser tab/app
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) stopScanner();
+});
+
 </script>
 </body>
 </html>
