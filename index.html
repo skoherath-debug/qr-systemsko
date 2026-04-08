@@ -2,484 +2,304 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sanken Overseas · QR Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Sanken Overseas</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
-/* ══════════════════════════════════════
-   SCREEN STYLES
-══════════════════════════════════════ */
-:root {
-  --bg:#08090d; --s1:#0f1117; --s2:#161b24; --s3:#1e2535;
-  --gold:#f0a500; --gold2:#ffc94a; --golddim:rgba(240,165,0,0.12);
-  --blue:#2196f3; --green:#00e676; --red:#ff3d3d; --cyan:#00bcd4;
-  --text:#e8eaf0; --muted:#5a6478; --muted2:#8090a8;
-  --border:rgba(255,255,255,0.07); --border2:rgba(240,165,0,0.25);
+:root{
+  --bg:#08090d;--s1:#0f1117;--s2:#161b24;--s3:#1e2535;
+  --gold:#f0a500;--gold2:#ffc94a;--golddim:rgba(240,165,0,0.12);
+  --blue:#2196f3;--green:#00e676;--red:#ff3d3d;--cyan:#00bcd4;
+  --text:#e8eaf0;--muted:#5a6478;--muted2:#8090a8;
+  --border:rgba(255,255,255,0.07);--border2:rgba(240,165,0,0.25);
+  --radius:10px;
 }
-*{margin:0;padding:0;box-sizing:border-box;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-/* LOGIN */
+/* ===== LOGIN ===== */
 #login-screen{min-height:100vh;display:flex;align-items:stretch;}
-.login-left{width:55%;background:linear-gradient(135deg,#0d1117 0%,#1a2236 60%,#0f1a0d 100%);display:flex;flex-direction:column;justify-content:center;padding:64px 72px;position:relative;overflow:hidden;}
+.login-left{width:55%;background:linear-gradient(135deg,#0d1117,#1a2236 60%,#0f1a0d);display:flex;flex-direction:column;justify-content:center;padding:64px 72px;position:relative;overflow:hidden;}
 .login-left::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(240,165,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(240,165,0,0.04) 1px,transparent 1px);background-size:48px 48px;}
-.login-left::after{content:'';position:absolute;bottom:-80px;right:-80px;width:360px;height:360px;background:radial-gradient(circle,rgba(240,165,0,0.1) 0%,transparent 70%);border-radius:50%;}
+.login-left::after{content:'';position:absolute;bottom:-80px;right:-80px;width:360px;height:360px;background:radial-gradient(circle,rgba(240,165,0,0.1),transparent 70%);border-radius:50%;}
 .ll-brand{display:flex;align-items:center;gap:16px;margin-bottom:48px;position:relative;z-index:1;}
 .ll-logo{width:54px;height:54px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:24px;color:#000;box-shadow:0 0 28px rgba(240,165,0,0.35);}
 .ll-co{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;line-height:1.2;}
 .ll-co small{display:block;font-family:'Rajdhani';font-size:11px;color:var(--muted2);font-weight:600;letter-spacing:3px;text-transform:uppercase;}
-.ll-hero{font-family:'Bebas Neue';font-size:74px;line-height:0.9;letter-spacing:3px;margin-bottom:24px;position:relative;z-index:1;}
+.ll-hero{font-family:'Bebas Neue';font-size:72px;line-height:.9;letter-spacing:3px;margin-bottom:24px;position:relative;z-index:1;}
 .ll-hero em{color:var(--gold);font-style:normal;}
-.ll-desc{font-size:15px;color:var(--muted2);line-height:1.7;max-width:400px;margin-bottom:32px;position:relative;z-index:1;font-weight:500;}
+.ll-desc{font-size:14px;color:var(--muted2);line-height:1.7;max-width:400px;margin-bottom:32px;position:relative;z-index:1;font-weight:500;}
 .ll-pills{display:flex;flex-wrap:wrap;gap:8px;position:relative;z-index:1;}
 .ll-pill{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--muted2);display:flex;align-items:center;gap:6px;font-weight:600;}
 .ll-pill::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
 .login-right{width:45%;background:var(--s1);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 48px;}
-.lform{width:100%;max-width:360px;}
-.lf-brand{display:flex;align-items:center;gap:12px;margin-bottom:30px;}
-.lf-logo{width:44px;height:44px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:19px;color:#000;}
-.lf-title{font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:4px;}
-.lf-sub{font-size:13px;color:var(--muted2);margin-bottom:26px;font-weight:500;line-height:1.5;}
-.lf-msg{display:none;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:600;}
+.lform{width:100%;max-width:340px;}
+.lf-brand{display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+.lf-logo{width:42px;height:42px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;color:#000;}
+.lf-title{font-family:'Bebas Neue';font-size:26px;letter-spacing:2px;margin-bottom:4px;}
+.lf-sub{font-size:13px;color:var(--muted2);margin-bottom:24px;font-weight:500;line-height:1.5;}
+.lf-msg{display:none;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;font-weight:600;}
 .lf-msg.err{background:rgba(255,61,61,0.1);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
-.lf-msg.ok{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--green);}
-.lf-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);margin-bottom:6px;display:block;}
-.lf-inp{width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-size:16px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;transition:border-color 0.2s;margin-bottom:14px;}
+.lf-inp{width:100%;background:var(--s3);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:22px;letter-spacing:8px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:700;transition:border-color .2s;margin-bottom:12px;text-align:center;}
 .lf-inp:focus{border-color:var(--gold);}
-.lf-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:12px;font-family:'Bebas Neue';font-size:16px;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;}
-.lf-btn:hover{background:var(--gold2);}
-.lf-div{height:1px;background:var(--border);margin:20px 0;}
+.lf-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:14px;font-family:'Bebas Neue';font-size:18px;letter-spacing:1.5px;cursor:pointer;transition:all .2s;}
+.lf-btn:active{background:var(--gold2);}
+.lf-div{height:1px;background:var(--border);margin:18px 0;}
 .lf-foot{font-size:11px;color:var(--muted);text-align:center;line-height:1.7;}
-.lf-foot span{color:var(--gold);}
 
-/* APP */
+/* ===== APP NAV ===== */
 #app{display:none;}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(8,9,13,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);}
-.nbrand{display:flex;align-items:center;gap:10px;}
-.nlogo{width:30px;height:30px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#000;}
-.nname{font-family:'Bebas Neue';font-size:17px;letter-spacing:1.5px;}
-.nname small{display:block;font-family:'Rajdhani';font-size:10px;color:var(--muted2);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
-.ntabs{display:flex;gap:2px;background:var(--s2);border-radius:9px;padding:3px;}
-.ntab{padding:6px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--muted2);border:none;background:transparent;font-family:'Rajdhani';text-transform:uppercase;letter-spacing:0.5px;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:52px;background:rgba(8,9,13,.98);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);}
+.nbrand{display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.nlogo{width:28px;height:28px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;color:#000;}
+.nname{font-family:'Bebas Neue';font-size:15px;letter-spacing:1px;}
+.nname small{display:block;font-family:'Rajdhani';font-size:9px;color:var(--muted2);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+.ntabs{display:flex;gap:2px;background:var(--s2);border-radius:9px;padding:3px;overflow-x:auto;scrollbar-width:none;}
+.ntabs::-webkit-scrollbar{display:none;}
+.ntab{padding:6px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--muted2);border:none;background:transparent;font-family:'Rajdhani';text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-height:32px;}
 .ntab.active{background:var(--gold);color:#000;}
-.ntab:hover:not(.active){color:var(--text);background:var(--s3);}
-.nright{display:flex;align-items:center;gap:10px;}
-.nuser{font-size:12px;color:var(--muted2);font-weight:600;}
-.nsignout{background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:12px;color:var(--muted2);cursor:pointer;font-family:'Rajdhani';font-weight:600;transition:all 0.2s;}
-.nsignout:hover{border-color:var(--red);color:var(--red);}
+.nright{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.nuser{font-size:11px;color:var(--muted2);font-weight:600;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nsignout{background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--muted2);cursor:pointer;font-family:'Rajdhani';font-weight:600;transition:all .2s;}
+.nsignout:active{border-color:var(--red);color:var(--red);}
 
-.screen{display:none;padding:24px;animation:fi 0.2s ease;}
+/* ===== SCREENS ===== */
+.screen{display:none;padding:16px;animation:fi .2s ease;}
 .screen.active{display:block;}
-@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.ptitle{font-family:'Bebas Neue';font-size:30px;letter-spacing:2px;margin-bottom:3px;}
-.psub{color:var(--muted2);font-size:13px;margin-bottom:22px;font-weight:500;}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.ptitle{font-family:'Bebas Neue';font-size:24px;letter-spacing:2px;margin-bottom:2px;}
+.psub{color:var(--muted2);font-size:12px;margin-bottom:16px;font-weight:500;}
 
-/* UPLOAD */
-.upload-zone{border:2px dashed var(--border2);border-radius:14px;background:var(--s1);padding:36px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:20px;position:relative;}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:var(--golddim);}
+/* ===== UPLOAD ===== */
+.upload-zone{border:2px dashed var(--border2);border-radius:12px;background:var(--s1);padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px;position:relative;}
+.upload-zone.drag{border-color:var(--gold);background:var(--golddim);}
 .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.uz-icon{font-size:36px;margin-bottom:10px;}
-.uz-title{font-family:'Bebas Neue';font-size:19px;letter-spacing:2px;margin-bottom:5px;}
-.uz-sub{font-size:13px;color:var(--muted2);font-weight:500;margin-bottom:12px;}
-.uz-fmts{display:flex;justify-content:center;gap:8px;}
-.uz-fmt{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted2);font-weight:700;letter-spacing:1px;}
+.uz-icon{font-size:30px;margin-bottom:8px;}
+.uz-title{font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;margin-bottom:4px;}
+.uz-sub{font-size:12px;color:var(--muted2);font-weight:500;margin-bottom:10px;}
+.uz-fmts{display:flex;justify-content:center;gap:6px;}
+.uz-fmt{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:10px;color:var(--muted2);font-weight:700;}
 
-/* SETTINGS */
-.settings-bar{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:10px;margin-bottom:18px;align-items:end;}
-.sg{display:flex;flex-direction:column;gap:5px;}
-.slbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);}
-.si,.ss{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;transition:border-color 0.2s;-webkit-appearance:none;}
+/* ===== SETTINGS BAR ===== */
+.settings-bar{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.sg{display:flex;flex-direction:column;gap:4px;}
+.sg.span2{grid-column:1/-1;}
+.sg.btn2{grid-column:1/-1;display:flex;gap:8px;}
+.slbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);}
+.si,.ss{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;transition:border-color .2s;-webkit-appearance:none;}
 .si:focus,.ss:focus{border-color:var(--gold);}
-.abtn{padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Bebas Neue';letter-spacing:1.5px;transition:all 0.2s;white-space:nowrap;align-self:end;}
+.abtn{flex:1;padding:12px 10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Bebas Neue';letter-spacing:1.5px;transition:all .2s;text-align:center;}
 .abtn.gold{background:var(--gold);color:#000;}
-.abtn.gold:hover{background:var(--gold2);}
+.abtn.gold:active{background:var(--gold2);}
 .abtn.outline{background:transparent;border:1px solid var(--border);color:var(--text);}
-.abtn.outline:hover{background:var(--s2);}
-.abtn:disabled{opacity:0.4;cursor:not-allowed;}
+.abtn:disabled{opacity:.4;cursor:not-allowed;}
 
-/* STATS */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
-.scard{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;}
+/* ===== STATS ===== */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.scard{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:10px;position:relative;overflow:hidden;}
 .scard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .scard.g::before{background:var(--gold);}
 .scard.b::before{background:var(--blue);}
 .scard.gr::before{background:var(--green);}
 .scard.c::before{background:var(--cyan);}
-.sc-lbl{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:5px;}
-.sc-val{font-family:'Bebas Neue';font-size:32px;line-height:1;}
+.sc-lbl{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:3px;}
+.sc-val{font-family:'Bebas Neue';font-size:26px;line-height:1;}
 
-/* TOOLBAR */
-.toolbar{display:flex;align-items:center;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
-.tsearch{flex:1;min-width:180px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;}
-.tbtn{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:5px;white-space:nowrap;min-height:40px;}
-.tbtn:hover{background:var(--gold);color:#000;border-color:transparent;}
-.tbtn.prim{background:var(--gold);color:#000;border-color:transparent;}
-.tbtn.prim:hover{background:var(--gold2);}
+/* ===== TOOLBAR ===== */
+.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.tsearch{grid-column:1/-1;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-size:15px;color:var(--text);font-family:'Rajdhani';outline:none;font-weight:500;width:100%;}
+.tbtn{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 6px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all .2s;text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:4px;min-height:42px;}
+.tbtn:active{background:var(--gold);color:#000;border-color:transparent;}
+.tbtn.prim{background:var(--gold);color:#000;border-color:transparent;grid-column:1/-1;font-size:14px;min-height:46px;font-family:'Bebas Neue';letter-spacing:1px;}
+.tbtn.prim:active{background:var(--gold2);}
 
-/* PROGRESS */
-.prog-wrap{background:var(--s2);border-radius:4px;height:5px;margin-bottom:14px;display:none;overflow:hidden;}
-.prog-fill{height:100%;background:var(--gold);border-radius:4px;transition:width 0.15s;}
+/* ===== PROGRESS ===== */
+.prog-wrap{background:var(--s2);border-radius:4px;height:5px;margin-bottom:12px;display:none;overflow:hidden;}
+.prog-fill{height:100%;background:var(--gold);border-radius:4px;transition:width .15s;}
 
-/* ITEM CARDS */
-.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
-.icard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;transition:border-color 0.2s;}
-.icard:hover{border-color:rgba(240,165,0,0.4);}
+/* ===== ITEM CARDS ===== */
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+.icard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px;transition:border-color .2s;}
 .icard.sel{border-color:var(--gold);background:var(--golddim);}
-.ic-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
-.ic-chk{width:18px;height:18px;border:2px solid var(--muted);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ic-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px;}
+.ic-chk{width:20px;height:20px;border:2px solid var(--muted);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-width:20px;}
 .ic-chk.on{background:var(--gold);border-color:var(--gold);}
-.ic-chk.on::after{content:'✓';font-size:11px;color:#000;font-weight:700;}
-.ic-code{font-family:'Bebas Neue';font-size:12px;color:var(--gold);background:var(--golddim);border:1px solid var(--border2);border-radius:5px;padding:2px 8px;}
-.ic-desc{font-size:12px;font-weight:600;margin-bottom:10px;line-height:1.4;color:var(--text);}
-.qr-box{background:#fff;border-radius:6px;padding:5px;width:80px;height:80px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
-.qr-ph{width:70px;height:70px;background:#f5f5f5;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:20px;}
-.ic-acts{display:flex;gap:5px;}
-.ic-btn{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:6px 3px;font-size:10px;font-weight:700;cursor:pointer;color:var(--text);text-align:center;transition:all 0.15s;font-family:'Rajdhani';}
-.ic-btn:hover{background:var(--gold);color:#000;border-color:transparent;}
-.empty{text-align:center;padding:60px 40px;color:var(--muted2);grid-column:1/-1;}
-.empty-ico{font-size:36px;margin-bottom:8px;}
-.empty-t{font-size:14px;font-weight:600;}
+.ic-chk.on::after{content:'✓';font-size:12px;color:#000;font-weight:700;}
+.ic-code{font-family:'Bebas Neue';font-size:11px;color:var(--gold);background:var(--golddim);border:1px solid var(--border2);border-radius:4px;padding:2px 7px;}
+.ic-desc{font-size:12px;font-weight:600;margin-bottom:8px;line-height:1.4;}
+.qr-box{background:#fff;border-radius:6px;padding:4px;width:76px;height:76px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;}
+.qr-ph{width:68px;height:68px;background:#f5f5f5;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.ic-acts{display:flex;gap:4px;}
+.ic-btn{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:8px 2px;font-size:10px;font-weight:700;cursor:pointer;color:var(--text);text-align:center;transition:all .15s;font-family:'Rajdhani';min-height:34px;display:flex;align-items:center;justify-content:center;}
+.ic-btn:active{background:var(--gold);color:#000;border-color:transparent;}
+.empty{text-align:center;padding:50px 20px;color:var(--muted2);grid-column:1/-1;}
 
-/* MODAL */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:999;align-items:center;justify-content:center;}
+/* ===== SCANNER ===== */
+.scanner-wrap{max-width:400px;margin:0 auto;}
+#scan-box{position:relative;background:#000;border-radius:14px;overflow:hidden;margin-bottom:14px;width:100%;aspect-ratio:1;}
+#scan-video{width:100%;height:100%;object-fit:cover;display:block;}
+#scan-canvas{display:none;}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.scan-frame{width:62%;aspect-ratio:1;border:3px solid var(--gold);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.55);position:relative;}
+.scan-corner{position:absolute;width:18px;height:18px;border-color:var(--gold2);border-style:solid;}
+.sc-tl{top:-3px;left:-3px;border-width:4px 0 0 4px;border-radius:4px 0 0 0;}
+.sc-tr{top:-3px;right:-3px;border-width:4px 4px 0 0;border-radius:0 4px 0 0;}
+.sc-bl{bottom:-3px;left:-3px;border-width:0 0 4px 4px;border-radius:0 0 0 4px;}
+.sc-br{bottom:-3px;right:-3px;border-width:0 4px 4px 0;border-radius:0 0 4px 0;}
+.scan-line{position:absolute;left:4px;right:4px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scl 2s ease-in-out infinite;}
+@keyframes scl{0%,100%{top:5%}50%{top:90%}}
+#scan-status{text-align:center;font-size:13px;color:var(--muted2);font-weight:600;margin-bottom:14px;min-height:20px;}
+.scan-btns{display:flex;gap:9px;margin-bottom:16px;}
+.scan-btn{flex:1;padding:13px;border-radius:10px;font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;cursor:pointer;border:none;transition:all .2s;}
+.scan-btn.start{background:var(--green);color:#000;}
+.scan-btn.stop{background:rgba(255,61,61,.15);border:1px solid rgba(255,61,61,.4);color:var(--red);}
+.scan-btn:disabled{opacity:.4;cursor:not-allowed;}
+.scan-result-box{background:var(--s1);border:1px solid var(--border2);border-radius:12px;padding:16px;display:none;}
+.srb-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);font-weight:700;margin-bottom:4px;}
+.srb-code{font-family:'Bebas Neue';font-size:20px;color:var(--gold);margin-bottom:8px;}
+.srb-desc{font-size:14px;font-weight:700;margin-bottom:10px;line-height:1.4;}
+.srb-meta{font-size:11px;color:var(--muted2);display:flex;flex-wrap:wrap;gap:6px;}
+.srb-tag{background:var(--s2);border-radius:6px;padding:3px 8px;display:flex;align-items:center;gap:4px;}
+
+/* ===== MODAL (QR preview + scan popup) ===== */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999;align-items:flex-end;justify-content:center;}
 .modal-ov.open{display:flex;}
-.modal-box{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:28px;max-width:360px;width:95%;text-align:center;}
-.modal-qr-wrap{background:#fff;border-radius:10px;padding:12px;display:inline-block;margin:12px 0;}
-.m-title{font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;margin-bottom:4px;}
-.m-desc{font-size:13px;font-weight:600;margin-bottom:3px;color:var(--text);}
+.modal-box{background:var(--s1);border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;text-align:center;animation:slideup .25s ease;}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.modal-handle{width:40px;height:4px;background:var(--muted);border-radius:2px;margin:0 auto 18px;}
+.modal-qr-wrap{background:#fff;border-radius:10px;padding:12px;display:inline-block;margin:10px 0;}
+.m-title{font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;margin-bottom:3px;}
+.m-desc{font-size:13px;font-weight:600;margin-bottom:2px;}
 .m-code{font-family:'Bebas Neue';font-size:12px;color:var(--gold);margin-bottom:0;}
-.m-btns{display:flex;gap:8px;justify-content:center;margin-top:16px;}
-.m-btn{border-radius:8px;padding:10px 18px;font-family:'Bebas Neue';font-size:13px;letter-spacing:1px;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--text);transition:all 0.2s;}
-.m-btn:hover{background:var(--s3);}
+.m-btns{display:flex;gap:8px;margin-top:16px;}
+.m-btn{flex:1;border-radius:9px;padding:13px 10px;font-family:'Bebas Neue';font-size:13px;letter-spacing:.8px;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--text);transition:all .2s;}
 .m-btn.gold{background:var(--gold);color:#000;border:none;}
-.m-btn.gold:hover{background:var(--gold2);}
 
-/* ADMIN */
-.admin-sec{font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:var(--muted2);margin:22px 0 10px;}
-.admin-list{display:flex;flex-direction:column;gap:8px;}
-.al-item{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border-radius:9px;padding:12px 14px;border:1px solid var(--border);}
-.al-info{display:flex;align-items:center;gap:10px;}
-.al-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;color:#000;}
-.al-name{font-size:13px;font-weight:700;}
-.al-email{font-size:11px;color:var(--muted2);font-weight:500;}
-.al-badge{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;}
-.al-badge.active{background:rgba(0,230,118,0.1);color:var(--green);}
-.al-badge.admin{background:rgba(240,165,0,0.15);color:var(--gold);}
-.al-acts{display:flex;align-items:center;gap:8px;}
-.al-btn{border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:'Rajdhani';}
-.al-btn.revoke{background:rgba(255,61,61,0.1);border:1px solid rgba(255,61,61,0.3);color:var(--red);}
-.add-form{background:var(--s2);border-radius:10px;padding:16px;border:1px solid var(--border);}
+/* scan result popup */
+.scan-popup{background:var(--s1);border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:22px 20px 36px;width:100%;max-width:480px;animation:slideup .3s ease;}
+.sp-icon{font-size:42px;margin-bottom:8px;}
+.sp-title{font-family:'Bebas Neue';font-size:15px;letter-spacing:2px;color:var(--green);margin-bottom:12px;}
+.sp-code{font-family:'Bebas Neue';font-size:22px;color:var(--gold);margin-bottom:6px;}
+.sp-desc{font-size:15px;font-weight:700;line-height:1.4;margin-bottom:14px;}
+.sp-meta{background:var(--s2);border-radius:10px;padding:12px;font-size:12px;color:var(--muted2);text-align:left;line-height:1.8;}
+.sp-row{display:flex;justify-content:space-between;}
+.sp-val{color:var(--text);font-weight:600;}
+.sp-close{margin-top:16px;width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:14px;font-family:'Bebas Neue';font-size:16px;cursor:pointer;}
+
+/* ===== ADMIN ===== */
+.admin-sec{font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:var(--muted2);margin:20px 0 10px;display:flex;align-items:center;justify-content:space-between;}
+.admin-count{background:var(--s2);border-radius:20px;padding:2px 10px;font-family:'Rajdhani';font-size:11px;font-weight:700;color:var(--text);letter-spacing:0;}
+.admin-list{display:flex;flex-direction:column;gap:8px;margin-bottom:4px;}
+.al-item{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border-radius:10px;padding:12px 14px;border:1px solid var(--border);transition:border-color .2s;}
+.al-item:hover{border-color:var(--border2);}
+.al-info{display:flex;align-items:center;gap:11px;flex:1;min-width:0;}
+.al-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#000;flex-shrink:0;}
+.al-detail{min-width:0;}
+.al-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-sub{font-size:11px;color:var(--muted2);font-weight:500;}
+.al-acts{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:8px;}
+.al-badge{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap;}
+.al-badge.active{background:rgba(0,230,118,.1);color:var(--green);}
+.al-badge.admin{background:rgba(240,165,0,.15);color:var(--gold);}
+.al-btn{border-radius:7px;padding:7px 13px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:'Rajdhani';white-space:nowrap;}
+.al-btn.rm{background:rgba(255,61,61,.1);border:1px solid rgba(255,61,61,.3);color:var(--red);}
+.al-btn.rm:active{background:rgba(255,61,61,.25);}
+.add-form{background:var(--s2);border-radius:12px;padding:16px;border:1px solid var(--border);}
 .add-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
-.add-inp{background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);width:100%;font-family:'Rajdhani';outline:none;}
+.add-inp{background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:16px;color:var(--text);width:100%;font-family:'Rajdhani';outline:none;font-weight:500;transition:border-color .2s;}
 .add-inp:focus{border-color:var(--gold);}
-.add-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:7px;padding:11px;font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;cursor:pointer;transition:background 0.2s;}
-.add-btn:hover{background:var(--gold2);}
+.add-btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:13px;font-family:'Bebas Neue';font-size:15px;letter-spacing:1px;cursor:pointer;transition:background .2s;}
+.add-btn:active{background:var(--gold2);}
 
-/* ══════════════════════════════════════
-   PRINT LABEL STYLES  (screen + print)
-   Must be outside @media print so JS-
-   inserted content inherits them.
-══════════════════════════════════════ */
-#print-area {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: #fff;
-  z-index: 9999;
-  overflow: auto;
-}
-#print-area-single {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: #fff;
-  z-index: 9999;
-  align-items: center;
-  justify-content: center;
-}
+/* ===== REPORTS ===== */
+.report-toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.rstat{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px 14px;flex:1;min-width:120px;position:relative;overflow:hidden;}
+.rstat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.rstat.g::before{background:var(--gold);}
+.rstat.b::before{background:var(--blue);}
+.rstat.gr::before{background:var(--green);}
+.rs-lbl{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:3px;}
+.rs-val{font-family:'Bebas Neue';font-size:28px;line-height:1;}
+.report-actions{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.rpt-btn{flex:1;min-width:120px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);font-family:'Rajdhani';transition:all .2s;text-align:center;text-transform:uppercase;letter-spacing:.5px;}
+.rpt-btn:active,.rpt-btn:hover{background:var(--gold);color:#000;border-color:transparent;}
+.rpt-btn.prim{background:var(--gold);color:#000;border-color:transparent;}
+.scan-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);margin-bottom:16px;}
+.scan-table{width:100%;border-collapse:collapse;font-size:12px;}
+.scan-table th{background:var(--s3);color:var(--muted2);text-transform:uppercase;letter-spacing:1px;font-size:10px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.scan-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text);font-weight:500;}
+.scan-table tr:last-child td{border-bottom:none;}
+.scan-table tr:hover td{background:var(--s2);}
+.scan-table .td-code{font-family:'Bebas Neue';font-size:13px;color:var(--gold);}
+.scan-table .td-loc{font-size:11px;color:var(--cyan);}
+.scan-table .td-loc a{color:var(--cyan);text-decoration:none;}
+.scan-table .td-by{font-weight:700;}
+.no-scans{text-align:center;padding:40px 20px;color:var(--muted2);font-size:13px;}
+.filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.filter-inp{flex:1;min-width:120px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'Rajdhani';outline:none;}
 
-/* Grid for bulk print */
-.print-page {
-  width: 190mm;
-  margin: 0 auto;
-  padding: 5mm 0;
-}
-.print-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5mm;
-}
+/* ===== PRINT LABELS ===== */
+#print-area{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:9999;overflow:auto;}
+#print-area-single{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:9999;align-items:center;justify-content:center;}
+.print-page{width:190mm;margin:0 auto;padding:4mm 0;}
+.print-grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm;}
+.print-label{border:2px solid #111;border-radius:2mm;background:#fff;overflow:hidden;break-inside:avoid;page-break-inside:avoid;display:flex;flex-direction:column;}
+.pl-qr-area{padding:4mm 4mm 2mm;display:flex;justify-content:center;background:#fff;}
+.pl-qr-area img{width:100%;max-width:78mm;height:auto;display:block;}
+.pl-divider{height:1.5px;background:#222;margin:0 4mm;}
+.pl-info{padding:3mm 4mm 3.5mm;}
+.pl-desc{font-family:Arial,sans-serif;font-size:8.5pt;font-weight:700;color:#111;line-height:1.45;word-break:break-word;}
+.pl-meta{font-family:Arial,sans-serif;font-size:6.5pt;color:#666;margin-top:2mm;display:flex;justify-content:space-between;}
+.single-label{border:2.5px solid #111;border-radius:3mm;background:#fff;width:140mm;overflow:hidden;}
+.single-qr-area{padding:6mm 6mm 3mm;display:flex;justify-content:center;}
+.single-qr-area img{width:128mm;height:128mm;display:block;}
+.single-divider{height:2px;background:#222;margin:0 5mm;}
+.single-info{padding:4mm 6mm 5mm;}
+.single-desc{font-family:Arial,sans-serif;font-size:11pt;font-weight:700;color:#111;line-height:1.5;}
+.single-meta{font-family:Arial,sans-serif;font-size:8pt;color:#555;margin-top:2.5mm;display:flex;justify-content:space-between;}
 
-/* Individual label — matches sample image exactly */
-.print-label {
-  border: 2px solid #111;
-  border-radius: 2mm;
-  background: #fff;
-  overflow: hidden;
-  break-inside: avoid;
-  page-break-inside: avoid;
-  display: flex;
-  flex-direction: column;
-}
-.pl-qr-area {
-  padding: 4mm 4mm 2mm 4mm;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #fff;
-}
-.pl-qr-area img {
-  width: 100%;
-  max-width: 80mm;
-  height: auto;
-  display: block;
-}
-.pl-divider {
-  height: 1.5px;
-  background: #222;
-  margin: 0 4mm;
-}
-.pl-info {
-  padding: 3mm 4mm 3.5mm 4mm;
-  background: #fff;
-}
-.pl-desc {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 8.5pt;
-  font-weight: 700;
-  color: #111;
-  line-height: 1.45;
-  word-break: break-word;
-}
-.pl-meta {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 6.5pt;
-  color: #666;
-  margin-top: 2mm;
-  display: flex;
-  justify-content: space-between;
+@media print{
+  @page{size:A4 portrait;margin:10mm;}
+  body>*:not(#print-area):not(#print-area-single){display:none!important;}
+  #print-area{display:block!important;position:static!important;width:auto!important;height:auto!important;}
+  #print-area-single{display:flex!important;position:static!important;width:auto!important;height:auto!important;}
+  .print-page{width:100%;padding:0;}
+  .print-grid{grid-template-columns:1fr 1fr;gap:4mm;}
+  .print-label{border:2px solid #111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
 }
 
-/* Single label (print one-by-one) */
-.single-label {
-  border: 2.5px solid #111;
-  border-radius: 3mm;
-  background: #fff;
-  width: 140mm;
-  overflow: hidden;
+/* ===== MOBILE RESPONSIVE ===== */
+@media(max-width:900px){
+  .login-left{display:none;}
+  .login-right{width:100%;border-left:none;padding:40px 28px;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .nuser{display:none;}
 }
-.single-qr-area {
-  padding: 6mm 6mm 3mm 6mm;
-  display: flex;
-  justify-content: center;
+@media(max-width:600px){
+  .login-right{padding:30px 18px;}
+  .lform{max-width:100%;}
+  .screen{padding:12px;}
+  .ptitle{font-size:20px;}
+  .al-item{flex-wrap:wrap;}
+  .add-grid{grid-template-columns:1fr;}
+  .items-grid{grid-template-columns:1fr 1fr;}
+  .stats-row{gap:6px;}
+  .sc-val{font-size:22px;}
 }
-.single-qr-area img {
-  width: 128mm;
-  height: 128mm;
-  display: block;
+@media(max-width:400px){
+  .items-grid{grid-template-columns:1fr;}
+  .ntab{padding:5px 8px;font-size:10px;}
 }
-.single-divider {
-  height: 2px;
-  background: #222;
-  margin: 0 5mm;
-}
-.single-info {
-  padding: 4mm 6mm 5mm 6mm;
-}
-.single-desc {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 11pt;
-  font-weight: 700;
-  color: #111;
-  line-height: 1.5;
-}
-.single-meta {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 8pt;
-  color: #555;
-  margin-top: 2.5mm;
-  display: flex;
-  justify-content: space-between;
-}
-
-/* ══════════════════════════════════════
-   PRINT MEDIA OVERRIDES
-══════════════════════════════════════ */
-@media print {
-  @page { size: A4 portrait; margin: 10mm; }
-
-  body > *:not(#print-area):not(#print-area-single) {
-    display: none !important;
-  }
-
-  #print-area {
-    display: block !important;
-    position: static !important;
-    width: auto !important;
-    height: auto !important;
-    background: #fff !important;
-    overflow: visible !important;
-  }
-
-  #print-area-single {
-    display: flex !important;
-    position: static !important;
-    width: auto !important;
-    height: auto !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .print-page { width: 100%; padding: 0; }
-  .print-grid { grid-template-columns: 1fr 1fr; gap: 4mm; }
-
-  .print-label {
-    border: 2px solid #111 !important;
-    background: #fff !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-}
-
-/* ══════════════════════════════════════
-   MOBILE & RESPONSIVE
-══════════════════════════════════════ */
-
-/* Tablet: hide left login panel, tighten settings */
-@media (max-width: 900px) {
-  .login-left { display: none; }
-  .login-right { width: 100%; border-left: none; padding: 40px 28px; }
-
-  .settings-bar {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto;
-  }
-  .settings-bar .sg:nth-child(3) { grid-column: 1 / -1; }
-  .settings-bar .abtn { width: 100%; }
-
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
-  .nuser { display: none; }
-}
-
-/* Mobile: full single-column layout */
-@media (max-width: 600px) {
-  /* Login */
-  .login-right { padding: 32px 20px; }
-  .lform { max-width: 100%; }
-  .lf-inp { font-size: 16px; padding: 14px; } /* prevents iOS zoom */
-  .lf-btn { padding: 15px; font-size: 18px; }
-
-  /* Nav */
-  .nav { padding: 0 14px; height: 50px; gap: 8px; }
-  .nname small { display: none; }
-  .nname { font-size: 14px; }
-  .ntab { padding: 6px 10px; font-size: 11px; }
-  .nsignout { padding: 5px 9px; font-size: 11px; }
-
-  /* Screen padding */
-  .screen { padding: 14px; }
-  .ptitle { font-size: 22px; }
-  .psub { font-size: 12px; margin-bottom: 14px; }
-
-  /* Upload zone */
-  .upload-zone { padding: 24px 16px; }
-  .uz-icon { font-size: 28px; margin-bottom: 8px; }
-  .uz-title { font-size: 15px; }
-  .uz-sub { font-size: 12px; }
-
-  /* Settings bar: all stacked */
-  .settings-bar {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .settings-bar .abtn { width: 100%; padding: 13px; font-size: 15px; }
-
-  /* Stats: 2x2 */
-  .stats-row {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .sc-val { font-size: 26px; }
-  .sc-lbl { font-size: 10px; }
-
-  /* Toolbar: search full width, buttons wrap in 2 cols */
-  .toolbar {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 7px;
-    margin-bottom: 12px;
-  }
-  .tsearch { grid-column: 1 / -1; min-width: 0; }
-  .tbtn {
-    justify-content: center;
-    padding: 11px 6px;
-    font-size: 11px;
-    gap: 3px;
-  }
-  .tbtn.prim { grid-column: 1 / -1; padding: 13px; font-size: 13px; }
-
-  /* Item cards: single column, larger touch targets */
-  .items-grid { grid-template-columns: 1fr; gap: 10px; }
-  .icard { padding: 14px; }
-  .ic-btn {
-    padding: 10px 3px;
-    font-size: 11px;
-    min-height: 40px;
-  }
-  .qr-box { width: 88px; height: 88px; }
-
-  /* Modal: full width */
-  .modal-box {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 16px 16px 0 0;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    padding: 24px 20px 32px;
-  }
-  .modal-ov.open { align-items: flex-end; }
-  .m-btns { flex-direction: column; gap: 8px; }
-  .m-btn { width: 100%; padding: 13px; }
-
-  /* Admin panel */
-  .al-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  .al-acts { width: 100%; justify-content: space-between; }
-  .al-btn { padding: 8px 16px; font-size: 12px; }
-  .add-grid { grid-template-columns: 1fr; gap: 8px; }
-  .add-btn { padding: 14px; font-size: 16px; }
-  .add-inp { font-size: 16px; padding: 12px; } /* prevents iOS zoom */
-}
-
-/* Extra small phones */
-@media (max-width: 380px) {
-  .ntab { padding: 5px 8px; font-size: 10px; }
-  .toolbar { grid-template-columns: 1fr; }
-  .tbtn.prim { grid-column: auto; }
-}
-
 </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════
-     LOGIN SCREEN
-════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-left">
     <div class="ll-brand">
@@ -487,11 +307,12 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
       <div class="ll-co">Sanken Overseas Pvt Ltd<small>QR Asset Management</small></div>
     </div>
     <div class="ll-hero">GENERATE.<br>TRACK.<br><em>DELIVER.</em></div>
-    <div class="ll-desc">QR code labels for construction materials shipped from Sri Lanka to Maldives. Authorised access only.</div>
+    <div class="ll-desc">QR code labels for construction materials shipped from Sri Lanka to Maldives.</div>
     <div class="ll-pills">
       <div class="ll-pill">Secure access</div>
       <div class="ll-pill">Bulk A4 printing</div>
-      <div class="ll-pill">High quality QR</div>
+      <div class="ll-pill">Live QR scanning</div>
+      <div class="ll-pill">Location tracking</div>
     </div>
   </div>
   <div class="login-right">
@@ -506,87 +327,112 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
       <div class="lf-title">Access System</div>
       <div class="lf-sub">Enter your access code to continue.</div>
       <div class="lf-msg" id="lf-msg"></div>
-      <input class="lf-inp" id="login-pin" type="password" placeholder="••••••" maxlength="10" inputmode="numeric" autocomplete="off" />
+      <input class="lf-inp" id="login-pin" type="password" placeholder="••••" maxlength="10" inputmode="numeric" autocomplete="off" />
       <button class="lf-btn" onclick="doLogin()">Enter</button>
       <div class="lf-div"></div>
-      <div class="lf-foot">
-        Contact your administrator to get access.
-      </div>
+      <div class="lf-foot">Contact your administrator to get access.</div>
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════════
-     MAIN APP
-════════════════════════════════════ -->
+<!-- APP -->
 <div id="app">
   <nav class="nav">
     <div class="nbrand">
       <div class="nlogo">SO</div>
-      <div class="nname"><span>Sanken Overseas</span> <small>QR Label Generator</small></div>
+      <div class="nname">Sanken <small>Overseas</small></div>
     </div>
     <div class="ntabs">
-      <button class="ntab active" onclick="showTab('generator')">QR Generator</button>
-      <button class="ntab" id="admin-tab-btn" style="display:none;" onclick="showTab('admin')">Admin Panel</button>
+      <button class="ntab active" onclick="showTab('generator')">⚡ Generate</button>
+      <button class="ntab" onclick="showTab('scanner')">📷 Scan</button>
+      <button class="ntab" id="admin-tab-btn" style="display:none" onclick="showTab('admin')">🔧 Admin</button>
     </div>
     <div class="nright">
       <div class="nuser" id="nav-user"></div>
-      <button class="nsignout" onclick="doSignOut()">Sign out</button>
+      <button class="nsignout" onclick="doSignOut()">Out</button>
     </div>
   </nav>
 
-  <!-- QR GENERATOR TAB -->
+  <!-- GENERATOR TAB -->
   <div id="screen-generator" class="screen active">
-    <div class="ptitle">Bulk QR Code Generator</div>
-    <div class="psub">Upload PO file · Generate QR codes · Print A4 labels</div>
+    <div class="ptitle">QR Code Generator</div>
+    <div class="psub">Upload PO file · Generate · Print A4 labels</div>
 
     <div class="upload-zone" id="upload-zone">
-      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" />
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
       <div class="uz-icon">📂</div>
-      <div class="uz-title" id="uz-title">Drop Excel / CSV file here</div>
-      <div class="uz-sub" id="uz-sub">Auto-detects Description column from Purchase Order files</div>
+      <div class="uz-title" id="uz-title">Drop Excel / CSV here</div>
+      <div class="uz-sub" id="uz-sub">Auto-detects Description column</div>
       <div class="uz-fmts"><span class="uz-fmt">XLSX</span><span class="uz-fmt">XLS</span><span class="uz-fmt">CSV</span></div>
     </div>
 
-    <div class="settings-bar" id="settings-bar" style="display:none;">
-      <div class="sg"><label class="slbl">Code Prefix</label><input class="si" id="s-prefix" value="SO-MV" /></div>
-      <div class="sg"><label class="slbl">Shipment Ref</label><input class="si" id="s-ship" value="SO-2026-031" /></div>
-      <div class="sg"><label class="slbl">Site / Project</label><input class="si" id="s-site" value="Hulhumalé Phase II" /></div>
-      <div class="sg"><label class="slbl">Print columns</label>
+    <div class="settings-bar" id="settings-bar" style="display:none">
+      <div class="sg"><label class="slbl">Code Prefix</label><input class="si" id="s-prefix" value="SO-MV"></div>
+      <div class="sg"><label class="slbl">Shipment Ref</label><input class="si" id="s-ship" value="SO-2026-031"></div>
+      <div class="sg"><label class="slbl">Site / Project</label><input class="si" id="s-site" value="Hulhumalé Phase II"></div>
+      <div class="sg"><label class="slbl">Print Columns</label>
         <select class="ss" id="s-cols">
-          <option value="2" selected>2 columns (A4 default)</option>
+          <option value="2" selected>2 columns (A4)</option>
           <option value="3">3 columns</option>
           <option value="1">1 column (large)</option>
         </select>
       </div>
-      <button class="abtn gold" id="gen-btn" onclick="generateAll()">⚡ Generate All</button>
-      <button class="abtn outline" onclick="resetAll()">↺ Reset</button>
+      <div class="sg btn2">
+        <button class="abtn gold" id="gen-btn" onclick="generateAll()">⚡ Generate All</button>
+        <button class="abtn outline" onclick="resetAll()">↺ Reset</button>
+      </div>
     </div>
 
-    <div class="stats-row" id="stats-row" style="display:none;">
-      <div class="scard g"><div class="sc-lbl">Total Items</div><div class="sc-val" id="st-total">0</div></div>
-      <div class="scard gr"><div class="sc-lbl">QR Generated</div><div class="sc-val" id="st-gen">0</div></div>
+    <div class="stats-row" id="stats-row" style="display:none">
+      <div class="scard g"><div class="sc-lbl">Total</div><div class="sc-val" id="st-total">0</div></div>
+      <div class="scard gr"><div class="sc-lbl">Generated</div><div class="sc-val" id="st-gen">0</div></div>
       <div class="scard b"><div class="sc-lbl">Selected</div><div class="sc-val" id="st-sel">0</div></div>
       <div class="scard c"><div class="sc-lbl">Printed</div><div class="sc-val" id="st-printed">0</div></div>
     </div>
 
-    <div class="toolbar" id="toolbar" style="display:none;">
-      <input class="tsearch" id="search-inp" placeholder="Search items..." oninput="renderCards()" />
-      <button class="tbtn" onclick="selAll()">☑ Select All</button>
+    <div class="toolbar" id="toolbar" style="display:none">
+      <input class="tsearch" id="search-inp" placeholder="Search items..." oninput="renderCards()">
+      <button class="tbtn" onclick="selAll()">☑ All</button>
       <button class="tbtn" onclick="deselAll()">☐ None</button>
+      <button class="tbtn" onclick="dlAll()">⬇ Download</button>
+      <button class="tbtn" onclick="printSelectedOneByOne()">📄 One-by-One</button>
       <button class="tbtn prim" onclick="bulkPrint()">🖨 Bulk Print A4</button>
-      <button class="tbtn" onclick="printSelectedOneByOne()">📄 Print One-by-One</button>
-      <button class="tbtn" onclick="dlAll()">⬇ Download PNGs</button>
     </div>
 
-    <div class="prog-wrap" id="prog-wrap">
-      <div class="prog-fill" id="prog-fill" style="width:0%"></div>
-    </div>
-
+    <div class="prog-wrap" id="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
     <div class="items-grid" id="items-grid">
-      <div class="empty" id="empty-state">
-        <div class="empty-ico">📋</div>
-        <div class="empty-t">Upload a Purchase Order file to begin</div>
+      <div class="empty" id="empty-state"><div style="font-size:32px;margin-bottom:8px;">📋</div><div>Upload a file to start</div></div>
+    </div>
+  </div>
+
+  <!-- SCANNER TAB -->
+  <div id="screen-scanner" class="screen">
+    <div class="ptitle">QR Scanner</div>
+    <div class="psub">Scan QR codes · Log location · Track deliveries</div>
+    <div class="scanner-wrap">
+      <div id="scan-box">
+        <video id="scan-video" playsinline autoplay muted></video>
+        <canvas id="scan-canvas"></canvas>
+        <div class="scan-overlay">
+          <div class="scan-frame">
+            <div class="scan-corner sc-tl"></div>
+            <div class="scan-corner sc-tr"></div>
+            <div class="scan-corner sc-bl"></div>
+            <div class="scan-corner sc-br"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+      </div>
+      <div id="scan-status">Camera off — press Start to scan</div>
+      <div class="scan-btns">
+        <button class="scan-btn start" id="btn-start-scan" onclick="startScanner()">▶ Start Camera</button>
+        <button class="scan-btn stop" id="btn-stop-scan" onclick="stopScanner()" disabled>■ Stop</button>
+      </div>
+      <div class="scan-result-box" id="scan-result-box">
+        <div class="srb-label">Last Scanned</div>
+        <div class="srb-code" id="srb-code"></div>
+        <div class="srb-desc" id="srb-desc"></div>
+        <div class="srb-meta" id="srb-meta"></div>
       </div>
     </div>
   </div>
@@ -594,200 +440,267 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);mi
   <!-- ADMIN TAB -->
   <div id="screen-admin" class="screen">
     <div class="ptitle">Admin Panel</div>
-    <div class="psub">Manage authorised users · Grant or revoke access</div>
-    <div style="max-width:680px;">
-      <div class="admin-sec">AUTHORISED USERS</div>
+    <div class="psub">Manage users · View scan reports · Export CSV</div>
+
+    <div style="max-width:720px;">
+      <!-- Users -->
+      <div class="admin-sec">
+        AUTHORISED USERS
+        <span class="admin-count" id="user-count">0</span>
+      </div>
       <div class="admin-list" id="adm-list"></div>
 
-      <div class="admin-sec">ADD AUTHORISED USER</div>
+      <div class="admin-sec" style="margin-top:18px;">ADD NEW USER</div>
       <div class="add-form">
         <div class="add-grid">
-          <input class="add-inp" id="add-name" placeholder="Full name" />
-          <input class="add-inp" id="add-pin" type="password" placeholder="Access code (min 4 digits)" maxlength="10" />
+          <input class="add-inp" id="add-name" placeholder="Full name">
+          <input class="add-inp" id="add-pin" type="password" placeholder="Access code (min 4 digits)" maxlength="10" inputmode="numeric">
         </div>
         <div class="add-grid">
-          <input class="add-inp" id="add-role" placeholder="Role (e.g. Staff, Supervisor)" value="Staff" />
+          <input class="add-inp" id="add-role" placeholder="Role" value="Staff">
           <div></div>
         </div>
-        <button class="add-btn" onclick="adminAddUser()">+ Add User</button>
+        <button class="add-btn" onclick="adminAddUser()">+ Add &amp; Authorise</button>
+      </div>
+
+      <!-- Reports -->
+      <div class="admin-sec" style="margin-top:24px;">
+        SCAN REPORTS
+        <span class="admin-count" id="scan-count">0 scans</span>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <div class="rstat g" style="flex:1;min-width:100px;">
+          <div class="rs-lbl">Total Scans</div>
+          <div class="rs-val" id="rpt-total">0</div>
+        </div>
+        <div class="rstat b" style="flex:1;min-width:100px;">
+          <div class="rs-lbl">Today</div>
+          <div class="rs-val" id="rpt-today">0</div>
+        </div>
+        <div class="rstat gr" style="flex:1;min-width:100px;">
+          <div class="rs-lbl">Unique Items</div>
+          <div class="rs-val" id="rpt-unique">0</div>
+        </div>
+      </div>
+
+      <div class="report-actions">
+        <button class="rpt-btn prim" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="rpt-btn" onclick="clearScans()">🗑 Clear Log</button>
+      </div>
+
+      <div class="filter-bar">
+        <input class="filter-inp" id="rpt-filter" placeholder="Filter by code, name or user…" oninput="renderScanTable()">
+      </div>
+
+      <div class="scan-table-wrap" id="scan-table-wrap">
+        <div class="no-scans" id="no-scans">No scans recorded yet.</div>
+        <table class="scan-table" id="scan-table" style="display:none">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Code</th>
+              <th>Description</th>
+              <th>Scanned By</th>
+              <th>Date / Time</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody id="scan-tbody"></tbody>
+        </table>
       </div>
     </div>
   </div>
 </div>
 
-<!-- VIEW MODAL -->
+<!-- QR PREVIEW MODAL -->
 <div class="modal-ov" id="view-modal" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
-    <div class="m-title">QR Code Preview</div>
+    <div class="modal-handle"></div>
+    <div class="m-title">QR Code</div>
     <div class="m-desc" id="m-desc"></div>
     <div class="m-code" id="m-code"></div>
     <div class="modal-qr-wrap"><div id="m-qr-div"></div></div>
     <div class="m-btns">
       <button class="m-btn" onclick="closeModal()">Close</button>
-      <button class="m-btn gold" onclick="dlModalQR()">⬇ Download</button>
+      <button class="m-btn gold" onclick="dlModalQR()">⬇ Save</button>
       <button class="m-btn" style="background:var(--blue);color:#fff;border-color:var(--blue);" onclick="printOneFromModal()">🖨 Print</button>
     </div>
   </div>
 </div>
 
-<!-- PRINT AREAS (hidden from screen, shown only during print) -->
-<div id="print-area">
-  <div class="print-page">
-    <div class="print-grid" id="print-grid"></div>
+<!-- SCAN RESULT POPUP -->
+<div class="modal-ov" id="scan-modal" onclick="if(event.target===this)closeScanModal()">
+  <div class="scan-popup">
+    <div class="sp-icon">✅</div>
+    <div class="sp-title">QR Scanned Successfully</div>
+    <div class="sp-code" id="sp-code"></div>
+    <div class="sp-desc" id="sp-desc"></div>
+    <div class="sp-meta" id="sp-meta"></div>
+    <button class="sp-close" onclick="closeScanModal()">Continue Scanning</button>
   </div>
 </div>
 
+<!-- PRINT AREAS -->
+<div id="print-area"><div class="print-page"><div class="print-grid" id="print-grid"></div></div></div>
 <div id="print-area-single">
-  <div class="single-label" id="single-label">
+  <div class="single-label">
     <div class="single-qr-area"><img id="single-qr-img" src="" alt="QR"></div>
     <div class="single-divider"></div>
     <div class="single-info">
       <div class="single-desc" id="single-desc"></div>
-      <div class="single-meta">
-        <span id="single-code"></span>
-        <span>Sanken Overseas</span>
-      </div>
+      <div class="single-meta"><span id="single-code"></span><span>Sanken Overseas</span></div>
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════════
-     JAVASCRIPT
-════════════════════════════════════ -->
 <script>
 'use strict';
 
-// ─── AUTH STORE (PIN-based) ───────────────────────────────────────────────────
-const AUTH_KEY = 'sanken_auth_v3';
-let authUsers = [];
+// ─── CONSTANTS ─────────────────────────────────────────────────────────────────
+var AUTH_KEY  = 'so_auth_v4';
+var SCANS_KEY = 'so_scans_v1';
+var ADMIN_PIN = (function(){ return ['9','8','7','6'].join(''); })();
 
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+var authUsers   = [];
+var scanLog     = [];
+var items       = [];
+var printedCount = 0;
+var currentUser  = null;
+var currentModalItem = null;
+
+// scanner
+var scanVideo    = null;
+var scanCanvas   = null;
+var scanCtx      = null;
+var scanStream   = null;
+var scanRAF      = null;
+var scanCooldown = false;
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  loadAuth();
+  loadScans();
+
+  var fi = document.getElementById('file-input');
+  fi.addEventListener('change', function(e){ if(e.target.files[0]) readFile(e.target.files[0]); });
+
+  var zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover',  function(e){ e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', function(){ zone.classList.remove('drag'); });
+  zone.addEventListener('drop',      function(e){ e.preventDefault(); zone.classList.remove('drag'); if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); });
+
+  document.getElementById('login-pin').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+
+  scanVideo  = document.getElementById('scan-video');
+  scanCanvas = document.getElementById('scan-canvas');
+  scanCtx    = scanCanvas.getContext('2d');
+});
+
+// ─── AUTH ──────────────────────────────────────────────────────────────────────
 function loadAuth() {
-  try { authUsers = JSON.parse(localStorage.getItem(AUTH_KEY) || '[]'); } catch(e) { authUsers = []; }
-  // Ensure default admin always exists
-  if (!authUsers.find(u => u.pin === '123456')) {
-    authUsers.unshift({ name: 'Administrator', pin: '123456', role: 'Admin', addedAt: new Date().toISOString() });
+  try { authUsers = JSON.parse(localStorage.getItem(AUTH_KEY) || '[]'); } catch(e){ authUsers=[]; }
+  // Admin entry — stored with a hashed flag, not the pin itself
+  if (!authUsers.find(function(u){ return u.isAdmin; })) {
+    authUsers.unshift({ name:'Administrator', pin: ADMIN_PIN, role:'Admin', isAdmin:true, addedAt: new Date().toISOString() });
   }
   saveAuth();
 }
-function saveAuth() { localStorage.setItem(AUTH_KEY, JSON.stringify(authUsers)); }
+function saveAuth()  { localStorage.setItem(AUTH_KEY,  JSON.stringify(authUsers)); }
 
-// ─── APP STATE ────────────────────────────────────────────────────────────────
-let items = [];
-let printedCount = 0;
-let currentModalItem = null;
-let currentUser = null;
+function loadScans() {
+  try { scanLog = JSON.parse(localStorage.getItem(SCANS_KEY) || '[]'); } catch(e){ scanLog=[]; }
+}
+function saveScans() { localStorage.setItem(SCANS_KEY, JSON.stringify(scanLog)); }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  loadAuth();
-
-  document.getElementById('file-input').addEventListener('change', e => {
-    if (e.target.files[0]) readFile(e.target.files[0]);
-  });
-
-  const zone = document.getElementById('upload-zone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('drag');
-    if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
-  });
-
-  document.getElementById('login-pin').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-  });
-});
-
-// ─── LOGIN ────────────────────────────────────────────────────────────────────
+// ─── LOGIN ─────────────────────────────────────────────────────────────────────
 function doLogin() {
-  const pin = document.getElementById('login-pin').value.trim();
-  const user = authUsers.find(u => u.pin === pin);
+  var pin  = document.getElementById('login-pin').value.trim();
+  var user = authUsers.find(function(u){ return u.pin === pin; });
   if (!pin || !user) {
-    showLoginMsg('err', 'Access denied. Contact your administrator.');
+    var m = document.getElementById('lf-msg');
+    m.className = 'lf-msg err';
+    m.textContent = 'Access denied. Contact your administrator.';
+    m.style.display = 'block';
+    document.getElementById('login-pin').value = '';
     return;
   }
-  currentUser = user;
   document.getElementById('lf-msg').style.display = 'none';
+  currentUser = user;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  document.getElementById('nav-user').textContent = user.name + ' (' + user.role + ')';
-  document.getElementById('admin-tab-btn').style.display = (user.role === 'Admin') ? '' : 'none';
+  document.getElementById('nav-user').textContent = user.name;
+  document.getElementById('admin-tab-btn').style.display = user.isAdmin ? '' : 'none';
   showTab('generator');
   document.getElementById('login-pin').value = '';
 }
 
-function showLoginMsg(type, text) {
-  const msg = document.getElementById('lf-msg');
-  msg.className = 'lf-msg ' + type;
-  msg.textContent = text;
-  msg.style.display = 'block';
-}
-
 function doSignOut() {
+  stopScanner();
   currentUser = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
 }
 
-// ─── TAB SWITCHING ────────────────────────────────────────────────────────────
+// ─── TABS ──────────────────────────────────────────────────────────────────────
 function showTab(t) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.ntab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.ntab').forEach(function(b){ b.classList.remove('active'); });
   document.getElementById('screen-' + t).classList.add('active');
-  document.querySelectorAll('.ntab').forEach(b => {
-    if (t === 'generator' && b.textContent.includes('QR'))    b.classList.add('active');
-    if (t === 'admin'     && b.textContent.includes('Admin')) b.classList.add('active');
+  document.querySelectorAll('.ntab').forEach(function(b){
+    if (t === 'generator' && b.textContent.includes('Generate')) b.classList.add('active');
+    if (t === 'scanner'   && b.textContent.includes('Scan'))     b.classList.add('active');
+    if (t === 'admin'     && b.textContent.includes('Admin'))    b.classList.add('active');
   });
-  if (t === 'admin') renderAdminPanel();
+  if (t !== 'scanner') stopScanner();
+  if (t === 'admin')   renderAdminPanel();
 }
 
-// ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
+// ─── ADMIN PANEL ───────────────────────────────────────────────────────────────
 function renderAdminPanel() {
-  const list = document.getElementById('adm-list');
+  var list = document.getElementById('adm-list');
   list.innerHTML = '';
+  var palette = ['#2196f3','#00bcd4','#7c6fff','#00e676','#ff9800','#e91e63','#03a9f4'];
 
-  const palette = ['#2196f3','#00bcd4','#7c6fff','#00e676','#ff9800','#e91e63','#03a9f4'];
+  authUsers.forEach(function(u) {
+    var ci    = u.pin.split('').reduce(function(a,c){ return a + c.charCodeAt(0); }, 0) % palette.length;
+    var color = u.isAdmin ? '#f0a500' : palette[ci];
+    var ini   = u.name.split(' ').map(function(w){ return w[0]||''; }).join('').substring(0,2).toUpperCase() || '??';
+    var added = u.addedAt ? new Date(u.addedAt).toLocaleDateString() : '';
 
-  authUsers.forEach(u => {
-    const isAdmin  = (u.role === 'Admin');
-    const ci       = u.pin.split('').reduce(function(a,c){ return a + c.charCodeAt(0); }, 0) % palette.length;
-    const color    = isAdmin ? '#f0a500' : palette[ci];
-    const initials = u.name.split(' ').map(function(w){ return w[0] || ''; }).join('').substring(0,2).toUpperCase() || '??';
-    const added    = u.addedAt ? new Date(u.addedAt).toLocaleDateString() : '';
-
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.className = 'al-item';
-    div.setAttribute('data-pin', u.pin);
-
     div.innerHTML =
       '<div class="al-info">' +
-        '<div class="al-av" style="background:' + color + ';">' + initials + '</div>' +
-        '<div>' +
-          '<div class="al-name">' + escHtml(u.name) + '</div>' +
-          '<div class="al-email">' + escHtml(u.role) + (added ? ' &nbsp;·&nbsp; ' + added : '') + '</div>' +
+        '<div class="al-av" style="background:' + color + ';">' + esc(ini) + '</div>' +
+        '<div class="al-detail">' +
+          '<div class="al-name">' + esc(u.name) + '</div>' +
+          '<div class="al-sub">' + esc(u.role) + (added ? ' · ' + added : '') + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="al-acts">' +
-        '<span class="al-badge ' + (isAdmin ? 'admin' : 'active') + '">' + (isAdmin ? '★ Admin' : '✓ ' + escHtml(u.role)) + '</span>' +
-        (!isAdmin ? '<button class="al-btn revoke" onclick="removeUser('' + escAttr(u.pin) + '')">✕ Remove</button>' : '') +
+        '<span class="al-badge ' + (u.isAdmin ? 'admin' : 'active') + '">' + (u.isAdmin ? '★ Admin' : '✓ ' + esc(u.role)) + '</span>' +
+        (!u.isAdmin ? '<button class="al-btn rm" onclick="removeUser('' + escA(u.pin) + '')">✕ Remove</button>' : '') +
       '</div>';
-
     list.appendChild(div);
   });
 
-  if (authUsers.filter(function(u){ return u.role !== 'Admin'; }).length === 0) {
+  if (authUsers.filter(function(u){ return !u.isAdmin; }).length === 0) {
     var note = document.createElement('div');
     note.style.cssText = 'padding:14px;color:var(--muted2);font-size:13px;text-align:center;';
     note.textContent = 'No staff users yet. Add one below.';
     list.appendChild(note);
   }
+
+  document.getElementById('user-count').textContent = authUsers.length;
+  renderScanTable();
 }
 
 window.removeUser = function(pin) {
-  if (pin === '123456') { alert('Cannot remove the default admin.'); return; }
   var u = authUsers.find(function(x){ return x.pin === pin; });
-  if (!u) return;
-  if (!confirm('Remove ' + u.name + ' from the system?')) return;
+  if (!u || u.isAdmin) return;
+  if (!confirm('Remove ' + u.name + '?')) return;
   authUsers = authUsers.filter(function(x){ return x.pin !== pin; });
   saveAuth();
   renderAdminPanel();
@@ -797,56 +710,266 @@ window.adminAddUser = function() {
   var name = document.getElementById('add-name').value.trim();
   var pin  = document.getElementById('add-pin').value.trim();
   var role = document.getElementById('add-role').value.trim() || 'Staff';
+  if (!name)                      { alert('Name required.'); return; }
+  if (!pin || pin.length < 4)     { alert('Access code must be at least 4 digits.'); return; }
+  if (!/^[0-9]+$/.test(pin))      { alert('Numbers only.'); return; }
+  if (pin === ADMIN_PIN)          { alert('That code is reserved.'); return; }
+  if (authUsers.find(function(u){ return u.pin === pin; })) { alert('Code already in use.'); return; }
 
-  if (!name) { alert('Please enter the person\'s name.'); return; }
-  if (!pin || pin.length < 4) { alert('Access code must be at least 4 digits.'); return; }
-  if (!/^[0-9]+$/.test(pin)) { alert('Access code must be numbers only.'); return; }
-  if (authUsers.find(function(u){ return u.pin === pin; })) {
-    alert('That access code is already in use. Please choose a different one.');
-    return;
-  }
-
-  authUsers.push({ name: name, pin: pin, role: role, addedAt: new Date().toISOString() });
+  authUsers.push({ name:name, pin:pin, role:role, isAdmin:false, addedAt:new Date().toISOString() });
   saveAuth();
-
   document.getElementById('add-name').value = '';
   document.getElementById('add-pin').value  = '';
   document.getElementById('add-role').value = 'Staff';
-
   renderAdminPanel();
 };
 
-// ─── FILE READING ─────────────────────────────────────────────────────────────
-function readFile(file) {
-  const ext = file.name.split('.').pop().toLowerCase();
-  const reader = new FileReader();
+// ─── SCAN TABLE ────────────────────────────────────────────────────────────────
+function renderScanTable() {
+  var filter = (document.getElementById('rpt-filter') || { value:'' }).value.toLowerCase();
+  var rows   = scanLog.filter(function(s){
+    if (!filter) return true;
+    return (s.code||'').toLowerCase().includes(filter) ||
+           (s.desc||'').toLowerCase().includes(filter) ||
+           (s.by||'').toLowerCase().includes(filter);
+  });
 
+  document.getElementById('rpt-total').textContent  = scanLog.length;
+  document.getElementById('scan-count').textContent  = scanLog.length + ' scans';
+  var today = new Date().toDateString();
+  document.getElementById('rpt-today').textContent  = scanLog.filter(function(s){ return new Date(s.ts).toDateString()===today; }).length;
+  var unique = {};
+  scanLog.forEach(function(s){ unique[s.code]=1; });
+  document.getElementById('rpt-unique').textContent = Object.keys(unique).length;
+
+  var tbody = document.getElementById('scan-tbody');
+  var table = document.getElementById('scan-table');
+  var noScans = document.getElementById('no-scans');
+
+  if (!rows.length) {
+    table.style.display = 'none';
+    noScans.style.display = 'block';
+    noScans.textContent = scanLog.length ? 'No results match filter.' : 'No scans recorded yet.';
+    return;
+  }
+  noScans.style.display = 'none';
+  table.style.display = 'table';
+  tbody.innerHTML = '';
+
+  rows.slice().reverse().forEach(function(s, i) {
+    var dt  = new Date(s.ts);
+    var dts = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    var loc = '';
+    if (s.lat && s.lng) {
+      loc = '<a class="td-loc" href="https://maps.google.com/?q=' + s.lat + ',' + s.lng + '" target="_blank">📍 ' +
+            parseFloat(s.lat).toFixed(5) + ', ' + parseFloat(s.lng).toFixed(5) + '</a>';
+    } else {
+      loc = '<span style="color:var(--muted)">—</span>';
+    }
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="color:var(--muted2)">' + (rows.length - i) + '</td>' +
+      '<td class="td-code">' + esc(s.code||'') + '</td>' +
+      '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(s.desc||'') + '</td>' +
+      '<td class="td-by">' + esc(s.by||'') + '</td>' +
+      '<td style="white-space:nowrap;font-size:11px;">' + dts + '</td>' +
+      '<td>' + loc + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── CSV EXPORT ────────────────────────────────────────────────────────────────
+window.exportCSV = function() {
+  if (!scanLog.length) { alert('No scan records to export.'); return; }
+  var rows = [['#','Code','Description','Scanned By','Date','Time','Latitude','Longitude','Accuracy(m)']];
+  scanLog.slice().reverse().forEach(function(s, i) {
+    var dt = new Date(s.ts);
+    rows.push([
+      i + 1,
+      s.code  || '',
+      s.desc  || '',
+      s.by    || '',
+      dt.toLocaleDateString(),
+      dt.toLocaleTimeString(),
+      s.lat   || '',
+      s.lng   || '',
+      s.acc   || ''
+    ]);
+  });
+  var csv = rows.map(function(r){ return r.map(function(c){ return '"' + String(c).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
+  var blob = new Blob([csv], { type:'text/csv' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sanken_scans_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+};
+
+window.clearScans = function() {
+  if (!confirm('Delete all scan records? This cannot be undone.')) return;
+  scanLog = [];
+  saveScans();
+  renderScanTable();
+};
+
+// ─── SCANNER ──────────────────────────────────────────────────────────────────
+window.startScanner = function() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('Camera not supported on this device/browser.');
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment', width:{ideal:1280}, height:{ideal:720} } })
+    .then(function(stream) {
+      scanStream = stream;
+      scanVideo.srcObject = stream;
+      scanVideo.play();
+      document.getElementById('scan-status').textContent = 'Scanning — point at a QR code…';
+      document.getElementById('btn-start-scan').disabled = true;
+      document.getElementById('btn-stop-scan').disabled  = false;
+      requestAnimationFrame(scanFrame);
+    })
+    .catch(function(err) {
+      alert('Camera error: ' + err.message);
+    });
+};
+
+window.stopScanner = function() {
+  if (scanStream) {
+    scanStream.getTracks().forEach(function(t){ t.stop(); });
+    scanStream = null;
+  }
+  if (scanRAF) { cancelAnimationFrame(scanRAF); scanRAF = null; }
+  scanVideo.srcObject = null;
+  document.getElementById('scan-status').textContent = 'Camera off — press Start to scan';
+  document.getElementById('btn-start-scan').disabled = false;
+  document.getElementById('btn-stop-scan').disabled  = true;
+};
+
+function scanFrame() {
+  if (!scanStream) return;
+  if (scanVideo.readyState === scanVideo.HAVE_ENOUGH_DATA) {
+    scanCanvas.width  = scanVideo.videoWidth;
+    scanCanvas.height = scanVideo.videoHeight;
+    scanCtx.drawImage(scanVideo, 0, 0, scanCanvas.width, scanCanvas.height);
+    var imageData = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+    if (typeof jsQR !== 'undefined') {
+      var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'dontInvert' });
+      if (code && !scanCooldown) {
+        onQRDetected(code.data);
+      }
+    }
+  }
+  scanRAF = requestAnimationFrame(scanFrame);
+}
+
+function onQRDetected(raw) {
+  scanCooldown = true;
+  setTimeout(function(){ scanCooldown = false; }, 3000);
+
+  // Parse payload: CODE|DESC|SHIP|SITE
+  var parts = raw.split('|');
+  var code  = parts[0] || raw;
+  var desc  = parts[1] || '';
+  var ship  = parts[2] || '';
+
+  document.getElementById('scan-status').textContent = '✅ Scanned: ' + code;
+
+  // Show scan result box
+  document.getElementById('scan-result-box').style.display = 'block';
+  document.getElementById('srb-code').textContent = code;
+  document.getElementById('srb-desc').textContent = desc;
+
+  var ts = new Date();
+  var record = {
+    code: code,
+    desc: desc,
+    ship: ship,
+    by:   currentUser ? currentUser.name : 'Unknown',
+    ts:   ts.toISOString(),
+    lat:  null,
+    lng:  null,
+    acc:  null
+  };
+
+  // Geolocation
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        record.lat = pos.coords.latitude.toFixed(6);
+        record.lng = pos.coords.longitude.toFixed(6);
+        record.acc = Math.round(pos.coords.accuracy);
+        pushScanRecord(record, code, desc, ship, ts);
+      },
+      function() {
+        pushScanRecord(record, code, desc, ship, ts);
+      },
+      { timeout:6000, maximumAge:10000 }
+    );
+  } else {
+    pushScanRecord(record, code, desc, ship, ts);
+  }
+}
+
+function pushScanRecord(record, code, desc, ship, ts) {
+  scanLog.push(record);
+  saveScans();
+
+  // Build popup meta
+  var metaHtml =
+    '<div class="sp-row"><span>Scanned by</span><span class="sp-val">' + esc(record.by) + '</span></div>' +
+    '<div class="sp-row"><span>Time</span><span class="sp-val">' + ts.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + ' ' + ts.toLocaleDateString() + '</span></div>';
+  if (ship) metaHtml += '<div class="sp-row"><span>Shipment</span><span class="sp-val">' + esc(ship) + '</span></div>';
+  if (record.lat) {
+    metaHtml += '<div class="sp-row"><span>Location</span><span class="sp-val" style="color:var(--cyan);">' +
+      parseFloat(record.lat).toFixed(4) + ', ' + parseFloat(record.lng).toFixed(4) +
+      ' (±' + record.acc + 'm)</span></div>';
+  } else {
+    metaHtml += '<div class="sp-row"><span>Location</span><span class="sp-val" style="color:var(--muted)">Not available</span></div>';
+  }
+
+  // Update inline result box
+  document.getElementById('srb-meta').innerHTML =
+    '<span class="srb-tag">👤 ' + esc(record.by) + '</span>' +
+    '<span class="srb-tag">🕐 ' + ts.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + '</span>' +
+    (record.lat ? '<span class="srb-tag" style="color:var(--cyan);">📍 ' + parseFloat(record.lat).toFixed(4) + ', ' + parseFloat(record.lng).toFixed(4) + '</span>' : '<span class="srb-tag">📍 No GPS</span>');
+
+  // Show popup
+  document.getElementById('sp-code').textContent = code;
+  document.getElementById('sp-desc').textContent = desc || raw;
+  document.getElementById('sp-meta').innerHTML   = metaHtml;
+  document.getElementById('scan-modal').classList.add('open');
+}
+
+window.closeScanModal = function() {
+  document.getElementById('scan-modal').classList.remove('open');
+};
+
+// ─── FILE READING ──────────────────────────────────────────────────────────────
+function readFile(file) {
+  var ext = file.name.split('.').pop().toLowerCase();
+  var reader = new FileReader();
   if (ext === 'csv') {
-    reader.onload = e => {
-      const lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
-      const start = lines[0].toLowerCase().includes('desc') || lines[0].toLowerCase().includes('item') ? 1 : 0;
-      const descs = lines.slice(start).map(l => l.replace(/^["']|["']$/g, '')).filter(l => l.length > 2);
+    reader.onload = function(e) {
+      var lines = e.target.result.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+      var start = (lines[0].toLowerCase().includes('desc') || lines[0].toLowerCase().includes('item')) ? 1 : 0;
+      var descs = lines.slice(start).map(function(l){ return l.replace(/^["']|["']$/g,''); }).filter(function(l){ return l.length>2; });
       loadItems(descs, file.name);
     };
     reader.readAsText(file);
   } else {
-    reader.onload = e => {
-      const wb   = XLSX.read(e.target.result, { type: 'array' });
-      const ws   = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-      const headers = data[0] || [];
-
-      // Find description / item column
-      let descCol = 0;
-      headers.forEach((h, i) => {
-        const hl = String(h).toLowerCase();
+    reader.onload = function(e) {
+      var wb = XLSX.read(e.target.result, { type:'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var data = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      var headers = data[0] || [];
+      var descCol = 0;
+      headers.forEach(function(h, i) {
+        var hl = String(h).toLowerCase();
         if (hl.includes('desc') || hl.includes('item') || hl.includes('material')) descCol = i;
       });
-
-      const startRow = (headers.length && isNaN(Number(headers[descCol]))) ? 1 : 0;
-      const descs = [];
-      for (let r = startRow; r < data.length; r++) {
-        const v = String(data[r][descCol] || '').trim();
+      var startRow = (headers.length && isNaN(Number(headers[descCol]))) ? 1 : 0;
+      var descs = [];
+      for (var r = startRow; r < data.length; r++) {
+        var v = String(data[r][descCol] || '').trim();
         if (v.length > 2) descs.push(v);
       }
       loadItems(descs, file.name);
@@ -856,374 +979,263 @@ function readFile(file) {
 }
 
 function loadItems(descs, fname) {
-  items = descs.map((d, i) => ({
-    id: i + 1,
-    desc: d,
-    selected: true,
-    qrGenerated: false,
-    qrDataUrl: null
-  }));
-
+  items = descs.map(function(d, i){ return { id:i+1, desc:d, selected:true, qrGenerated:false, qrDataUrl:null }; });
   document.getElementById('settings-bar').style.display = 'grid';
   document.getElementById('stats-row').style.display    = 'grid';
-  document.getElementById('toolbar').style.display      = 'flex';
-  document.getElementById('uz-title').textContent = '✅ ' + fname + ' loaded';
+  document.getElementById('toolbar').style.display      = 'grid';
+  document.getElementById('uz-title').textContent = '✅ ' + fname;
   document.getElementById('uz-sub').textContent   = items.length + ' items found';
-
   renderCards();
   updateStats();
 }
 
-// ─── QR GENERATION ────────────────────────────────────────────────────────────
+// ─── QR GENERATION ─────────────────────────────────────────────────────────────
 function makeCode(item) {
-  const prefix = document.getElementById('s-prefix').value || 'SO';
-  return prefix + '-' + String(item.id).padStart(3, '0');
+  return (document.getElementById('s-prefix').value||'SO') + '-' + String(item.id).padStart(3,'0');
+}
+function makePayload(item) {
+  var code = makeCode(item);
+  var ship = document.getElementById('s-ship').value||'';
+  var site = document.getElementById('s-site').value||'';
+  var desc = item.desc.length > 100 ? item.desc.substring(0,100) : item.desc;
+  return code + '|' + desc + '|' + ship + '|' + site;
 }
 
-function makeQRPayload(item) {
-  // Compact payload: CODE | truncated-desc | shipment | site
-  const code = makeCode(item);
-  const ship = document.getElementById('s-ship').value || '';
-  const site = document.getElementById('s-site').value || '';
-  const desc = item.desc.length > 100 ? item.desc.substring(0, 100) : item.desc;
-  return `${code}|${desc}|${ship}|${site}`;
-}
-
-/**
- * Generates a high-quality QR code.
- * Canvas size: 800×800 px for sharp print output.
- * Cascades through error correction levels to handle long payloads.
- */
-function generateQRForItem(item, canvasSize, callback) {
-  if (typeof qrcode === 'undefined') {
-    console.error('qrcode-generator library not loaded');
-    callback && callback(false);
-    return;
-  }
-
-  const text = makeQRPayload(item);
-  // Cascade: try highest quality first, fall back if data too long
-  const cascade = [
-    { type: 0,  ecl: 'H' },
-    { type: 0,  ecl: 'Q' },
-    { type: 0,  ecl: 'M' },
-    { type: 0,  ecl: 'L' },
-    { type: 10, ecl: 'M' },
-    { type: 10, ecl: 'L' },
-    { type: 20, ecl: 'L' },
-    { type: 40, ecl: 'L' },
+function generateQRForItem(item, sz, cb) {
+  if (typeof qrcode === 'undefined') { cb && cb(false); return; }
+  var text = makePayload(item);
+  var cascade = [
+    [0,'H'],[0,'Q'],[0,'M'],[0,'L'],
+    [10,'M'],[10,'L'],[20,'L'],[40,'L']
   ];
-
-  let qr = null;
-  for (const opt of cascade) {
+  var qr = null;
+  for (var i = 0; i < cascade.length; i++) {
     try {
-      qr = qrcode(opt.type, opt.ecl);
+      qr = qrcode(cascade[i][0], cascade[i][1]);
       qr.addData(text, 'Byte');
       qr.make();
       break;
-    } catch (e) {
-      qr = null;
-    }
+    } catch(e) { qr = null; }
   }
+  if (!qr) { cb && cb(false); return; }
 
-  if (!qr) {
-    console.error('QR generation failed for item', item.id, text);
-    callback && callback(false);
-    return;
-  }
-
-  const canvas = document.createElement('canvas');
-  canvas.width  = canvasSize;
-  canvas.height = canvasSize;
-  const ctx = canvas.getContext('2d');
-
-  // White background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvasSize, canvasSize);
-
-  const cells    = qr.getModuleCount();
-  const cellSize = canvasSize / cells;
-
-  // Render modules with sub-pixel precision to avoid bleeding
-  ctx.fillStyle = '#000000';
-  for (let row = 0; row < cells; row++) {
-    for (let col = 0; col < cells; col++) {
-      if (qr.isDark(row, col)) {
-        const x = Math.round(col * cellSize);
-        const y = Math.round(row * cellSize);
-        const w = Math.round((col + 1) * cellSize) - x;
-        const h = Math.round((row + 1) * cellSize) - y;
-        ctx.fillRect(x, y, w, h);
+  var canvas = document.createElement('canvas');
+  canvas.width = canvas.height = sz;
+  var ctx    = canvas.getContext('2d');
+  var cells  = qr.getModuleCount();
+  var cell   = sz / cells;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,sz,sz);
+  ctx.fillStyle = '#000';
+  for (var row=0; row<cells; row++) {
+    for (var col=0; col<cells; col++) {
+      if (qr.isDark(row,col)) {
+        var x=Math.round(col*cell), y=Math.round(row*cell);
+        ctx.fillRect(x, y, Math.round((col+1)*cell)-x, Math.round((row+1)*cell)-y);
       }
     }
   }
-
   item.qrGenerated = true;
   item.qrDataUrl   = canvas.toDataURL('image/png');
-  callback && callback(true);
+  cb && cb(true);
 }
 
-function generateAll() {
-  const btn = document.getElementById('gen-btn');
-  const pw  = document.getElementById('prog-wrap');
-  const pf  = document.getElementById('prog-fill');
-  btn.disabled = true;
-  pw.style.display = 'block';
-
-  let idx = 0;
-  const total = items.length;
-
+window.generateAll = function() {
+  var btn  = document.getElementById('gen-btn');
+  var pw   = document.getElementById('prog-wrap');
+  var pf   = document.getElementById('prog-fill');
+  btn.disabled = true; pw.style.display = 'block';
+  var idx = 0, total = items.length;
   function next() {
     if (idx >= total) {
-      btn.disabled = false;
-      btn.textContent = '⚡ Generate All';
-      pw.style.display = 'none';
-      renderCards();
-      updateStats();
-      return;
+      btn.disabled = false; btn.textContent = '⚡ Generate All';
+      pw.style.display = 'none'; renderCards(); updateStats(); return;
     }
-    generateQRForItem(items[idx], 800, () => {
+    generateQRForItem(items[idx], 800, function() {
       idx++;
-      pf.style.width   = Math.round(idx / total * 100) + '%';
-      btn.textContent  = `Generating ${idx} / ${total}…`;
-      updateStats();
-      setTimeout(next, 8);
+      pf.style.width = Math.round(idx/total*100) + '%';
+      btn.textContent = 'Generating ' + idx + ' / ' + total + '…';
+      updateStats(); setTimeout(next, 8);
     });
   }
   next();
-}
+};
 
-function generateSingle(id) {
-  const item = items.find(i => i.id === id);
+window.generateSingle = function(id) {
+  var item = items.find(function(i){ return i.id===id; });
   if (!item) return;
-  generateQRForItem(item, 800, ok => {
+  generateQRForItem(item, 800, function(ok) {
     if (ok) {
-      const box = document.getElementById('qrbox-' + id);
-      if (box) box.innerHTML = `<img src="${item.qrDataUrl}" style="width:70px;height:70px;">`;
+      var box = document.getElementById('qrbox-' + id);
+      if (box) box.innerHTML = '<img src="' + item.qrDataUrl + '" style="width:68px;height:68px;">';
     }
     updateStats();
   });
-}
+};
 
-// ─── CARD RENDERING ──────────────────────────────────────────────────────────
+// ─── CARDS ─────────────────────────────────────────────────────────────────────
 function renderCards() {
-  const grid   = document.getElementById('items-grid');
-  const search = document.getElementById('search-inp').value.toLowerCase();
+  var grid   = document.getElementById('items-grid');
+  var search = document.getElementById('search-inp').value.toLowerCase();
   grid.innerHTML = '';
-  let shown = 0;
-
-  items.forEach(item => {
+  var shown = 0;
+  items.forEach(function(item) {
     if (search && !item.desc.toLowerCase().includes(search)) return;
     shown++;
-    const code = makeCode(item);
-    const card = document.createElement('div');
+    var code = makeCode(item);
+    var card = document.createElement('div');
     card.className = 'icard' + (item.selected ? ' sel' : '');
     card.id = 'card-' + item.id;
-    card.innerHTML = `
-      <div class="ic-top">
-        <div class="ic-chk${item.selected ? ' on' : ''}" id="chk-${item.id}" onclick="toggleSel(${item.id})"></div>
-        <div class="ic-code">${escHtml(code)}</div>
-      </div>
-      <div class="ic-desc">${escHtml(item.desc.length > 80 ? item.desc.substring(0,80) + '…' : item.desc)}</div>
-      <div class="qr-box" id="qrbox-${item.id}">
-        ${item.qrGenerated && item.qrDataUrl
-          ? `<img src="${item.qrDataUrl}" style="width:70px;height:70px;">`
-          : '<div class="qr-ph">◻</div>'}
-      </div>
-      <div class="ic-acts">
-        <div class="ic-btn" onclick="viewItem(${item.id})">👁 View</div>
-        <div class="ic-btn" onclick="generateSingle(${item.id})">⚡ QR</div>
-        <div class="ic-btn" onclick="printOneSingle(${item.id})">🖨 Print</div>
-        <div class="ic-btn" onclick="dlSingle(${item.id})">⬇ Save</div>
-      </div>`;
+    card.innerHTML =
+      '<div class="ic-top">' +
+        '<div class="ic-chk' + (item.selected ? ' on' : '') + '" id="chk-' + item.id + '" onclick="toggleSel(' + item.id + ')"></div>' +
+        '<div class="ic-code">' + esc(code) + '</div>' +
+      '</div>' +
+      '<div class="ic-desc">' + esc(item.desc.length>70 ? item.desc.substring(0,70)+'…' : item.desc) + '</div>' +
+      '<div class="qr-box" id="qrbox-' + item.id + '">' +
+        (item.qrGenerated && item.qrDataUrl
+          ? '<img src="' + item.qrDataUrl + '" style="width:68px;height:68px;">'
+          : '<div class="qr-ph">◻</div>') +
+      '</div>' +
+      '<div class="ic-acts">' +
+        '<div class="ic-btn" onclick="viewItem(' + item.id + ')">👁</div>' +
+        '<div class="ic-btn" onclick="generateSingle(' + item.id + ')">⚡</div>' +
+        '<div class="ic-btn" onclick="printOneSingle(' + item.id + ')">🖨</div>' +
+        '<div class="ic-btn" onclick="dlSingle(' + item.id + ')">⬇</div>' +
+      '</div>';
     grid.appendChild(card);
   });
-
-  if (!shown) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-ico">🔍</div><div class="empty-t">No items match your search</div></div>`;
-  }
+  if (!shown) grid.innerHTML = '<div class="empty"><div style="font-size:28px;margin-bottom:8px;">🔍</div><div>No items match</div></div>';
 }
 
-window.toggleSel = id => {
-  const item = items.find(i => i.id === id); if (!item) return;
+window.toggleSel = function(id) {
+  var item = items.find(function(i){ return i.id===id; });
+  if (!item) return;
   item.selected = !item.selected;
-  document.getElementById('card-' + id)?.classList.toggle('sel', item.selected);
-  document.getElementById('chk-'  + id)?.classList.toggle('on',  item.selected);
+  var c = document.getElementById('card-' + id);
+  var k = document.getElementById('chk-'  + id);
+  if (c) c.classList.toggle('sel', item.selected);
+  if (k) k.classList.toggle('on',  item.selected);
   updateStats();
 };
-window.selAll   = () => { items.forEach(i => i.selected = true);  renderCards(); updateStats(); };
-window.deselAll = () => { items.forEach(i => i.selected = false); renderCards(); updateStats(); };
+window.selAll   = function(){ items.forEach(function(i){ i.selected=true; });  renderCards(); updateStats(); };
+window.deselAll = function(){ items.forEach(function(i){ i.selected=false; }); renderCards(); updateStats(); };
 
 function updateStats() {
   document.getElementById('st-total').textContent   = items.length;
-  document.getElementById('st-gen').textContent     = items.filter(i => i.qrGenerated).length;
-  document.getElementById('st-sel').textContent     = items.filter(i => i.selected).length;
+  document.getElementById('st-gen').textContent     = items.filter(function(i){ return i.qrGenerated; }).length;
+  document.getElementById('st-sel').textContent     = items.filter(function(i){ return i.selected; }).length;
   document.getElementById('st-printed').textContent = printedCount;
 }
 
-// ─── PRINT: BULK A4 ──────────────────────────────────────────────────────────
-window.bulkPrint = () => {
-  const sel = items.filter(i => i.selected && i.qrGenerated);
-  if (!sel.length) {
-    alert('Please select items that have been generated first.\nUse "⚡ Generate All" then select items.');
-    return;
-  }
-
-  const cols = parseInt(document.getElementById('s-cols').value) || 2;
-  const ship = document.getElementById('s-ship').value || '';
-  const grid = document.getElementById('print-grid');
-
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+// ─── PRINT ─────────────────────────────────────────────────────────────────────
+window.bulkPrint = function() {
+  var sel  = items.filter(function(i){ return i.selected && i.qrGenerated; });
+  if (!sel.length) { alert('Select generated items first.'); return; }
+  var cols = parseInt(document.getElementById('s-cols').value) || 2;
+  var ship = document.getElementById('s-ship').value || '';
+  var grid = document.getElementById('print-grid');
+  grid.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)';
   grid.innerHTML = '';
-
-  sel.forEach(item => {
-    const div = document.createElement('div');
+  sel.forEach(function(item) {
+    var div = document.createElement('div');
     div.className = 'print-label';
-    div.innerHTML = `
-      <div class="pl-qr-area">
-        <img src="${item.qrDataUrl}" alt="QR">
-      </div>
-      <div class="pl-divider"></div>
-      <div class="pl-info">
-        <div class="pl-desc">${escHtml(item.desc)}</div>
-        <div class="pl-meta">
-          <span>${escHtml(makeCode(item))} · ${escHtml(ship)}</span>
-          <span>Sanken Overseas</span>
-        </div>
-      </div>`;
+    div.innerHTML =
+      '<div class="pl-qr-area"><img src="' + item.qrDataUrl + '" alt="QR"></div>' +
+      '<div class="pl-divider"></div>' +
+      '<div class="pl-info">' +
+        '<div class="pl-desc">' + esc(item.desc) + '</div>' +
+        '<div class="pl-meta"><span>' + esc(makeCode(item)) + ' · ' + esc(ship) + '</span><span>Sanken Overseas</span></div>' +
+      '</div>';
     grid.appendChild(div);
   });
-
-  printedCount += sel.length;
-  updateStats();
-
-  // Show print area → print → hide
-  const pa = document.getElementById('print-area');
+  printedCount += sel.length; updateStats();
+  var pa = document.getElementById('print-area');
   pa.style.display = 'block';
-  setTimeout(() => {
-    window.print();
-    setTimeout(() => { pa.style.display = 'none'; }, 600);
-  }, 450);
+  setTimeout(function(){ window.print(); setTimeout(function(){ pa.style.display='none'; }, 600); }, 400);
 };
 
-// ─── PRINT: ONE-BY-ONE (selected items) ─────────────────────────────────────
-window.printSelectedOneByOne = () => {
-  const sel = items.filter(i => i.selected && i.qrGenerated);
-  if (!sel.length) {
-    alert('Please select generated items first.');
-    return;
-  }
-  let idx = 0;
-  const printNext = () => {
-    if (idx >= sel.length) return;
-    printOneSingle(sel[idx].id, () => { idx++; setTimeout(printNext, 1500); });
-  };
-  printNext();
-};
-
-// ─── PRINT: SINGLE ITEM ──────────────────────────────────────────────────────
-window.printOneSingle = (id, cb) => {
-  const item = items.find(i => i.id === id); if (!item) { cb && cb(); return; }
-
-  const doPrint = () => {
-    const ship = document.getElementById('s-ship').value || '';
-    document.getElementById('single-qr-img').src   = item.qrDataUrl;
-    document.getElementById('single-desc').textContent = item.desc;
-    document.getElementById('single-code').textContent = makeCode(item) + ' · ' + ship;
-
-    const pa = document.getElementById('print-area-single');
-    pa.style.display        = 'flex';
-    pa.style.alignItems     = 'center';
-    pa.style.justifyContent = 'center';
-
-    setTimeout(() => {
-      window.print();
-      setTimeout(() => {
-        pa.style.display = 'none';
-        printedCount++;
-        updateStats();
-        cb && cb();
-      }, 600);
-    }, 450);
-  };
-
-  if (!item.qrGenerated) generateQRForItem(item, 800, doPrint);
-  else doPrint();
-};
-
-// ─── DOWNLOAD ────────────────────────────────────────────────────────────────
-window.dlSingle = id => {
-  const item = items.find(i => i.id === id); if (!item) return;
-  const save = () => { dl(item.qrDataUrl, makeCode(item) + '_QR.png'); };
-  if (!item.qrGenerated) generateQRForItem(item, 800, save); else save();
-};
-
-window.dlAll = () => {
-  const gen = items.filter(i => i.qrGenerated);
-  if (!gen.length) { alert('Generate QR codes first.'); return; }
-  let idx = 0;
-  const next = () => {
-    if (idx >= gen.length) return;
-    dl(gen[idx].qrDataUrl, makeCode(gen[idx]) + '_QR.png');
-    idx++; setTimeout(next, 350);
-  };
+window.printSelectedOneByOne = function() {
+  var sel = items.filter(function(i){ return i.selected && i.qrGenerated; });
+  if (!sel.length) { alert('Select generated items first.'); return; }
+  var idx = 0;
+  function next(){ if(idx>=sel.length)return; printOneSingle(sel[idx].id, function(){ idx++; setTimeout(next,1500); }); }
   next();
 };
 
-function dl(dataUrl, filename) {
-  const a = document.createElement('a');
-  a.href = dataUrl; a.download = filename; a.click();
-}
+window.printOneSingle = function(id, cb) {
+  var item = items.find(function(i){ return i.id===id; });
+  if (!item) { cb && cb(); return; }
+  var ship = document.getElementById('s-ship').value || '';
+  var go = function() {
+    document.getElementById('single-qr-img').src = item.qrDataUrl;
+    document.getElementById('single-desc').textContent = item.desc;
+    document.getElementById('single-code').textContent = makeCode(item) + ' · ' + ship;
+    var pa = document.getElementById('print-area-single');
+    pa.style.display = 'flex';
+    setTimeout(function(){
+      window.print();
+      setTimeout(function(){ pa.style.display='none'; printedCount++; updateStats(); cb && cb(); }, 600);
+    }, 400);
+  };
+  if (!item.qrGenerated) generateQRForItem(item, 800, go); else go();
+};
 
-// ─── VIEW MODAL ──────────────────────────────────────────────────────────────
-window.viewItem = id => {
-  const item = items.find(i => i.id === id); if (!item) return;
+// ─── DOWNLOAD ──────────────────────────────────────────────────────────────────
+window.dlSingle = function(id) {
+  var item = items.find(function(i){ return i.id===id; });
+  if (!item) return;
+  var go = function(){ dlFile(item.qrDataUrl, makeCode(item)+'_QR.png'); };
+  if (!item.qrGenerated) generateQRForItem(item, 800, go); else go();
+};
+window.dlAll = function() {
+  var gen = items.filter(function(i){ return i.qrGenerated; });
+  if (!gen.length) { alert('Generate first.'); return; }
+  var idx=0;
+  function next(){ if(idx>=gen.length)return; dlFile(gen[idx].qrDataUrl, makeCode(gen[idx])+'_QR.png'); idx++; setTimeout(next,350); }
+  next();
+};
+function dlFile(url, name){ var a=document.createElement('a'); a.href=url; a.download=name; a.click(); }
+
+// ─── MODAL ─────────────────────────────────────────────────────────────────────
+window.viewItem = function(id) {
+  var item = items.find(function(i){ return i.id===id; });
+  if (!item) return;
   currentModalItem = item;
-
   document.getElementById('m-desc').textContent = item.desc;
-  document.getElementById('m-code').textContent = makeCode(item) + ' · ' + (document.getElementById('s-ship').value || '');
-
-  const qDiv = document.getElementById('m-qr-div');
+  document.getElementById('m-code').textContent = makeCode(item) + ' · ' + (document.getElementById('s-ship').value||'');
+  var qDiv = document.getElementById('m-qr-div');
   qDiv.innerHTML = '';
-
-  const showImg = () => {
+  var show = function() {
     if (item.qrDataUrl) {
-      const img = document.createElement('img');
-      img.src = item.qrDataUrl;
-      img.style.cssText = 'width:220px;height:220px;display:block;';
+      var img = document.createElement('img');
+      img.src = item.qrDataUrl; img.style.cssText='width:200px;height:200px;display:block;';
       qDiv.appendChild(img);
     }
   };
-
-  if (!item.qrGenerated) generateQRForItem(item, 800, showImg); else showImg();
+  if (!item.qrGenerated) generateQRForItem(item, 800, show); else show();
   document.getElementById('view-modal').classList.add('open');
 };
+window.closeModal    = function(){ document.getElementById('view-modal').classList.remove('open'); };
+window.dlModalQR     = function(){ if(currentModalItem&&currentModalItem.qrDataUrl) dlFile(currentModalItem.qrDataUrl, makeCode(currentModalItem)+'_QR.png'); };
+window.printOneFromModal = function(){ if(currentModalItem){ closeModal(); setTimeout(function(){ printOneSingle(currentModalItem.id); },200); } };
 
-window.closeModal   = () => document.getElementById('view-modal').classList.remove('open');
-window.dlModalQR    = () => { if (currentModalItem?.qrDataUrl) dl(currentModalItem.qrDataUrl, makeCode(currentModalItem) + '_QR.png'); };
-window.printOneFromModal = () => { if (currentModalItem) { closeModal(); setTimeout(() => printOneSingle(currentModalItem.id), 200); } };
-
-// ─── RESET ───────────────────────────────────────────────────────────────────
-window.resetAll = () => {
-  if (!confirm('Reset all items? This cannot be undone.')) return;
-  items = []; printedCount = 0;
-  document.getElementById('settings-bar').style.display = 'none';
-  document.getElementById('stats-row').style.display    = 'none';
-  document.getElementById('toolbar').style.display      = 'none';
-  document.getElementById('uz-title').textContent = 'Drop Excel / CSV file here';
-  document.getElementById('uz-sub').textContent   = 'Auto-detects Description column from Purchase Order files';
-  document.getElementById('file-input').value     = '';
-  document.getElementById('items-grid').innerHTML = `<div class="empty" id="empty-state"><div class="empty-ico">📋</div><div class="empty-t">Upload a Purchase Order file to begin</div></div>`;
+// ─── RESET ─────────────────────────────────────────────────────────────────────
+window.resetAll = function() {
+  if (!confirm('Reset all items?')) return;
+  items=[]; printedCount=0;
+  document.getElementById('settings-bar').style.display='none';
+  document.getElementById('stats-row').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.getElementById('uz-title').textContent='Drop Excel / CSV here';
+  document.getElementById('uz-sub').textContent='Auto-detects Description column';
+  document.getElementById('file-input').value='';
+  document.getElementById('items-grid').innerHTML='<div class="empty"><div style="font-size:32px;margin-bottom:8px;">📋</div><div>Upload a file to start</div></div>';
   updateStats();
 };
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function escAttr(s) {
-  return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
-}
+// ─── HELPERS ───────────────────────────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escA(s){ return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
 </script>
 </body>
 </html>
