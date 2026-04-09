@@ -1225,9 +1225,12 @@ function doFrame() {
 function onQrDetected(raw) {
   var now   = new Date();
   var parts = raw.indexOf('|') !== -1 ? raw.split('|') : ['', raw, '', ''];
-  var desc  = (parts[0] || raw).trim();   // item name is now first
-  var code  = (parts[1] || '').trim();
-  var ship  = (parts[2] || '').trim();
+  // QR format: "Item Name\nCODE | SHIP | Sanken Overseas"
+  var lines = raw.split('\n');
+  var desc  = (lines[0] || raw).trim();
+  var meta  = (lines[1] || '').split('|');
+  var code  = (meta[0] || '').trim();
+  var ship  = (meta[1] || '').trim();
   // If no pipe, raw IS the description, generate a sequential code
   if (!code) {
     var cnt = 0;
@@ -1424,9 +1427,13 @@ function loadItems(ds, fname) {
 // ── QR ENGINE ─────────────────────────────────────────────────────────────────
 function mkCode(it) { return (document.getElementById('s-pre').value||'SO') + '-' + String(it.id).padStart(3,'0'); }
 function mkPay(it) {
-  var code = mkCode(it), ship = document.getElementById('s-ship').value||'', site = document.getElementById('s-site').value||'';
-  var desc = it.desc.length > 100 ? it.desc.substring(0,100) : it.desc;
-  return desc + '|' + code + '|' + ship + '|' + site;  // item name first for phone scanners
+  var code = mkCode(it);
+  var ship = document.getElementById('s-ship').value||'';
+  var site = document.getElementById('s-site').value||'';
+  var desc = it.desc.length > 120 ? it.desc.substring(0,120) : it.desc;
+  // Item name appears first so ANY phone QR scanner shows it immediately
+  // Internal fields follow after a newline so they don't clutter the preview
+  return desc + '\n' + code + ' | ' + ship + ' | Sanken Overseas';
 }
 function genQR(it, sz, cb) {
   if (typeof qrcode === 'undefined') { cb && cb(false); return; }
