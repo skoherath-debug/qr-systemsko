@@ -869,18 +869,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var btn = document.getElementById('sr-close-btn');
     if (!btn) return;
     function onClose() {
-      if (_pLocked) {
-        // Pulse manual panel to draw attention
-        var sec = document.getElementById('sr-manual-panel');
-        if (sec) {
-          sec.style.transform = 'scale(1.02)';
-          setTimeout(function() { sec.style.transform = ''; }, 200);
-        }
-        var inp = document.getElementById('sr-loc-manual');
-        if (inp) inp.focus();
-        return;
-      }
-      // Close popup directly
+      // Record already saved on detect — just close popup
       document.getElementById('scan-overlay').classList.remove('open');
       document.body.style.overflow = '';
       _pRec    = null;
@@ -1272,7 +1261,7 @@ function onQrDetected(raw) {
         mkTag(tg, '&#128205; ' + parseFloat(rec.lat).toFixed(4) + ', ' + parseFloat(rec.lng).toFixed(4));
       },
       function() { showManualPanel(rec, updateSaved, tg); },
-      { timeout: 8000, maximumAge: 10000 }
+      { timeout: 3000, maximumAge: 30000 }
     );
   } else {
     showManualPanel(rec, updateSaved, tg);
@@ -1287,7 +1276,7 @@ function showManualPanel(rec, updateSaved, tg) {
   var panel = document.getElementById('sr-manual-panel');
   if (panel) panel.style.display = 'block';
 
-  setCloseLock(true);  // lock close until location entered
+  // Location is optional — close button stays enabled
 
   // Replace save btn to clear old listeners
   var saveEl = document.getElementById('sr-loc-save-btn');
@@ -1313,7 +1302,6 @@ function showManualPanel(rec, updateSaved, tg) {
       var locEl2 = document.getElementById('sr-loc');
       if (locEl2) { locEl2.innerHTML = '&#128205; ' + esc(val); locEl2.style.color = 'var(--cyan)'; }
       if (panel) panel.style.display = 'none';
-      setCloseLock(false);
       mkTag(tg, '&#128205; ' + esc(val));
     }
 
@@ -1325,13 +1313,9 @@ function showManualPanel(rec, updateSaved, tg) {
 
 // Lock/unlock close button
 function setCloseLock(lock) {
-  _pLocked = lock;
+  _pLocked = lock; // kept for manual panel visual feedback only
   var btn = document.getElementById('sr-close-btn');
-  if (!btn) return;
-  btn.disabled      = lock;
-  btn.style.opacity = lock ? '0.35' : '';
-  btn.style.cursor  = lock ? 'not-allowed' : '';
-  btn.textContent   = lock ? 'Enter location to continue \u2191' : 'Continue Scanning';
+  if (btn) btn.textContent = lock ? 'Enter location (optional)...' : 'Continue Scanning';
 }
 
 
