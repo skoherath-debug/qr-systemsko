@@ -786,9 +786,12 @@ var printed = 0;
 var curUser = null;
 var pinBuf  = '';
 var qpItem  = null;
-var scanStr = null;
-var scanRAF = null;
-var scanLck = false;
+var scanStr    = null;
+var scanRAF    = null;
+var scanLck    = false;
+var _pRec      = null;  // pending scan record
+var _pSaved    = false; // whether pending record saved
+var _pLocked   = false; // close button locked (manual location required)
 var sVideo  = null;
 var sCvs    = null;
 var sCtx    = null;
@@ -861,6 +864,28 @@ window.addEventListener('DOMContentLoaded', function() {
 
   // Camera off on tab hidden
   document.addEventListener('visibilitychange', function() { if (document.hidden) stopScan(); });
+
+  // Scan overlay close button — ONE listener, uses module-level state
+  (function() {
+    var btn = document.getElementById('sr-close-btn');
+    if (!btn) return;
+    function onClose() {
+      if (_pLocked) {
+        // Pulse manual panel to draw attention
+        var sec = document.getElementById('sr-manual-panel');
+        if (sec) {
+          sec.style.transform = 'scale(1.02)';
+          setTimeout(function() { sec.style.transform = ''; }, 200);
+        }
+        var inp = document.getElementById('sr-loc-manual');
+        if (inp) inp.focus();
+        return;
+      }
+      saveAndClose();
+    }
+    btn.addEventListener('touchend', function(e) { e.preventDefault(); onClose(); }, {passive:false});
+    btn.addEventListener('click',    function()  { onClose(); });
+  })();
 });
 
 // ── URL HASH AUTO-IMPORT ───────────────────────────────────────────────────────
@@ -1183,7 +1208,12 @@ function onQrDetected(raw) {
   var ts    = new Date();
   var by    = curUser ? curUser.name : 'Unknown';
 
-  // Update inline last-scan box on scanner page
+  // Store as module-level pending record
+  _pRec    = { code:code, desc:desc, ship:ship, by:by, ts:ts.toISOString(), lat:null, lng:null, acc:null };
+  _pSaved  = false;
+  _pLocked = false;
+
+  // Update inline last-scan box
   document.getElementById('scan-last').style.display = 'block';
   document.getElementById('sl-code').textContent = code;
   document.getElementById('sl-desc').textContent = desc;
@@ -1191,7 +1221,7 @@ function onQrDetected(raw) {
   mkTag(tg, '&#128100; ' + by);
   mkTag(tg, '&#128336; ' + ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
 
-  // Populate popup
+  // Populate popup fields
   document.getElementById('sr-code').textContent = code;
   document.getElementById('sr-desc').textContent = desc || raw;
   document.getElementById('sr-by').textContent   = by;
@@ -1199,148 +1229,119 @@ function onQrDetected(raw) {
   document.getElementById('sr-ship').textContent = ship || 'N/A';
   document.getElementById('sr-loc').textContent  = 'Fetching GPS...';
   document.getElementById('sr-loc').style.color  = '';
+
+  // Reset manual panel
   document.getElementById('sr-manual-panel').style.display = 'none';
+  var inp = document.getElementById('sr-loc-manual'); if (inp) { inp.value = ''; inp.style.border = ''; }
+
+  // Reset close button state
+  setCloseLock(false);
 
   // Show popup
   document.getElementById('scan-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  // The record — coords filled in async, saved exactly once
-  var rec     = { code:code, desc:desc, ship:ship, by:by, ts:ts.toISOString(), lat:null, lng:null, acc:null };
-  var saved   = false;
-  var gpsDone = false;   // true once GPS resolves (success or fail)
-
-  function saveNow() {
-    if (saved) return;
-    saved = true;
-    scans.push(rec);
-    saveScans();
-    renderRptTable();
-  }
-
-  // Close button ALWAYS saves first, then closes
-  setupCloseBtn(false, function() {
-    saveNow();
-    doCloseScan();
-  });
-
   // Try GPS
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       function(pos) {
-        gpsDone = true;
-        rec.lat = pos.coords.latitude.toFixed(6);
-        rec.lng = pos.coords.longitude.toFixed(6);
-        rec.acc = Math.round(pos.coords.accuracy);
-        // Update location display
+        if (!_pRec) return;
+        _pRec.lat = pos.coords.latitude.toFixed(6);
+        _pRec.lng = pos.coords.longitude.toFixed(6);
+        _pRec.acc = Math.round(pos.coords.accuracy);
         var locEl = document.getElementById('sr-loc');
         if (locEl) {
-          locEl.innerHTML = '<a href="https://maps.google.com/?q=' + rec.lat + ',' + rec.lng +
+          locEl.innerHTML = '<a href="https://maps.google.com/?q=' + _pRec.lat + ',' + _pRec.lng +
             '" target="_blank" style="color:var(--cyan)">&#128205; ' +
-            parseFloat(rec.lat).toFixed(4) + ', ' + parseFloat(rec.lng).toFixed(4) +
-            ' (\u00b1' + rec.acc + 'm)</a>';
+            parseFloat(_pRec.lat).toFixed(4) + ', ' + parseFloat(_pRec.lng).toFixed(4) +
+            ' (\u00b1' + _pRec.acc + 'm)</a>';
           locEl.style.color = '';
         }
-        mkTag(tg, '&#128205; ' + parseFloat(rec.lat).toFixed(4) + ', ' + parseFloat(rec.lng).toFixed(4));
-        // GPS done — close button just saves+closes (already set)
+        mkTag(tg, '&#128205; ' + parseFloat(_pRec.lat).toFixed(4) + ', ' + parseFloat(_pRec.lng).toFixed(4));
       },
-      function() {
-        // GPS failed — show manual entry
-        gpsDone = true;
-        showLocEntry(rec, function() {
-          // After manual location saved, re-wire close button
-          setupCloseBtn(false, function() { saveNow(); doCloseScan(); });
-        });
-        // Lock close until manual location entered
-        setupCloseBtn(true, null);
-      },
+      function() { showManualPanel(); },
       { timeout: 8000, maximumAge: 10000 }
     );
   } else {
-    // No geolocation API
-    showLocEntry(rec, function() {
-      setupCloseBtn(false, function() { saveNow(); doCloseScan(); });
-    });
-    setupCloseBtn(true, null);
+    showManualPanel();
   }
 }
 
-// Show manual location panel; calls onLocSaved() when user saves
-function showLocEntry(rec, onLocSaved) {
+// Show manual location entry and lock close button
+function showManualPanel() {
   var locEl = document.getElementById('sr-loc');
   if (locEl) { locEl.textContent = 'GPS unavailable'; locEl.style.color = 'var(--muted2)'; }
 
   var panel = document.getElementById('sr-manual-panel');
   if (panel) panel.style.display = 'block';
 
-  var inp    = document.getElementById('sr-loc-manual');
-  var saveEl = document.getElementById('sr-loc-save-btn');
-  if (inp) { inp.value = ''; }
+  setCloseLock(true);
 
+  // Wire save button — replace element to clear old listeners
+  var saveEl = document.getElementById('sr-loc-save-btn');
   if (saveEl) {
-    var fresh  = saveEl.cloneNode(true);
+    var fresh = saveEl.cloneNode(true);
     saveEl.parentNode.replaceChild(fresh, saveEl);
-    var fired  = false;
+    var fired = false;
 
     function doSave() {
       if (fired) return;
+      var inp = document.getElementById('sr-loc-manual');
       var val = inp ? inp.value.trim() : '';
       if (!val) {
         if (inp) {
           inp.style.border = '2px solid var(--red)';
           inp.focus();
-          setTimeout(function() { if(inp) inp.style.border = ''; }, 1500);
+          setTimeout(function() { if(inp) inp.style.border=''; }, 1500);
         }
         return;
       }
       fired = true;
-      rec.manualLoc = val;
+      if (_pRec) _pRec.manualLoc = val;
+
+      // Update display
       if (locEl) { locEl.innerHTML = '&#128205; ' + esc(val); locEl.style.color = 'var(--cyan)'; }
       if (panel)  { panel.style.display = 'none'; }
-      if (onLocSaved) onLocSaved();
+
+      // Unlock close button
+      setCloseLock(false);
     }
 
     fresh.addEventListener('touchend', function(e) { e.preventDefault(); doSave(); }, {passive:false});
     fresh.addEventListener('click',    function()  { doSave(); });
   }
 
-  setTimeout(function() { if (inp) inp.focus(); }, 350);
+  setTimeout(function() {
+    var inp = document.getElementById('sr-loc-manual');
+    if (inp) inp.focus();
+  }, 350);
 }
 
-// setupCloseBtn(lock, onPress)
-// lock=true  → disabled, cannot press
-// lock=false → enabled, calls onPress() when tapped
-function setupCloseBtn(lock, onPress) {
+// Lock or unlock the close button visually
+function setCloseLock(lock) {
+  _pLocked = lock;
   var btn = document.getElementById('sr-close-btn');
   if (!btn) return;
-  var fresh = btn.cloneNode(true);
-  btn.parentNode.replaceChild(fresh, btn);
-  if (lock) {
-    fresh.disabled        = true;
-    fresh.style.opacity   = '0.35';
-    fresh.style.cursor    = 'not-allowed';
-    fresh.textContent     = 'Save location to continue \u2191';
-  } else {
-    fresh.disabled        = false;
-    fresh.style.opacity   = '';
-    fresh.style.cursor    = '';
-    fresh.textContent     = 'Continue Scanning';
-    if (onPress) {
-      fresh.addEventListener('touchend', function(e) { e.preventDefault(); onPress(); }, {passive:false});
-      fresh.addEventListener('click',    function()  { onPress(); });
-    }
-  }
+  btn.disabled      = lock;
+  btn.style.opacity = lock ? '0.35' : '';
+  btn.style.cursor  = lock ? 'not-allowed' : '';
+  btn.textContent   = lock ? 'Save location to continue \u2191' : 'Continue Scanning';
 }
 
-function doCloseScan() {
+// Save pending record (idempotent) then close popup
+function saveAndClose() {
+  if (!_pSaved && _pRec) {
+    _pSaved = true;
+    scans.push(_pRec);
+    saveScans();
+    console.log('Scan saved:', _pRec.code, '| Total scans:', scans.length);
+  }
+  // Close popup
   document.getElementById('scan-overlay').classList.remove('open');
   document.body.style.overflow = '';
-  var panel = document.getElementById('sr-manual-panel');
-  if (panel) panel.style.display = 'none';
-  var inp = document.getElementById('sr-loc-manual');
-  if (inp)  { inp.value = ''; if(inp.style) inp.style.border = ''; }
-  var locEl = document.getElementById('sr-loc');
-  if (locEl) { locEl.style.color = ''; locEl.textContent = 'Fetching GPS...'; }
+  // Reset
+  _pRec    = null;
+  _pLocked = false;
   renderRptTable();
 }
 
