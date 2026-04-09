@@ -679,7 +679,20 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
         <div class="sm"><div class="sm-lbl">Scanned By</div><div class="sm-val" id="sr-by">—</div></div>
         <div class="sm"><div class="sm-lbl">Time</div><div class="sm-val" id="sr-time">—</div></div>
         <div class="sm"><div class="sm-lbl">Shipment</div><div class="sm-val" id="sr-ship">—</div></div>
-        <div class="sm"><div class="sm-lbl">Location</div><div class="sm-val loc" id="sr-loc">Fetching GPS...</div></div>
+        <div class="sm" id="sr-loc-card">
+          <div class="sm-lbl">Location</div>
+          <div class="sm-val loc" id="sr-loc">Fetching GPS...</div>
+          <div id="sr-loc-input-wrap" style="display:none;margin-top:8px;">
+            <input id="sr-loc-manual" type="text" placeholder="Enter location manually..."
+              style="width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:7px;
+              padding:8px 10px;font-size:13px;color:var(--text);font-family:Rajdhani,sans-serif;
+              outline:none;font-weight:600;" autocomplete="off">
+            <button type="button" id="sr-loc-save"
+              style="margin-top:6px;width:100%;background:var(--gold);color:#000;border:none;
+              border-radius:7px;padding:8px;font-family:Bebas Neue,sans-serif;font-size:13px;
+              letter-spacing:1px;cursor:pointer;">Save Location</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="sr-foot"><button type="button" class="sr-close" onclick="closeScanSheet()">Continue Scanning</button></div>
@@ -1033,7 +1046,9 @@ function renderRptTable() {
     var dts = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     var loc = s.lat
       ? '<a class="td-loc" href="https://maps.google.com/?q=' + s.lat + ',' + s.lng + '" target="_blank">&#128205; ' + parseFloat(s.lat).toFixed(4) + ', ' + parseFloat(s.lng).toFixed(4) + '</a>'
-      : '<span style="color:var(--muted)">—</span>';
+      : s.manualLoc
+        ? '<span style="color:var(--cyan);font-size:11px;">&#128205; ' + esc(s.manualLoc) + '</span>'
+        : '<span style="color:var(--muted)">—</span>';
     var tr = document.createElement('tr');
     tr.innerHTML = '<td style="color:var(--muted2)">' + (rows.length - i) + '</td>' +
       '<td class="td-code">' + esc(s.code||'') + '</td>' +
@@ -1047,11 +1062,11 @@ function renderRptTable() {
 
 window.exportCSV = function() {
   if (!scans.length) { alert('No scan records to export.'); return; }
-  var hdr = ['#','Code','Description','Scanned By','Date','Time','Latitude','Longitude','Accuracy(m)'];
+  var hdr = ['#','Code','Description','Scanned By','Date','Time','Latitude','Longitude','Accuracy(m)','Manual Location'];
   var rows = [hdr];
   scans.slice().reverse().forEach(function(s, i) {
     var dt = new Date(s.ts);
-    rows.push([i+1,s.code||'',s.desc||'',s.by||'',dt.toLocaleDateString(),dt.toLocaleTimeString(),s.lat||'',s.lng||'',s.acc||'']);
+    rows.push([i+1,s.code||'',s.desc||'',s.by||'',dt.toLocaleDateString(),dt.toLocaleTimeString(),s.lat||'',s.lng||'',s.acc||'',s.manualLoc||'']);
   });
   var csv = rows.map(function(r) { return r.map(function(c) { return '"' + String(c).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
   var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
@@ -1143,11 +1158,49 @@ function onQrDetected(raw) {
       },
       {timeout:8000,maximumAge:10000}
     );
-  } else { var el = document.getElementById('sr-loc'); if (el) el.textContent = 'GPS not supported'; finishRec(rec); }
+  } else { showManualLocation(rec); }
 }
 function finishRec(rec) { scans.push(rec); saveScans(); renderRptTable(); }
+
+function showManualLocation(rec) {
+  var el = document.getElementById('sr-loc');
+  if (el) {
+    el.textContent = 'GPS unavailable';
+    el.style.color = 'var(--muted2)';
+  }
+  var wrap = document.getElementById('sr-loc-input-wrap');
+  if (wrap) wrap.style.display = 'block';
+
+  var saveBtn = document.getElementById('sr-loc-save');
+  if (saveBtn) {
+    saveBtn.onclick = function() {
+      var val = (document.getElementById('sr-loc-manual').value || '').trim();
+      if (!val) { alert('Please enter a location.'); return; }
+      rec.manualLoc = val;
+      // Update the display
+      if (el) { el.textContent = '\u1F4CD ' + val; el.style.color = 'var(--cyan)'; }
+      if (wrap) wrap.style.display = 'none';
+      finishRec(rec);
+      saveBtn.onclick = null;
+    };
+  }
+  // Still finalize after a short delay even if user doesn't enter location
+  // (they can always view in reports)
+  finishRec(rec);
+}
 function mkTag(p, html) { var t = document.createElement('span'); t.className = 'sl-tag'; t.innerHTML = html; p.appendChild(t); }
-window.closeScanSheet = function() { document.getElementById('scan-overlay').classList.remove('open'); document.body.style.overflow = ''; renderRptTable(); };
+window.closeScanSheet = function() {
+  document.getElementById('scan-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  // Reset manual location input for next scan
+  var wrap = document.getElementById('sr-loc-input-wrap');
+  if (wrap) wrap.style.display = 'none';
+  var inp = document.getElementById('sr-loc-manual');
+  if (inp) inp.value = '';
+  var locEl = document.getElementById('sr-loc');
+  if (locEl) { locEl.style.color = ''; }
+  renderRptTable();
+};
 
 // ── FILE READING ──────────────────────────────────────────────────────────────
 function readFile(file) {
