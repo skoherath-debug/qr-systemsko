@@ -698,16 +698,15 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
     <!-- Header -->
     <div class="sr-hd">
       <div class="sr-icon">&#9989;</div>
-      <div>
-        <div class="sr-top-tag">SCANNED SUCCESSFULLY</div>
-        <div class="sr-code" id="sr-code"></div>
+      <div style="flex:1;min-width:0;">
+        <div class="sr-top-tag">&#9989; SCANNED</div>
+        <div class="sr-desc" id="sr-desc" style="font-size:15px;font-weight:700;line-height:1.4;margin-top:2px;">—</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;color:var(--gold);margin-top:4px;" id="sr-code"></div>
       </div>
     </div>
 
     <!-- Body -->
     <div class="sr-body">
-      <!-- Description -->
-      <div class="sr-desc" id="sr-desc">—</div>
 
       <!-- Info grid -->
       <div class="sr-meta">
@@ -1215,26 +1214,35 @@ function doFrame() {
   if (scanLck) return;
 
   var img = _qrCtx.getImageData(0, 0, 400, 400);
-  var qr  = jsQR(img.data, 400, 400, { inversionAttempts: 'dontInvert' });
+  var qr  = jsQR(img.data, 400, 400, { inversionAttempts: 'attemptBoth' });
   if (qr) {
     scanLck = true;
     setTimeout(function() { scanLck = false; }, 2000);
     onQrDetected(qr.data);
   }
 }
+
 function onQrDetected(raw) {
   var now   = new Date();
-  var parts = raw.split('|');
-  var rec   = {
-    code: (parts[0] || raw).trim(),
-    desc: (parts[1] || raw).trim(),
-    ship: (parts[2] || '').trim(),
+  var parts = raw.indexOf('|') !== -1 ? raw.split('|') : ['', raw, '', ''];
+  var code  = (parts[0] || '').trim();
+  var desc  = (parts[1] || raw).trim();
+  var ship  = (parts[2] || '').trim();
+  // If no pipe, raw IS the description, generate a sequential code
+  if (!code) {
+    var cnt = 0;
+    try { cnt = JSON.parse(localStorage.getItem(SK) || '[]').length; } catch(e) {}
+    code = 'SCAN-' + String(cnt + 1).padStart(3,'0');
+  }
+
+  var rec = {
+    code: code, desc: desc, ship: ship,
     by:   curUser ? curUser.name : 'Unknown',
     ts:   now.toISOString(),
     lat:'', lng:'', acc:'', manualLoc:''
   };
 
-  // --- SAVE TO localStorage ---
+  // --- SAVE ---
   var total = 0;
   try {
     var arr = JSON.parse(localStorage.getItem(SK) || '[]');
@@ -1248,44 +1256,44 @@ function onQrDetected(raw) {
     total = scans.length;
   }
 
-  // --- VISIBLE FEEDBACK (toast + counter) ---
+  // --- TOAST ---
   var toast = document.getElementById('scan-toast');
   if (toast) {
-    toast.textContent = '\u2705 #' + total + ' saved: ' + rec.code;
+    toast.textContent = '\u2705 #' + total + ' ' + (code || desc).substring(0,20);
     toast.classList.add('show');
     setTimeout(function(){ toast.classList.remove('show'); }, 3000);
   }
-  var lc = document.getElementById('scan-live-count');
-  if (lc) lc.textContent = total + ' scan' + (total === 1 ? '' : 's');
 
-  // --- UPDATE LAST SCAN BOX ---
-  var scanLast = document.getElementById('scan-last');
-  if (scanLast) scanLast.style.display = 'block';
-  var slCode = document.getElementById('sl-code');
-  var slDesc = document.getElementById('sl-desc');
-  var slTags = document.getElementById('sl-tags');
-  if (slCode) slCode.textContent = rec.code;
-  if (slDesc) slDesc.textContent = rec.desc;
-  if (slTags) {
-    slTags.innerHTML = '';
-    mkTag(slTags, '&#128100; ' + rec.by);
-    mkTag(slTags, '&#128336; ' + now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+  // --- COUNTER ---
+  var lc = document.getElementById('scan-live-count');
+  if (lc) lc.textContent = total + ' scan' + (total===1?'':'s');
+
+  // --- INLINE BOX ---
+  var sl = document.getElementById('scan-last');
+  if (sl) sl.style.display = 'block';
+  var elC = document.getElementById('sl-code'); if(elC) elC.textContent = code;
+  var elD = document.getElementById('sl-desc'); if(elD) elD.textContent = desc;
+  var tg  = document.getElementById('sl-tags');
+  if (tg) {
+    tg.innerHTML = '';
+    mkTag(tg, '&#128100; ' + rec.by);
+    mkTag(tg, '&#128336; ' + now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
   }
 
-  // --- SHOW POPUP ---
+  // --- POPUP ---
   var el = function(id){ return document.getElementById(id); };
-  if (el('sr-code'))  el('sr-code').textContent  = rec.code;
-  if (el('sr-desc'))  el('sr-desc').textContent  = rec.desc || raw;
+  if (el('sr-desc'))  el('sr-desc').textContent  = desc;
+  if (el('sr-code'))  el('sr-code').textContent  = code;
   if (el('sr-by'))    el('sr-by').textContent    = rec.by;
-  if (el('sr-time'))  el('sr-time').textContent  = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + ' ' + now.toLocaleDateString();
-  if (el('sr-ship'))  el('sr-ship').textContent  = rec.ship || 'N/A';
-  if (el('sr-loc'))   { el('sr-loc').textContent = 'Fetching GPS\u2026'; el('sr-loc').style.color = ''; }
+  if (el('sr-time'))  el('sr-time').textContent  = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + '  ' + now.toLocaleDateString();
+  if (el('sr-ship'))  el('sr-ship').textContent  = ship || 'N/A';
+  if (el('sr-loc'))   { el('sr-loc').textContent = 'Fetching GPS\u2026'; el('sr-loc').style.color=''; }
   if (el('sr-manual-panel')) el('sr-manual-panel').style.display = 'none';
   setCloseLock(false);
-  var overlay = el('scan-overlay');
-  if (overlay) { overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  var ov = el('scan-overlay');
+  if (ov) { ov.classList.add('open'); document.body.style.overflow = 'hidden'; }
 
-  // --- GPS (updates already-saved record) ---
+  // --- GPS ---
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       function(pos) {
@@ -1295,15 +1303,11 @@ function onQrDetected(raw) {
         try {
           var arr2 = JSON.parse(localStorage.getItem(SK) || '[]');
           for (var i = arr2.length-1; i >= 0; i--) {
-            if (arr2[i].ts === rec.ts) {
-              arr2[i].lat = rec.lat; arr2[i].lng = rec.lng; arr2[i].acc = rec.acc;
-              localStorage.setItem(SK, JSON.stringify(arr2));
-              scans = arr2; break;
-            }
+            if (arr2[i].ts === rec.ts) { arr2[i].lat=rec.lat; arr2[i].lng=rec.lng; arr2[i].acc=rec.acc; localStorage.setItem(SK,JSON.stringify(arr2)); scans=arr2; break; }
           }
         } catch(e2) {}
         var locEl = el('sr-loc');
-        if (locEl) locEl.innerHTML = '<a href="https://maps.google.com/?q=' + rec.lat + ',' + rec.lng + '" target="_blank" style="color:var(--cyan)">&#128205; ' + parseFloat(rec.lat).toFixed(4) + ', ' + parseFloat(rec.lng).toFixed(4) + ' (\u00b1' + rec.acc + 'm)</a>';
+        if (locEl) locEl.innerHTML = '<a href="https://maps.google.com/?q='+rec.lat+','+rec.lng+'" target="_blank" style="color:var(--cyan)">&#128205; '+parseFloat(rec.lat).toFixed(4)+', '+parseFloat(rec.lng).toFixed(4)+' (\u00b1'+rec.acc+'m)</a>';
       },
       function() { showManualPanel(rec); },
       { timeout: 5000, maximumAge: 30000 }
@@ -1312,9 +1316,6 @@ function onQrDetected(raw) {
     showManualPanel(rec);
   }
 }
-
-
-
 
 
 
