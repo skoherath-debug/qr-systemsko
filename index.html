@@ -666,7 +666,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
 </div>
 
 <!-- Scan result overlay -->
-<div class="overlay" id="scan-overlay" onclick="if(event.target===this)closeScanSheet()">
+<div class="overlay" id="scan-overlay" onclick="if(event.target===this)tryCloseScanSheet()">
   <div class="sheet">
     <div class="sh-drag"></div>
     <div class="sr-hd">
@@ -679,23 +679,29 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
         <div class="sm"><div class="sm-lbl">Scanned By</div><div class="sm-val" id="sr-by">—</div></div>
         <div class="sm"><div class="sm-lbl">Time</div><div class="sm-val" id="sr-time">—</div></div>
         <div class="sm"><div class="sm-lbl">Shipment</div><div class="sm-val" id="sr-ship">—</div></div>
-        <div class="sm" id="sr-loc-card">
+        <div class="sm" id="sr-loc-card" style="grid-column:1/-1">
           <div class="sm-lbl">Location</div>
           <div class="sm-val loc" id="sr-loc">Fetching GPS...</div>
-          <div id="sr-loc-input-wrap" style="display:none;margin-top:8px;">
-            <input id="sr-loc-manual" type="text" placeholder="Enter location manually..."
-              style="width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:7px;
-              padding:8px 10px;font-size:13px;color:var(--text);font-family:Rajdhani,sans-serif;
-              outline:none;font-weight:600;" autocomplete="off">
-            <button type="button" id="sr-loc-save"
-              style="margin-top:6px;width:100%;background:var(--gold);color:#000;border:none;
-              border-radius:7px;padding:8px;font-family:Bebas Neue,sans-serif;font-size:13px;
-              letter-spacing:1px;cursor:pointer;">Save Location</button>
-          </div>
+        </div>
+        <!-- Manual location entry — shown full width when GPS unavailable -->
+        <div id="sr-loc-manual-section" style="display:none;grid-column:1/-1;background:rgba(240,165,0,.08);border:1.5px solid var(--gold);border-radius:12px;padding:14px;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);font-weight:700;margin-bottom:4px;">&#128205; GPS Unavailable — Enter Location</div>
+          <div style="font-size:12px;color:var(--muted2);font-weight:500;margin-bottom:10px;">Type your current location to save this scan. You cannot continue until saved.</div>
+          <input id="sr-loc-manual" type="text" placeholder="e.g. Site B, Block 3, Hulhumalé"
+            style="width:100%;background:var(--s3);border:1.5px solid var(--border2);border-radius:9px;
+            padding:12px 14px;font-size:15px;color:var(--text);font-family:Rajdhani,sans-serif;
+            outline:none;font-weight:600;margin-bottom:10px;display:block;"
+            autocomplete="off" autocorrect="off">
+          <button type="button" id="sr-loc-save"
+            style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;border:none;
+            border-radius:10px;padding:14px;font-family:Bebas Neue,sans-serif;font-size:16px;
+            letter-spacing:1.5px;cursor:pointer;box-shadow:0 4px 14px rgba(240,165,0,.35);">
+            &#128205; Save Location &amp; Continue
+          </button>
         </div>
       </div>
     </div>
-    <div class="sr-foot"><button type="button" class="sr-close" onclick="closeScanSheet()">Continue Scanning</button></div>
+    <div class="sr-foot"><button type="button" class="sr-close" id="sr-close-btn" onclick="tryCloseScanSheet()">Continue Scanning</button></div>
   </div>
 </div>
 
@@ -1153,8 +1159,8 @@ function onQrDetected(raw) {
         finishRec(rec);
       },
       function() {
-        var el = document.getElementById('sr-loc'); if (el) el.textContent = 'Location unavailable';
-        finishRec(rec);
+        var el = document.getElementById('sr-loc');
+        showManualLocation(rec);
       },
       {timeout:8000,maximumAge:10000}
     );
@@ -1162,43 +1168,110 @@ function onQrDetected(raw) {
 }
 function finishRec(rec) { scans.push(rec); saveScans(); renderRptTable(); }
 
-function showManualLocation(rec) {
-  var el = document.getElementById('sr-loc');
-  if (el) {
-    el.textContent = 'GPS unavailable';
-    el.style.color = 'var(--muted2)';
-  }
-  var wrap = document.getElementById('sr-loc-input-wrap');
-  if (wrap) wrap.style.display = 'block';
+// Track whether manual location is required before closing
+var _locPending = false;
+var _pendingRec = null;
 
+function showManualLocation(rec) {
+  _locPending = true;
+  _pendingRec = rec;
+
+  var el = document.getElementById('sr-loc');
+  if (el) { el.textContent = 'GPS unavailable'; el.style.color = 'var(--muted2)'; }
+
+  // Show manual entry section
+  var sec = document.getElementById('sr-loc-manual-section');
+  if (sec) sec.style.display = 'block';
+
+  // Dim/disable the close button
+  var closeBtn = document.getElementById('sr-close-btn');
+  if (closeBtn) {
+    closeBtn.disabled  = true;
+    closeBtn.style.opacity = '0.35';
+    closeBtn.style.cursor  = 'not-allowed';
+    closeBtn.textContent   = 'Enter location to continue';
+  }
+
+  // Focus the input after a short delay
+  setTimeout(function() {
+    var inp = document.getElementById('sr-loc-manual');
+    if (inp) inp.focus();
+  }, 300);
+
+  // Wire Save button
   var saveBtn = document.getElementById('sr-loc-save');
   if (saveBtn) {
-    saveBtn.onclick = function() {
-      var val = (document.getElementById('sr-loc-manual').value || '').trim();
-      if (!val) { alert('Please enter a location.'); return; }
-      rec.manualLoc = val;
-      // Update the display
-      if (el) { el.textContent = '\u1F4CD ' + val; el.style.color = 'var(--cyan)'; }
-      if (wrap) wrap.style.display = 'none';
-      finishRec(rec);
-      saveBtn.onclick = null;
-    };
+    saveBtn.onclick = null;
+    saveBtn.addEventListener('touchend', function(e) { e.preventDefault(); doSaveLocation(); });
+    saveBtn.addEventListener('click',    function()  { doSaveLocation(); });
   }
-  // Still finalize after a short delay even if user doesn't enter location
-  // (they can always view in reports)
-  finishRec(rec);
+}
+
+function doSaveLocation() {
+  var val = (document.getElementById('sr-loc-manual').value || '').trim();
+  if (!val) {
+    // Shake input
+    var inp = document.getElementById('sr-loc-manual');
+    if (inp) { inp.style.border = '1.5px solid var(--red)'; setTimeout(function(){ inp.style.border = ''; }, 1500); }
+    return;
+  }
+
+  if (_pendingRec) {
+    _pendingRec.manualLoc = val;
+    finishRec(_pendingRec);
+    _pendingRec = null;
+  }
+
+  // Update display
+  var el = document.getElementById('sr-loc');
+  if (el) { el.innerHTML = '&#128205; ' + esc(val); el.style.color = 'var(--cyan)'; }
+
+  // Hide manual section
+  var sec = document.getElementById('sr-loc-manual-section');
+  if (sec) sec.style.display = 'none';
+
+  // Re-enable close button
+  var closeBtn = document.getElementById('sr-close-btn');
+  if (closeBtn) {
+    closeBtn.disabled  = false;
+    closeBtn.style.opacity  = '';
+    closeBtn.style.cursor   = '';
+    closeBtn.textContent    = 'Continue Scanning';
+  }
+
+  _locPending = false;
 }
 function mkTag(p, html) { var t = document.createElement('span'); t.className = 'sl-tag'; t.innerHTML = html; p.appendChild(t); }
+window.tryCloseScanSheet = function() {
+  if (_locPending) {
+    // Pulse the location section to draw attention
+    var sec = document.getElementById('sr-loc-manual-section');
+    if (sec) {
+      sec.style.transition = 'transform .1s';
+      sec.style.transform  = 'scale(1.02)';
+      setTimeout(function(){ sec.style.transform = ''; }, 200);
+    }
+    var inp = document.getElementById('sr-loc-manual');
+    if (inp) inp.focus();
+    return;
+  }
+  window.closeScanSheet();
+};
+
 window.closeScanSheet = function() {
+  _locPending = false;
+  _pendingRec = null;
   document.getElementById('scan-overlay').classList.remove('open');
   document.body.style.overflow = '';
-  // Reset manual location input for next scan
-  var wrap = document.getElementById('sr-loc-input-wrap');
-  if (wrap) wrap.style.display = 'none';
+  // Reset for next scan
+  var sec = document.getElementById('sr-loc-manual-section');
+  if (sec) sec.style.display = 'none';
   var inp = document.getElementById('sr-loc-manual');
   if (inp) inp.value = '';
   var locEl = document.getElementById('sr-loc');
-  if (locEl) { locEl.style.color = ''; }
+  if (locEl) { locEl.style.color = ''; locEl.textContent = 'Fetching GPS...'; }
+  var closeBtn = document.getElementById('sr-close-btn');
+  if (closeBtn) { closeBtn.disabled=false; closeBtn.style.opacity=''; closeBtn.style.cursor=''; closeBtn.textContent='Continue Scanning'; }
   renderRptTable();
 };
 
