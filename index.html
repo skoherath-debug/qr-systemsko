@@ -1123,7 +1123,7 @@ window.clearScans = function() {
 window.startScan = function() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert('Camera not supported.'); return; }
   document.getElementById('scan-stat').textContent = 'Requesting camera...';
-  navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment', width:{ideal:1280}, height:{ideal:720} } })
+  navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment', width:{ideal:640}, height:{ideal:480} } })
     .then(function(stream) {
       scanStr = stream; sVideo.srcObject = stream; sVideo.play();
       document.getElementById('scan-stat').textContent = 'Scanning — point at QR code';
@@ -1145,16 +1145,35 @@ window.stopScan = function() {
   if (ss) { ss.textContent = 'Camera off — press Start'; ss.className = 'scan-stat'; }
   if (bs) bs.disabled = false; if (be) be.disabled = true;
 };
+// Dedicated small canvas for jsQR — 400×400 is optimal for speed+accuracy
+var _qrCvs = document.createElement('canvas');
+var _qrCtx = _qrCvs.getContext('2d');
+_qrCvs.width = _qrCvs.height = 400;
+var _frameSkip = 0;   // process every 3rd frame only
+
 function doFrame() {
   if (!scanStr) return;
   scanRAF = requestAnimationFrame(doFrame);
   if (sVideo.readyState !== sVideo.HAVE_ENOUGH_DATA) return;
-  sCvs.width = sVideo.videoWidth; sCvs.height = sVideo.videoHeight;
-  sCtx.drawImage(sVideo, 0, 0);
+
+  // Skip frames to reduce CPU load on mobile
+  _frameSkip++;
+  if (_frameSkip < 3) return;
+  _frameSkip = 0;
+
+  // Draw video into small 400×400 canvas (downsampled — much faster for jsQR)
+  _qrCtx.drawImage(sVideo, 0, 0, 400, 400);
+
   if (typeof jsQR === 'undefined') return;
-  var img = sCtx.getImageData(0, 0, sCvs.width, sCvs.height);
-  var qr  = jsQR(img.data, img.width, img.height, {inversionAttempts:'dontInvert'});
-  if (qr && !scanLck) { scanLck = true; setTimeout(function() { scanLck = false; }, 3000); onQrDetected(qr.data); }
+  if (scanLck) return;
+
+  var img = _qrCtx.getImageData(0, 0, 400, 400);
+  var qr  = jsQR(img.data, 400, 400, { inversionAttempts: 'dontInvert' });
+  if (qr) {
+    scanLck = true;
+    setTimeout(function() { scanLck = false; }, 2000);
+    onQrDetected(qr.data);
+  }
 }
 function onQrDetected(raw) {
   var parts = raw.split('|');
