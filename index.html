@@ -1321,6 +1321,13 @@ function doCloseScan() {
 
 
 
+function mkTag(parent, html) {
+  var t = document.createElement('span');
+  t.className = 'sl-tag';
+  t.innerHTML = html;
+  parent.appendChild(t);
+}
+
 // ── FILE READING ──────────────────────────────────────────────────────────────
 function readFile(file) {
   var ext = file.name.split('.').pop().toLowerCase();
