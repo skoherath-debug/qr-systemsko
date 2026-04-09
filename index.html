@@ -20,17 +20,17 @@
 
 /* PWA Install Banner */
 #install-banner{
-  display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  display:none;position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
   background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;
-  border-radius:14px;padding:13px 22px;font-family:'Bebas Neue';font-size:15px;
+  border-radius:14px;padding:12px 20px;font-family:'Bebas Neue';font-size:14px;
   letter-spacing:1px;cursor:pointer;z-index:400;white-space:nowrap;
   box-shadow:0 6px 24px rgba(240,165,0,.45);
-  display:none;align-items:center;gap:10px;border:none;
-  animation:popIn .3s cubic-bezier(.22,1,.36,1);
+  align-items:center;gap:10px;animation:popIn .3s cubic-bezier(.22,1,.36,1);
+  user-select:none;
 }
+#install-banner.show{display:flex;}
 @keyframes popIn{from{transform:translateX(-50%) scale(.8);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
-#install-banner.show{display:flex!important;}
-#install-dismiss{background:transparent;border:none;color:rgba(0,0,0,.5);font-size:18px;cursor:pointer;padding:0 0 0 6px;line-height:1;}
+#install-dismiss{color:rgba(0,0,0,.5);font-size:18px;cursor:pointer;padding:0 0 0 4px;line-height:1;}
 
 /* ── RESET ── */
 :root{
@@ -60,7 +60,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
   background:radial-gradient(circle,rgba(240,165,0,.07),transparent 68%);}
 .ll-inner{position:relative;z-index:1;}
 .ll-logo-row{display:flex;align-items:center;gap:16px;margin-bottom:52px;}
-.ll-logo-img{width:110px;height:auto;object-fit:contain;filter:brightness(0) invert(1);}
+.ll-logo-img{width:100px;height:56px;object-fit:contain;object-position:left center;}
 .ll-coname{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;line-height:1.2;}
 .ll-coname small{display:block;font-family:'Rajdhani';font-size:11px;color:var(--muted2);font-weight:600;letter-spacing:3px;text-transform:uppercase;}
 .ll-hero{font-family:'Bebas Neue';font-size:86px;line-height:.84;letter-spacing:4px;margin-bottom:28px;}
@@ -77,7 +77,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
 }
 .pin-card{width:100%;max-width:340px;}
 .pin-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
-.pin-logo-img{width:72px;height:auto;object-fit:contain;filter:brightness(0) invert(1);}
+.pin-logo-img{width:64px;height:36px;object-fit:contain;}
 .pin-brand-text{font-family:'Bebas Neue';font-size:19px;letter-spacing:1.5px;line-height:1.2;}
 .pin-brand-text small{display:block;font-family:'Rajdhani';font-size:10px;color:var(--muted2);font-weight:600;letter-spacing:2px;}
 .pin-title{font-family:'Bebas Neue';font-size:30px;letter-spacing:2px;margin-bottom:6px;}
@@ -128,7 +128,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
   backdrop-filter:blur(16px);
 }
 .tnbrand{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.tn-logo-img{width:44px;height:auto;object-fit:contain;filter:brightness(0) invert(1);}
+.tn-logo-img{width:38px;height:22px;object-fit:contain;}
 .tnname{font-family:'Bebas Neue';font-size:15px;letter-spacing:1px;line-height:1.1;}
 .tnname small{display:block;font-family:'Rajdhani';font-size:9px;color:var(--muted2);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
 .tntabs{display:flex;gap:3px;background:var(--s2);border-radius:10px;padding:3px;overflow-x:auto;scrollbar-width:none;}
@@ -499,7 +499,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
       <div class="tnname">Sanken<small>Overseas</small></div>
     </div>
     <div class="tntabs">
-      <button type="button" class="tntab active" data-tab="generator">&#9889; Generate</button>
+      <button type="button" class="tntab active" id="gen-tab" data-tab="generator">&#9889; Generate</button>
       <button type="button" class="tntab" data-tab="scanner">&#128247; Scan</button>
       <button type="button" class="tntab" id="admin-tab" style="display:none" data-tab="admin">&#128295; Admin</button>
     </div>
@@ -614,10 +614,10 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
             </div>
           </div>
           <div class="add-row" style="margin-bottom:10px">
-            <input class="add-inp" id="add-role" placeholder="Role" value="Staff">
+            <input class="add-inp" id="add-role" placeholder="Role: Staff / Operator" value="Staff">
             <div></div>
           </div>
-          <button type="button" class="add-sub" id="add-btn">+ Authorise User</button>
+          <div style="font-size:11px;color:var(--muted2);margin-bottom:10px;line-height:1.6;"><strong style="color:var(--muted2)">Roles:</strong> <strong style="color:var(--text)">Staff</strong> = Scan only &nbsp;|&nbsp; <strong style="color:var(--text)">Operator</strong> = Scan + Generate QR</div><button type="button" class="add-sub" id="add-btn">+ Authorise User</button>
         </div>
 
         <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">Share Access</div></div>
@@ -658,7 +658,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
   <!-- Mobile bottom nav -->
   <div class="bot-nav">
     <div class="bot-nav-row">
-      <button type="button" class="bnb active" data-tab="generator"><span class="bnb-icon">&#9889;</span>Generate</button>
+      <button type="button" class="bnb active" id="gen-bnb" data-tab="generator"><span class="bnb-icon">&#9889;</span>Generate</button>
       <button type="button" class="bnb" data-tab="scanner"><span class="bnb-icon">&#128247;</span>Scan</button>
       <button type="button" class="bnb" id="admin-bnb" style="display:none" data-tab="admin"><span class="bnb-icon">&#128295;</span>Admin</button>
     </div>
@@ -880,11 +880,14 @@ function pinEnter() {
   appEl.classList.add('on');
   document.getElementById('nav-user').textContent = u.name;
   var adm = u.isAdmin;
-  document.getElementById('admin-tab').style.display = adm ? '' : 'none';
-  document.getElementById('admin-bnb').style.display = adm ? '' : 'none';
+  var canGenerate = adm || u.role === 'Operator' || u.role === 'operator';
+  document.getElementById('admin-tab').style.display      = adm ? '' : 'none';
+  document.getElementById('admin-bnb').style.display      = adm ? '' : 'none';
+  document.getElementById('gen-tab').style.display        = canGenerate ? '' : 'none';
+  document.getElementById('gen-bnb').style.display        = canGenerate ? '' : 'none';
   pinBuf = '';
   updateDots(false);
-  showTab('generator');
+  showTab(canGenerate ? 'generator' : 'scanner');
 }
 function doSignOut() {
   stopScan();
@@ -1375,13 +1378,12 @@ window.resetAll = function() {
     var banner = document.getElementById('install-banner');
     if (banner) banner.classList.add('show');
   });
-  document.getElementById('install-banner').addEventListener('click', function(e) {
-    if (e.target.id === 'install-dismiss') return;
+  document.getElementById('install-text').addEventListener('click', function() {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
     }
-    this.classList.remove('show');
+    document.getElementById('install-banner').classList.remove('show');
   });
   window.dismissInstall = function(e) {
     e.stopPropagation();
@@ -1406,10 +1408,10 @@ window.resetAll = function() {
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
 
-<button id="install-banner" type="button">
-  <span>&#128247; Add to Home Screen</span>
-  <button id="install-dismiss" type="button" onclick="dismissInstall(event)">&#10005;</button>
-</button>
+<div id="install-banner">
+  <span id="install-text">&#128247; Add to Home Screen</span>
+  <span id="install-dismiss" onclick="dismissInstall(event)">&#10005;</span>
+</div>
 
 </body>
 </html>
