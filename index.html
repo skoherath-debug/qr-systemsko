@@ -790,7 +790,6 @@ var scanStr    = null;
 var scanRAF    = null;
 var scanLck    = false;
 var _pRec      = null;  // pending scan record
-var _pSaved    = false; // whether pending record saved
 var _pLocked   = false; // close button locked (manual location required)
 var sVideo  = null;
 var sCvs    = null;
@@ -881,7 +880,12 @@ window.addEventListener('DOMContentLoaded', function() {
         if (inp) inp.focus();
         return;
       }
-      saveAndClose();
+      // Close popup directly
+      document.getElementById('scan-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+      _pRec    = null;
+      _pLocked = false;
+      renderRptTable();
     }
     btn.addEventListener('touchend', function(e) { e.preventDefault(); onClose(); }, {passive:false});
     btn.addEventListener('click',    function()  { onClose(); });
@@ -1208,12 +1212,19 @@ function onQrDetected(raw) {
   var ts    = new Date();
   var by    = curUser ? curUser.name : 'Unknown';
 
-  // Store as module-level pending record
-  _pRec    = { code:code, desc:desc, ship:ship, by:by, ts:ts.toISOString(), lat:null, lng:null, acc:null };
-  _pSaved  = false;
-  _pLocked = false;
+  // ── BUILD RECORD ──────────────────────────────────────────
+  var rec = {
+    code: code, desc: desc, ship: ship,
+    by: by, ts: ts.toISOString(),
+    lat: null, lng: null, acc: null, manualLoc: ''
+  };
 
-  // Update inline last-scan box
+  // ── SAVE IMMEDIATELY (GPS will update later) ──────────────
+  scans.push(rec);
+  saveScans();
+  renderRptTable();   // update admin table right away
+
+  // ── UPDATE INLINE SCAN BOX ────────────────────────────────
   document.getElementById('scan-last').style.display = 'block';
   document.getElementById('sl-code').textContent = code;
   document.getElementById('sl-desc').textContent = desc;
@@ -1221,63 +1232,64 @@ function onQrDetected(raw) {
   mkTag(tg, '&#128100; ' + by);
   mkTag(tg, '&#128336; ' + ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
 
-  // Populate popup fields
+  // ── SHOW POPUP ────────────────────────────────────────────
   document.getElementById('sr-code').textContent = code;
   document.getElementById('sr-desc').textContent = desc || raw;
   document.getElementById('sr-by').textContent   = by;
   document.getElementById('sr-time').textContent = ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + ' ' + ts.toLocaleDateString();
   document.getElementById('sr-ship').textContent = ship || 'N/A';
-  document.getElementById('sr-loc').textContent  = 'Fetching GPS...';
+  document.getElementById('sr-loc').textContent  = 'Getting GPS...';
   document.getElementById('sr-loc').style.color  = '';
-
-  // Reset manual panel
   document.getElementById('sr-manual-panel').style.display = 'none';
-  var inp = document.getElementById('sr-loc-manual'); if (inp) { inp.value = ''; inp.style.border = ''; }
+  var locInp = document.getElementById('sr-loc-manual');
+  if (locInp) { locInp.value = ''; locInp.style.border = ''; }
 
-  // Reset close button state
   setCloseLock(false);
-
-  // Show popup
   document.getElementById('scan-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  // Try GPS
+  // ── GPS (updates the record that is already saved) ────────
+  function updateSaved(field, val) {
+    rec[field] = val;
+    // Re-save with updated coordinates
+    saveScans();
+    renderRptTable();
+  }
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       function(pos) {
-        if (!_pRec) return;
-        _pRec.lat = pos.coords.latitude.toFixed(6);
-        _pRec.lng = pos.coords.longitude.toFixed(6);
-        _pRec.acc = Math.round(pos.coords.accuracy);
+        updateSaved('lat', pos.coords.latitude.toFixed(6));
+        updateSaved('lng', pos.coords.longitude.toFixed(6));
+        updateSaved('acc', Math.round(pos.coords.accuracy));
         var locEl = document.getElementById('sr-loc');
         if (locEl) {
-          locEl.innerHTML = '<a href="https://maps.google.com/?q=' + _pRec.lat + ',' + _pRec.lng +
+          locEl.innerHTML = '<a href="https://maps.google.com/?q=' + rec.lat + ',' + rec.lng +
             '" target="_blank" style="color:var(--cyan)">&#128205; ' +
-            parseFloat(_pRec.lat).toFixed(4) + ', ' + parseFloat(_pRec.lng).toFixed(4) +
-            ' (\u00b1' + _pRec.acc + 'm)</a>';
-          locEl.style.color = '';
+            parseFloat(rec.lat).toFixed(4) + ', ' + parseFloat(rec.lng).toFixed(4) +
+            ' (\u00b1' + rec.acc + 'm)</a>';
         }
-        mkTag(tg, '&#128205; ' + parseFloat(_pRec.lat).toFixed(4) + ', ' + parseFloat(_pRec.lng).toFixed(4));
+        mkTag(tg, '&#128205; ' + parseFloat(rec.lat).toFixed(4) + ', ' + parseFloat(rec.lng).toFixed(4));
       },
-      function() { showManualPanel(); },
+      function() { showManualPanel(rec, updateSaved, tg); },
       { timeout: 8000, maximumAge: 10000 }
     );
   } else {
-    showManualPanel();
+    showManualPanel(rec, updateSaved, tg);
   }
 }
 
-// Show manual location entry and lock close button
-function showManualPanel() {
+// Show manual location entry (record already saved — just updating it)
+function showManualPanel(rec, updateSaved, tg) {
   var locEl = document.getElementById('sr-loc');
-  if (locEl) { locEl.textContent = 'GPS unavailable'; locEl.style.color = 'var(--muted2)'; }
+  if (locEl) { locEl.textContent = 'GPS unavailable — enter location'; locEl.style.color = 'var(--muted2)'; }
 
   var panel = document.getElementById('sr-manual-panel');
   if (panel) panel.style.display = 'block';
 
-  setCloseLock(true);
+  setCloseLock(true);  // lock close until location entered
 
-  // Wire save button — replace element to clear old listeners
+  // Replace save btn to clear old listeners
   var saveEl = document.getElementById('sr-loc-save-btn');
   if (saveEl) {
     var fresh = saveEl.cloneNode(true);
@@ -1297,27 +1309,21 @@ function showManualPanel() {
         return;
       }
       fired = true;
-      if (_pRec) _pRec.manualLoc = val;
-
-      // Update display
-      if (locEl) { locEl.innerHTML = '&#128205; ' + esc(val); locEl.style.color = 'var(--cyan)'; }
-      if (panel)  { panel.style.display = 'none'; }
-
-      // Unlock close button
+      updateSaved('manualLoc', val);
+      var locEl2 = document.getElementById('sr-loc');
+      if (locEl2) { locEl2.innerHTML = '&#128205; ' + esc(val); locEl2.style.color = 'var(--cyan)'; }
+      if (panel) panel.style.display = 'none';
       setCloseLock(false);
+      mkTag(tg, '&#128205; ' + esc(val));
     }
 
     fresh.addEventListener('touchend', function(e) { e.preventDefault(); doSave(); }, {passive:false});
     fresh.addEventListener('click',    function()  { doSave(); });
   }
-
-  setTimeout(function() {
-    var inp = document.getElementById('sr-loc-manual');
-    if (inp) inp.focus();
-  }, 350);
+  setTimeout(function() { var i=document.getElementById('sr-loc-manual'); if(i) i.focus(); }, 350);
 }
 
-// Lock or unlock the close button visually
+// Lock/unlock close button
 function setCloseLock(lock) {
   _pLocked = lock;
   var btn = document.getElementById('sr-close-btn');
@@ -1325,24 +1331,7 @@ function setCloseLock(lock) {
   btn.disabled      = lock;
   btn.style.opacity = lock ? '0.35' : '';
   btn.style.cursor  = lock ? 'not-allowed' : '';
-  btn.textContent   = lock ? 'Save location to continue \u2191' : 'Continue Scanning';
-}
-
-// Save pending record (idempotent) then close popup
-function saveAndClose() {
-  if (!_pSaved && _pRec) {
-    _pSaved = true;
-    scans.push(_pRec);
-    saveScans();
-    console.log('Scan saved:', _pRec.code, '| Total scans:', scans.length);
-  }
-  // Close popup
-  document.getElementById('scan-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-  // Reset
-  _pRec    = null;
-  _pLocked = false;
-  renderRptTable();
+  btn.textContent   = lock ? 'Enter location to continue \u2191' : 'Continue Scanning';
 }
 
 
