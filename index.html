@@ -1317,15 +1317,15 @@ function doFrame() {
 
 function onQrDetected(raw) {
   var now   = new Date();
-  var parts = raw.indexOf('|') !== -1 ? raw.split('|') : ['', raw, '', ''];
-  var code  = (parts[0] || '').trim();
-  var desc  = (parts[1] || raw).trim();
+  var parts = raw.indexOf('|') !== -1 ? raw.split('|') : [raw, '', '', ''];
+  var desc  = (parts[0] || raw).trim();
+  var code  = (parts[1] || '').trim();
   var ship  = (parts[2] || '').trim();
-  // If no pipe, raw IS the description, generate a sequential code
+  // External QR (no pipe) — raw is the description
   if (!code) {
     var cnt = 0;
     try { cnt = JSON.parse(localStorage.getItem(SK) || '[]').length; } catch(e) {}
-    code = 'SCAN-' + String(cnt + 1).padStart(3,'0');
+    code = 'EXT-' + String(cnt + 1).padStart(3,'0');
   }
 
   var rec = {
@@ -1519,7 +1519,7 @@ function mkCode(it) { return (document.getElementById('s-pre').value||'SO') + '-
 function mkPay(it) {
   var code = mkCode(it), ship = document.getElementById('s-ship').value||'', site = document.getElementById('s-site').value||'';
   var desc = it.desc.length > 100 ? it.desc.substring(0,100) : it.desc;
-  return code + '|' + desc + '|' + ship + '|' + site;
+  return desc + '|' + code + '|' + ship + '|' + site;
 }
 function genQR(it, sz, cb) {
   if (typeof qrcode === 'undefined') { cb && cb(false); return; }
