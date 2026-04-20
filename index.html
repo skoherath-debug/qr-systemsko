@@ -544,8 +544,8 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
       <div id="gen-settings" style="display:none">
         <div class="sg-grid">
           <div class="sg"><label class="slbl">Code Prefix</label><input class="sinp" id="s-pre" value="SO-MV"></div>
-          <div class="sg"><label class="slbl">Shipment Ref</label><input class="sinp" id="s-ship" value="SO-2026-031"></div>
-          <div class="sg"><label class="slbl">Site / Project</label><input class="sinp" id="s-site" value="Hulhumale Phase II"></div>
+          <div class="sg"><label class="slbl">PO Number</label><input class="sinp" id="s-ship" value="PO-2026-031"></div>
+          <div class="sg"><label class="slbl">Site / Project</label><select class="ssel" id="s-site"><option value="Hulhumale Phase II">Hulhumale Phase II</option></select></div>
           <div class="sg"><label class="slbl">Print Columns</label>
             <select class="ssel" id="s-cols">
               <option value="2" selected>2 columns (A4)</option>
@@ -655,6 +655,21 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
           <div class="share-note" id="share-note"></div>
         </div>
 
+        <!-- ── SITE / PROJECT MANAGEMENT ── -->
+        <div class="sec-hd" style="margin-top:20px;">
+          <div class="sec-title">Sites / Projects</div>
+          <span class="sec-badge bd-gold" id="site-count">0</span>
+        </div>
+        <div id="site-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+        <div class="add-card" style="padding:14px;">
+          <div style="display:flex;gap:8px;">
+            <input class="add-inp" id="add-site-inp" placeholder="e.g. Hulhumale Phase III" autocomplete="off"
+              style="flex:1;" onkeydown="if(event.key==='Enter')addSite()">
+            <button type="button" class="add-sub" onclick="addSite()"
+              style="flex:0;padding:12px 18px;font-size:13px;white-space:nowrap;">+ Add</button>
+          </div>
+        </div>
+
         <div class="sec-hd" style="margin-top:22px;">
           <div class="sec-title">Scan Reports</div>
           <span class="sec-badge bd-blue" id="scan-count-badge">0 scans</span>
@@ -666,7 +681,8 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
         </div>
         <div class="rpt-btns">
           <button type="button" class="rpt-btn g" onclick="exportCSV()">&#8675; Export CSV</button>
-          <button type="button" class="rpt-btn" onclick="clearScans()">&#128465; Clear Log</button>
+          <button type="button" class="rpt-btn" onclick="testSaveRecord()">&#9654; Test</button>
+        <button type="button" class="rpt-btn" onclick="clearScans()">&#128465; Clear Log</button>
         </div>
         <input class="rpt-filter" id="rpt-filter" placeholder="Filter by code, description or user..." oninput="renderRptTable()">
         <div class="tbl-wrap">
@@ -695,14 +711,11 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
   <div class="sheet" id="scan-sheet">
     <div class="sh-drag"></div>
 
-    <!-- Header -->
-    <div class="sr-hd">
-      <div class="sr-icon">&#9989;</div>
-      <div style="flex:1;min-width:0;">
-        <div class="sr-top-tag">&#9989; SCANNED</div>
-        <div class="sr-desc" id="sr-desc" style="font-size:15px;font-weight:700;line-height:1.4;margin-top:2px;">—</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;color:var(--gold);margin-top:4px;" id="sr-code"></div>
-      </div>
+    <!-- Header: ITEM NAME FIRST, code second -->
+    <div style="padding:16px 20px 4px;">
+      <div style="font-size:10px;font-family:Bebas Neue,sans-serif;letter-spacing:2.5px;color:var(--green);margin-bottom:8px;">&#9989; SCANNED</div>
+      <div id="sr-desc" style="font-size:19px;font-weight:700;line-height:1.4;color:var(--text);word-break:break-word;">—</div>
+      <div id="sr-code" style="font-family:Bebas Neue,sans-serif;font-size:12px;color:var(--gold);margin-top:6px;letter-spacing:.5px;"></div>
     </div>
 
     <!-- Body -->
@@ -790,7 +803,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);}
     <div class="sl-ln"></div>
     <div class="sl-inf">
       <div class="sl-d" id="sl-d"></div>
-      <div class="sl-m"><span id="sl-c"></span><span>Sanken Overseas</span></div>
+      <div class="sl-m"><span id="sl-c"></span><span id="sl-po" style="color:#444;"></span><span id="sl-site">Sanken Overseas</span></div>
     </div>
   </div>
 </div>
@@ -823,6 +836,7 @@ var sCtx    = null;
 window.addEventListener('DOMContentLoaded', function() {
   loadUsers();
   loadScans();
+  loadSites();
   checkUrlHash();   // auto-import users from share link
 
   sVideo = document.getElementById('scan-video');
@@ -928,6 +942,84 @@ function checkUrlHash() {
   } catch(e) { /* ignore */ }
 }
 
+// ── SITES ─────────────────────────────────────────────────────────────────────
+var SITES_KEY = 'so_sites_v1';
+var sitesList = [];
+
+function loadSites() {
+  try { sitesList = JSON.parse(localStorage.getItem(SITES_KEY) || '[]'); } catch(e) { sitesList = []; }
+  if (!sitesList.length) sitesList = ['Hulhumale Phase II'];
+  populateSiteDropdown();
+}
+
+function saveSites() {
+  localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
+}
+
+function populateSiteDropdown() {
+  var sel = document.getElementById('s-site');
+  if (!sel) return;
+  var cur = sel.value;
+  sel.innerHTML = '';
+  sitesList.forEach(function(s) {
+    var opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    if (s === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  // Restore previous selection if still valid
+  if (sitesList.indexOf(cur) !== -1) sel.value = cur;
+}
+
+function renderSites() {
+  var list = document.getElementById('site-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!sitesList.length) {
+    list.innerHTML = '<div style="padding:12px;color:var(--muted2);font-size:13px;text-align:center;background:var(--s2);border-radius:10px;border:1px dashed var(--border);">No sites added yet.</div>';
+    document.getElementById('site-count').textContent = '0';
+    return;
+  }
+  sitesList.forEach(function(site, idx) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;gap:10px;';
+    var icon = document.createElement('span'); icon.textContent = '\uD83D\uDCCD'; icon.style.fontSize='16px';
+    var nm = document.createElement('div'); nm.style.cssText='flex:1;font-size:13px;font-weight:700;'; nm.textContent = site;
+    var rm = document.createElement('button'); rm.type='button';
+    rm.style.cssText='background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.25);color:var(--red);border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Rajdhani,sans-serif;';
+    rm.textContent = '\u00D7 Remove';
+    rm.dataset.idx = idx;
+    function makeRemove(i) {
+      rm.addEventListener('touchend', function(e){ e.preventDefault(); removeSite(i); }, {passive:false});
+      rm.addEventListener('click',    function()  { removeSite(i); });
+    }
+    makeRemove(idx);
+    row.appendChild(icon); row.appendChild(nm); row.appendChild(rm);
+    list.appendChild(row);
+  });
+  document.getElementById('site-count').textContent = sitesList.length;
+  populateSiteDropdown();
+}
+
+function addSite() {
+  var inp = document.getElementById('add-site-inp');
+  var val = inp ? inp.value.trim() : '';
+  if (!val) { inp && inp.focus(); return; }
+  if (sitesList.indexOf(val) !== -1) { alert('Site already exists.'); return; }
+  sitesList.push(val);
+  saveSites();
+  if (inp) inp.value = '';
+  renderSites();
+}
+
+function removeSite(idx) {
+  var site = sitesList[idx];
+  if (!confirm('Remove "' + site + '"?')) return;
+  sitesList.splice(idx, 1);
+  saveSites();
+  renderSites();
+}
+
 // ── USERS ──────────────────────────────────────────────────────────────────────
 function loadUsers() {
   try { users = JSON.parse(localStorage.getItem(AK) || '[]'); } catch(e) { users = []; }
@@ -1010,6 +1102,7 @@ function showTab(t) {
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
 function renderAdmin() {
   try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; }
+  renderSites();
   var lc = document.getElementById('scan-live-count'); if(lc) lc.textContent = scans.length + ' scan' + (scans.length===1?'':' s');
   var list = document.getElementById('user-list');
   list.innerHTML = '';
@@ -1225,12 +1318,9 @@ function doFrame() {
 function onQrDetected(raw) {
   var now   = new Date();
   var parts = raw.indexOf('|') !== -1 ? raw.split('|') : ['', raw, '', ''];
-  // QR format: "Item Name\nCODE | SHIP | Sanken Overseas"
-  var lines = raw.split('\n');
-  var desc  = (lines[0] || raw).trim();
-  var meta  = (lines[1] || '').split('|');
-  var code  = (meta[0] || '').trim();
-  var ship  = (meta[1] || '').trim();
+  var code  = (parts[0] || '').trim();
+  var desc  = (parts[1] || raw).trim();
+  var ship  = (parts[2] || '').trim();
   // If no pipe, raw IS the description, generate a sequential code
   if (!code) {
     var cnt = 0;
@@ -1427,13 +1517,9 @@ function loadItems(ds, fname) {
 // ── QR ENGINE ─────────────────────────────────────────────────────────────────
 function mkCode(it) { return (document.getElementById('s-pre').value||'SO') + '-' + String(it.id).padStart(3,'0'); }
 function mkPay(it) {
-  var code = mkCode(it);
-  var ship = document.getElementById('s-ship').value||'';
-  var site = document.getElementById('s-site').value||'';
-  var desc = it.desc.length > 120 ? it.desc.substring(0,120) : it.desc;
-  // Item name appears first so ANY phone QR scanner shows it immediately
-  // Internal fields follow after a newline so they don't clutter the preview
-  return desc + '\n' + code + ' | ' + ship + ' | Sanken Overseas';
+  var code = mkCode(it), ship = document.getElementById('s-ship').value||'', site = document.getElementById('s-site').value||'';
+  var desc = it.desc.length > 100 ? it.desc.substring(0,100) : it.desc;
+  return code + '|' + desc + '|' + ship + '|' + site;
 }
 function genQR(it, sz, cb) {
   if (typeof qrcode === 'undefined') { cb && cb(false); return; }
@@ -1531,13 +1617,13 @@ window.printFromQp  = function() { if (qpItem) { closeQrSheet(); setTimeout(func
 window.bulkPrint = function() {
   var sel = items.filter(function(i) { return i.sel && i.gen; });
   if (!sel.length) { alert('Select generated items first.'); return; }
-  var cols = parseInt(document.getElementById('s-cols').value)||2, ship = document.getElementById('s-ship').value||'';
+  var cols = parseInt(document.getElementById('s-cols').value)||2, ship = document.getElementById('s-ship').value||'', site = document.getElementById('s-site').value||'Sanken Overseas';
   var g = document.getElementById('print-grid'); g.style.gridTemplateColumns = 'repeat('+cols+',1fr)'; g.innerHTML = '';
   sel.forEach(function(it) {
     var d = document.createElement('div'); d.className = 'pl';
     d.innerHTML = '<div class="pl-qr"><img src="'+it.url+'" alt="QR"></div><div class="pl-ln"></div>' +
       '<div class="pl-inf"><div class="pl-d">'+esc(it.desc)+'</div>' +
-      '<div class="pl-m"><span>'+esc(mkCode(it))+' · '+esc(ship)+'</span><span>Sanken Overseas</span></div></div>';
+      '<div class="pl-m"><span>'+esc(mkCode(it))+'</span><span>PO No: '+esc(ship)+'</span><span>'+esc(site)+'</span></div></div>';
     g.appendChild(d);
   });
   printed += sel.length; updateStats();
@@ -1555,7 +1641,9 @@ window.printOne = function(id, cb) {
   var go = function() {
     document.getElementById('sl-img').src = it.url;
     document.getElementById('sl-d').textContent = it.desc;
-    document.getElementById('sl-c').textContent = mkCode(it) + ' · ' + ship;
+    document.getElementById('sl-c').textContent = mkCode(it);
+    var _sp=document.getElementById('sl-po');if(_sp)_sp.textContent='PO No: '+(document.getElementById('s-ship').value||'');
+    var _ss=document.getElementById('sl-site');if(_ss)_ss.textContent=document.getElementById('s-site').value||'Sanken Overseas';
     var pa = document.getElementById('print-area-single'); pa.style.display = 'flex';
     setTimeout(function(){ window.print(); setTimeout(function(){ pa.style.display='none'; printed++; updateStats(); cb&&cb(); },600); },400);
   };
@@ -1640,6 +1728,27 @@ window.resetAll = function() {
 })();
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
+window.googleItem = function() {
+  var desc = document.getElementById('sr-desc');
+  if (desc && desc.textContent && desc.textContent !== '—') {
+    var q = encodeURIComponent(desc.textContent.trim());
+    window.open('https://www.google.com/search?q=' + q + '&tbm=isch', '_blank');
+  }
+};
+
+window.testSaveRecord = function() {
+  var rec = { code:'TEST-001', desc:'Test Item - Storage Check', ship:'TEST', by: curUser ? curUser.name : 'Admin', ts:new Date().toISOString(), lat:'', lng:'', acc:'', manualLoc:'Test Location' };
+  try {
+    var arr = JSON.parse(localStorage.getItem(SK) || '[]');
+    if (!Array.isArray(arr)) arr = [];
+    arr.push(rec);
+    localStorage.setItem(SK, JSON.stringify(arr));
+    scans = arr;
+    renderRptTable();
+    alert('Saved! Total scans: ' + arr.length);
+  } catch(e) { alert('STORAGE ERROR: ' + e.message); }
+};
+
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
 
