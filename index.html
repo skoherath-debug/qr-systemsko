@@ -1317,15 +1317,26 @@ function doFrame() {
 
 function onQrDetected(raw) {
   var now   = new Date();
-  var parts = raw.indexOf('|') !== -1 ? raw.split('|') : [raw, '', '', ''];
-  var desc  = (parts[0] || raw).trim();
-  var code  = (parts[1] || '').trim();
-  var ship  = (parts[2] || '').trim();
-  // External QR (no pipe) — raw is the description
+  // Handle both new format (plain description) and old format (CODE|DESC|...)
+  var desc, code, ship;
+  if (raw.indexOf('|') !== -1) {
+    // Old format: CODE|DESC|SHIP|SITE  OR  DESC|CODE|SHIP|SITE
+    var parts = raw.split('|');
+    // Detect which field is the description (longer, has spaces/letters)
+    var p0 = (parts[0]||'').trim(), p1 = (parts[1]||'').trim();
+    var p0isCode = /^[A-Z0-9\-]{3,15}$/.test(p0);
+    if (p0isCode) { code=p0; desc=p1; } else { desc=p0; code=p1; }
+    ship = (parts[2]||'').trim();
+  } else {
+    // New format: plain description only
+    desc = raw.trim();
+    code = '';
+    ship = '';
+  }
   if (!code) {
     var cnt = 0;
-    try { cnt = JSON.parse(localStorage.getItem(SK) || '[]').length; } catch(e) {}
-    code = 'EXT-' + String(cnt + 1).padStart(3,'0');
+    try { cnt = JSON.parse(localStorage.getItem(SK)||'[]').length; } catch(e) {}
+    code = 'SCAN-' + String(cnt+1).padStart(3,'0');
   }
 
   var rec = {
@@ -1517,9 +1528,10 @@ function loadItems(ds, fname) {
 // ── QR ENGINE ─────────────────────────────────────────────────────────────────
 function mkCode(it) { return (document.getElementById('s-pre').value||'SO') + '-' + String(it.id).padStart(3,'0'); }
 function mkPay(it) {
-  var code = mkCode(it), ship = document.getElementById('s-ship').value||'', site = document.getElementById('s-site').value||'';
-  var desc = it.desc.length > 100 ? it.desc.substring(0,100) : it.desc;
-  return desc + '|' + code + '|' + ship + '|' + site;
+  // QR payload = item description ONLY (plain text)
+  // So any phone scanner immediately shows the item name for Google search
+  // App metadata (code, PO, site) stored separately on scan
+  return it.desc.length > 120 ? it.desc.substring(0,120) : it.desc;
 }
 function genQR(it, sz, cb) {
   if (typeof qrcode === 'undefined') { cb && cb(false); return; }
