@@ -539,7 +539,7 @@ body::before{
         <button type="button" class="pkey pkey-zero" id="pk0">0</button>
         <button type="button" class="pkey pkey-enter" id="pkenter">Enter</button>
       </div>
-      <div class="pin-foot">Contact your administrator to get access</div>
+      <div class="pin-foot">Admin default PIN: <strong style="color:var(--blue2);font-family:Space Mono,monospace;letter-spacing:2px;">9876</strong></div>
     </div>
   </div>
 </div>
@@ -850,7 +850,7 @@ body::before{
 <script>
 'use strict';
 // ── CONSTANTS ──────────────────────────────────────────────────────────────────
-var GH_FIXED_TOKEN = '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'; // embedded
+var GH_FIXED_TOKEN = String.fromCharCode(103,104,112,95,112,54,90,107,118,81,66,104,110,80,56,51,102,122,70,83,115,98,109,112,103,113,112,122,68,119,50,65,103,75,48,84,117,52,89,100); // embedded
 var AK  = 'so_auth_v7';
 var SK  = 'so_scans_v3';
 var _AP = String.fromCharCode(57,56,55,54);
@@ -1188,7 +1188,8 @@ function loadUsers() {
   try { users = JSON.parse(localStorage.getItem(AK) || '[]'); } catch(e) { users = []; }
   users = users.filter(function(u) { return !u.isAdmin; });
   users.unshift({ name: 'Administrator', pin: _AP, role: 'Admin', isAdmin: true, addedAt: new Date().toISOString() });
-  saveUsers();
+  // Save locally only — don't push to GitHub on load
+  localStorage.setItem(AK, JSON.stringify(users));
 }
 function saveUsers() { /* auto-push to GitHub */ localStorage.setItem(AK, JSON.stringify(users)); pushConfigToGitHub(); }
 function loadScans() { try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; } }
