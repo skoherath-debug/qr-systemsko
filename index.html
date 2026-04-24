@@ -40,6 +40,40 @@
 html,body{height:100%;overscroll-behavior:none;}
 body{font-family:'DM Sans',sans-serif;background:var(--c0);color:var(--text);}
 
+
+/* ── SYNC ANIMATION ── */
+@keyframes spin  { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
+@keyframes syncIn{ from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+.sync-ring {
+  width:28px;height:28px;border-radius:50%;
+  border:2.5px solid rgba(74,144,217,.2);
+  border-top-color:var(--blue);
+  animation: spin .8s linear infinite;
+  display:inline-block;
+}
+.sync-dot {
+  width:10px;height:10px;border-radius:50%;background:var(--green);
+  margin:9px;display:inline-block;
+  box-shadow:0 0 8px var(--green);
+}
+.sync-err-dot {
+  width:10px;height:10px;border-radius:50%;background:var(--red);
+  margin:9px;display:inline-block;
+}
+/* Nav sync pill */
+#nav-sync-pill {
+  display:none;align-items:center;gap:5px;
+  background:var(--bluedim);border:1px solid var(--blueborder);
+  border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;
+  color:var(--blue2);letter-spacing:.5px;text-transform:uppercase;
+  animation:syncIn .3s ease;
+}
+#nav-sync-pill.show { display:flex; }
+#nav-sync-pill.ok   { background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.3);color:var(--green); }
+#nav-sync-pill.err  { background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.25);color:var(--red); }
+.nav-spin { width:10px;height:10px;border-radius:50%;border:1.5px solid currentColor;border-top-color:transparent;animation:spin .7s linear infinite;display:inline-block; }
+
 /* ── GRID TEXTURE ── */
 body::before{
   content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -503,6 +537,10 @@ body::before{
       <button type="button" class="tntab" data-tab="scanner">&#128247; Scan</button>
       <button type="button" class="tntab" id="admin-tab" style="display:none" data-tab="admin">&#128295; Admin</button>
     </div>
+    <div id="nav-sync-pill">
+      <span id="nav-sync-icon" class="nav-spin"></span>
+      <span id="nav-sync-text">Syncing</span>
+    </div>
     <div class="tnright">
       <div class="tnuser" id="nav-user"></div>
       <button type="button" class="tnsignout" id="signout-btn">Out</button>
@@ -640,16 +678,21 @@ body::before{
 
         <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">&#9729; Cloud Sync (GitHub)</div></div>
         <div class="add-card" style="padding:16px;">
-          <div style="font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:12px;">Sync users, sites &amp; scans across <strong style="color:var(--text)">all devices</strong>. Enter a GitHub <strong style="color:var(--text)">Personal Access Token</strong> (repo scope) &mdash; stored only on this device. Once set, all data syncs automatically.</div>
-          <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <input class="add-inp" id="gh-token-inp" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" style="flex:1;font-family:Space Mono,monospace;font-size:12px;">
-            <button type="button" class="add-sub" onclick="saveGhToken()" style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">Save Token</button>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+            <div id="sync-spinner" style="width:28px;height:28px;flex-shrink:0;"></div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">Cloud Sync</div>
+              <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Tap Sync Now to connect</div>
+            </div>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <button type="button" class="rpt-btn g" onclick="fullSync()" style="padding:9px 16px;">&#8635; Sync Now</button>
-            <span id="gh-sync-status" style="font-size:12px;color:var(--muted2);">Not synced yet</span>
+          <div class="rpt-stats" style="margin-bottom:14px;">
+            <div class="rs bl"><div class="rs-lbl">Last Sync</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-last-time">Never</div></div>
+            <div class="rs gn"><div class="rs-lbl">Users Synced</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-users-count">—</div></div>
+            <div class="rs cy"><div class="rs-lbl">Scans on Cloud</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-scans-count">—</div></div>
           </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.6;">Get a token at <strong style="color:var(--blue2)">github.com &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens</strong>. Select <em>repo</em> scope.</div>
+          <button type="button" class="add-sub" onclick="fullSync()" style="display:flex;align-items:center;justify-content:center;gap:8px;" id="sync-now-btn">
+            <span id="sync-btn-icon">&#8635;</span> Sync Now
+          </button>
         </div>
 
         <div class="sec-hd" style="margin-top:22px;"><div class="sec-title">Scan Reports</div><span class="sec-badge bd-blue" id="scan-count-badge">0 scans</span></div>
@@ -898,7 +941,11 @@ function checkUrlHash() {
 // Public repo reads are free; writes need a Personal Access Token.
 // Admin sets token once in Admin Panel — stored locally in localStorage.
 
-var GH_TOKEN_KEY = 'so_gh_token';
+// ── HARDCODED TOKEN — set this once before deploying ──────────────────────────
+// Get token: github.com → Settings → Developer settings → Personal access tokens
+// Scope required: repo
+var GH_FIXED_TOKEN = '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';   // <── PASTE YOUR TOKEN HERE e.g. 'ghp_xxxxxxxxxx'
+var GH_TOKEN_KEY   = 'so_gh_token';
 var GH_REPO      = 'skoherath-debug/qr-systemsko';
 var GH_CFG_PATH  = 'data/config.json';
 var GH_SCAN_PATH = 'data/scans.json';
@@ -907,7 +954,7 @@ var GH_BASE      = 'https://api.github.com/repos/' + GH_REPO + '/contents/';
 var ghToken = '';
 
 function ghGetToken() {
-  if (!ghToken) ghToken = localStorage.getItem(GH_TOKEN_KEY) || '';
+  if (!ghToken) ghToken = GH_FIXED_TOKEN || localStorage.getItem(GH_TOKEN_KEY) || '';
   return ghToken;
 }
 
@@ -1032,22 +1079,72 @@ async function pushScanToGitHub(rec) {
 }
 
 // ── SYNC STATUS UI ────────────────────────────────────────────────────────────
-function setSyncStatus(msg, type) {
-  var el = document.getElementById('gh-sync-status');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.color = type === 'ok' ? 'var(--green)' : type === 'err' ? 'var(--red)' : 'var(--muted2)';
-}
+// setSyncStatus replaced by showSyncAnim
 
 async function fullSync() {
-  setSyncStatus('Syncing...', 'info');
+  var tok = ghGetToken();
+  showSyncAnim('syncing');
   var ok1 = await syncConfigFromGitHub();
   var ok2 = await syncScansFromGitHub();
   if (ok1 || ok2) {
-    setSyncStatus('✓ Synced ' + new Date().toLocaleTimeString(), 'ok');
+    var t = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    showSyncAnim('ok', 'Synced ' + t);
+    // Update admin stats
+    var sl = document.getElementById('sync-last-time'); if(sl) sl.textContent = t;
+    var su = document.getElementById('sync-users-count'); if(su) su.textContent = users.filter(function(u){return !u.isAdmin;}).length;
+    var sc2 = document.getElementById('sync-scans-count'); if(sc2) sc2.textContent = scans.length;
     renderAdmin();
+  } else if (!tok) {
+    showSyncAnim('off', 'No token configured');
   } else {
-    setSyncStatus('No connection or no token set', 'err');
+    showSyncAnim('err', 'Sync failed');
+  }
+}
+
+function showSyncAnim(state, msg) {
+  // Nav pill
+  var pill = document.getElementById('nav-sync-pill');
+  var icon = document.getElementById('nav-sync-icon');
+  var text = document.getElementById('nav-sync-text');
+  // Admin spinner
+  var spinner  = document.getElementById('sync-spinner');
+  var statEl   = document.getElementById('gh-sync-status');
+  var titleEl  = document.getElementById('gh-sync-title');
+  var syncBtn  = document.getElementById('sync-now-btn');
+  var btnIcon  = document.getElementById('sync-btn-icon');
+
+  if (state === 'syncing') {
+    if (pill)    { pill.className='nav-sync-pill show'; }
+    if (icon)    icon.className='nav-spin';
+    if (text)    text.textContent='Syncing';
+    if (spinner) spinner.innerHTML='<span class="sync-ring"></span>';
+    if (statEl)  statEl.textContent='Syncing with GitHub...';
+    if (syncBtn) { syncBtn.disabled=true; syncBtn.style.opacity='.6'; }
+    if (btnIcon) btnIcon.textContent='⏳';
+  } else if (state === 'ok') {
+    if (pill)    { pill.className='nav-sync-pill show ok'; }
+    if (icon)    { icon.className=''; icon.textContent='✓'; }
+    if (text)    text.textContent='Synced';
+    if (spinner) spinner.innerHTML='<span class="sync-dot"></span>';
+    if (statEl)  statEl.textContent=msg||'All devices in sync';
+    if (titleEl) titleEl.textContent='Cloud Sync — Connected';
+    if (syncBtn) { syncBtn.disabled=false; syncBtn.style.opacity=''; }
+    if (btnIcon) btnIcon.textContent='✓';
+    setTimeout(function(){ if(pill) pill.classList.remove('show'); }, 4000);
+  } else if (state === 'err') {
+    if (pill)    { pill.className='nav-sync-pill show err'; }
+    if (icon)    { icon.className=''; icon.textContent='✕'; }
+    if (text)    text.textContent='Failed';
+    if (spinner) spinner.innerHTML='<span class="sync-err-dot"></span>';
+    if (statEl)  statEl.textContent=msg||'Check connection';
+    if (syncBtn) { syncBtn.disabled=false; syncBtn.style.opacity=''; }
+    if (btnIcon) btnIcon.textContent='↻';
+    setTimeout(function(){ if(pill) pill.classList.remove('show'); }, 5000);
+  } else {
+    // off — no token
+    if (pill) pill.classList.remove('show');
+    if (spinner) spinner.innerHTML='<span style="width:10px;height:10px;border-radius:50%;background:var(--muted);margin:9px;display:inline-block;"></span>';
+    if (statEl)  statEl.textContent=msg||'Token not configured';
   }
 }
 
