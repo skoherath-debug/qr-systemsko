@@ -1,1 +1,1 @@
-{"users":[{"name":"nuwan","pin":"4567","role":"Operator","isAdmin":false,"addedAt":"2026-04-24T06:58:33.934Z"},{"name":"herath","pin":"1234","role":"operator","isAdmin":false,"addedAt":"2026-04-24T08:10:56.686Z"}],"sites":["Hulhumale Phase II","moldives","secylles"],"t":"2026-04-24T08:24:17.396Z"}
+{"users":[{"name":"herath","pin":"1234","role":"operator","isAdmin":false,"addedAt":"2026-04-24T08:27:27.309Z"}],"sites":["Hulhumale Phase II"],"t":"2026-04-24T08:27:53.447Z"}
