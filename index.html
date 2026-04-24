@@ -676,44 +676,33 @@ body::before{
           </div>
         </div>
 
-        <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">&#9729; Cloud Sync (GitHub)</div></div>
+        <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">&#9729; Cloud Sync</div></div>
         <div class="add-card" style="padding:16px;">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-            <div id="sync-spinner" style="width:28px;height:28px;flex-shrink:0;"></div>
-            <div style="flex:1;">
-              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">Cloud Sync</div>
-              <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Enter token below to connect</div>
-            </div>
-          </div>
-          <!-- Token input — set once, stored on device -->
-          <div style="display:flex;gap:8px;margin-bottom:12px;" id="token-row">
-            <input class="add-inp" id="gh-token-inp" type="password"
-              placeholder="Paste GitHub token: ghp_xxxx..."
-              autocomplete="off" autocorrect="off" spellcheck="false"
-              style="flex:1;font-family:Space Mono,monospace;font-size:12px;"
-              oninput="onTokenInput()" onkeydown="if(event.key==='Enter')saveGhToken()">
-            <button type="button" class="add-sub" id="token-save-btn" onclick="saveGhToken()"
-              style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">
-              Save
-            </button>
-          </div>
-          <div id="token-hint" style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
-            Get free token: <strong style="color:var(--blue2)">github.com → Settings → Developer settings → Personal access tokens → Classic → repo scope</strong>
+            <div id="sync-spinner" style="width:28px;height:28px;flex-shrink:0;"><span style="width:10px;height:10px;border-radius:50%;background:var(--muted);margin:9px;display:inline-block;"></span></div>
+            <div style="flex:1;"><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">&#9729; Cloud Sync</div><div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Operators auto-load config on login</div></div>
           </div>
           <div class="rpt-stats" style="margin-bottom:14px;">
-            <div class="rs bl"><div class="rs-lbl">Last Sync</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-last-time">Never</div></div>
-            <div class="rs gn"><div class="rs-lbl">Users Synced</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-users-count">—</div></div>
-            <div class="rs cy"><div class="rs-lbl">Scans on Cloud</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-scans-count">—</div></div>
+            <div class="rs bl"><div class="rs-lbl">Last Push</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-last-time">Never</div></div>
+            <div class="rs gn"><div class="rs-lbl">Users</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-users-count">&#8212;</div></div>
+            <div class="rs cy"><div class="rs-lbl">Sites</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-scans-count">&#8212;</div></div>
           </div>
-          <button type="button" class="add-sub" onclick="fullSync()"
-            style="display:flex;align-items:center;justify-content:center;gap:8px;" id="sync-now-btn">
-            <span id="sync-btn-icon">&#8635;</span> Sync Now
-          </button>
-          <div id="sync-err-box" style="display:none;margin-top:10px;background:rgba(248,113,113,.1);
-            border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;
-            font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;"></div>
+          <div style="background:rgba(74,144,217,.07);border:1px solid var(--blueborder);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:var(--muted2);line-height:1.8;">
+            &#128100; <strong style="color:var(--text)">Operators / Staff</strong> &mdash; auto-gets users &amp; site list when they login. No token needed.<br>
+            &#128737; <strong style="color:var(--text)">Admin</strong> &mdash; enter token once below, then tap <strong style="color:var(--text)">Push to Cloud</strong> after any changes.
+          </div>
+          <button type="button" class="add-sub" onclick="pushConfigToGitHub()" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;font-size:13px;">&#8679;&nbsp; Push Users &amp; Sites to Cloud</button>
+          <button type="button" style="width:100%;background:var(--c2);border:1px solid var(--border);border-radius:10px;padding:10px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:700;color:var(--muted2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-transform:uppercase;letter-spacing:.5px;" onclick="fullSync()" id="sync-now-btn"><span id="sync-btn-icon">&#8635;</span> Pull Latest</button>
+          <div id="sync-err-box" style="display:none;margin-top:10px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;"></div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+            <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Admin GitHub Token (once only)</div>
+            <div style="display:flex;gap:8px;margin-bottom:6px;" id="token-row">
+              <input class="add-inp" id="gh-token-inp" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" style="flex:1;font-family:Space Mono,monospace;font-size:12px;" oninput="onTokenInput()" onkeydown="if(event.key==='Enter')saveGhToken()">
+              <button type="button" class="add-sub" id="token-save-btn" onclick="saveGhToken()" style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">Save</button>
+            </div>
+            <div id="token-hint" style="font-size:10px;color:var(--muted);line-height:1.6;">github.com &#8594; Settings &#8594; Developer settings &#8594; Tokens (Classic) &#8594; tick <strong>repo</strong></div>
+          </div>
         </div>
-
         <div class="sec-hd" style="margin-top:22px;"><div class="sec-title">Scan Reports</div><span class="sec-badge bd-blue" id="scan-count-badge">0 scans</span></div>
         <div class="rpt-stats">
           <div class="rs bl"><div class="rs-lbl">Total Scans</div><div class="rs-val" id="rpt-tot">0</div></div>
