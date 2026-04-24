@@ -74,6 +74,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--c0);color:var(--text);}
 #nav-sync-pill.err  { background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.25);color:var(--red); }
 .nav-spin { width:10px;height:10px;border-radius:50%;border:1.5px solid currentColor;border-top-color:transparent;animation:spin .7s linear infinite;display:inline-block; }
 
+
+/* ── LIVE SYNC INDICATOR ── */
+@keyframes syncPulse{0%,100%{box-shadow:0 0 0 0 rgba(74,144,217,.6)}70%{box-shadow:0 0 0 8px rgba(74,144,217,0)}}
+@keyframes syncOkPulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.sync-live-dot{
+  width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;
+  background:var(--muted);transition:background .3s;
+}
+.sync-live-dot.syncing{background:var(--blue);animation:syncPulse 1s infinite;}
+.sync-live-dot.ok{background:var(--green);animation:syncOkPulse 2s 2;}
+.sync-live-dot.err{background:var(--red);}
+#sync-live-bar{
+  display:none;position:fixed;top:56px;left:0;right:0;z-index:250;
+  padding:6px 20px;font-size:11px;font-weight:600;letter-spacing:.3px;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(10,22,40,.97);border-bottom:1px solid var(--border);
+  animation:fadeSlideIn .3s ease;
+}
+#sync-live-bar.hide{display:none!important;}
+
 /* ── GRID TEXTURE ── */
 body::before{
   content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -191,7 +212,7 @@ body::before{
 
 /* Stats */
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
-.stat{background:var(--c1);border:1px solid var(--border);border-radius:12px;padding:12px;position:relative;overflow:hidden;}
+.stat{background:var(--c1);border:1px solid var(--border);border-radius:12px;padding:12px;position:relative;overflow:hidden;transition:transform .15s;}.stat:hover{transform:translateY(-1px);}
 .stat::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
 .stat.bl::before{background:linear-gradient(90deg,var(--blue),var(--accent));}
 .stat.gn::before{background:var(--green);}
@@ -337,7 +358,7 @@ body::before{
 .u-meta{font-size:11px;color:var(--muted);margin-top:2px;}
 .u-acts{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .rm-btn{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);color:var(--red);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;touch-action:manipulation;}
-.add-card{background:var(--c1);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.add-card{background:var(--c1);border:1px solid var(--border);border-radius:14px;padding:18px;transition:border-color .2s;}.add-card:hover{border-color:var(--blueborder);}
 .add-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
 .add-inp{background:var(--c2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:16px;color:var(--text);width:100%;font-family:'DM Sans',sans-serif;outline:none;font-weight:500;transition:border-color .2s;-webkit-appearance:none;}
 .add-inp:focus{border-color:var(--blue);}
@@ -554,6 +575,8 @@ body::before{
     </div>
   </nav>
 
+  <!-- Live sync bar -->
+  <div id="sync-live-bar" class="hide"><span class="sync-live-dot" id="sync-dot"></span><span id="sync-bar-text">Syncing...</span></div>
   <div class="app-body">
     <!-- GENERATOR -->
     <div id="screen-generator" class="screen active">
@@ -827,7 +850,7 @@ body::before{
 <script>
 'use strict';
 // ── CONSTANTS ──────────────────────────────────────────────────────────────────
-var GH_FIXED_TOKEN = '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';  // ← Admin: paste GitHub token here once to skip UI entry
+var GH_FIXED_TOKEN = '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'; // embedded
 var AK  = 'so_auth_v7';
 var SK  = 'so_scans_v3';
 var _AP = String.fromCharCode(57,56,55,54);
@@ -972,7 +995,38 @@ var ghToken='';
 function ghTok(){if(!ghToken)ghToken=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';return ghToken;}
 
 // All users: reads config on login - no token needed
+function showSyncBar(state, msg, autohide) {
+  var bar  = document.getElementById('sync-live-bar');
+  var dot  = document.getElementById('sync-dot');
+  var txt  = document.getElementById('sync-bar-text');
+  var pill = document.getElementById('nav-sync-pill');
+  if (!bar) return;
+  bar.classList.remove('hide');
+  if (dot) { dot.className = 'sync-live-dot ' + state; }
+  if (txt) txt.textContent = msg || '';
+  // Nav pill
+  if (pill) {
+    if (state === 'syncing') {
+      pill.className = 'nav-sync-pill show';
+      var ico=document.getElementById('nav-sync-icon'); if(ico)ico.className='nav-spin';
+      var ntxt=document.getElementById('nav-sync-text'); if(ntxt)ntxt.textContent='Syncing';
+    } else if (state === 'ok') {
+      pill.className = 'nav-sync-pill show ok';
+      var ico=document.getElementById('nav-sync-icon'); if(ico){ico.className='';ico.textContent='\u2713';}
+      var ntxt=document.getElementById('nav-sync-text'); if(ntxt)ntxt.textContent='Synced';
+      setTimeout(function(){if(pill)pill.classList.remove('show');},3000);
+    } else if (state === 'err') {
+      pill.className = 'nav-sync-pill show err';
+      var ico=document.getElementById('nav-sync-icon'); if(ico){ico.className='';ico.textContent='\u2715';}
+      var ntxt=document.getElementById('nav-sync-text'); if(ntxt)ntxt.textContent='Error';
+      setTimeout(function(){if(pill)pill.classList.remove('show');},5000);
+    }
+  }
+  if (autohide) setTimeout(function(){ if(bar) bar.classList.add('hide'); }, autohide);
+}
+
 function autoLoadConfig(){
+  showSyncBar('syncing','Loading config from cloud...');
   fetch(CLOUD_READ+'?nc='+Date.now())
     .then(function(r){return r.ok?r.json():null;})
     .then(function(cfg){
@@ -988,8 +1042,10 @@ function autoLoadConfig(){
         populateSiteDropdown();
       }
       var st=document.getElementById('gh-sync-status');
-      if(st)st.textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    }).catch(function(){});
+      var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      if(st)st.textContent='Auto-updated '+t;
+      showSyncBar('ok','Config synced ✓',3000);
+    }).catch(function(){ showSyncBar('err','Config sync failed',4000); });
 }
 
 // Admin: push users + sites to GitHub
@@ -999,6 +1055,7 @@ async function pushConfigToGitHub(){
   var btn=document.getElementById('push-btn');
   if(btn){btn.disabled=true;btn.textContent='Pushing\u2026';}
   setErrBox('');
+  showSyncBar('syncing','Pushing to cloud...');
   var cfg={users:users.filter(function(u){return !u.isAdmin;}),sites:sitesList};
   try{
     var sha=null;
@@ -1012,6 +1069,7 @@ async function pushConfigToGitHub(){
     if(p.ok||p.status===201){
       var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
       if(btn){btn.disabled=false;btn.textContent='\u2713 Pushed '+t;setTimeout(function(){btn.textContent='\u2191 Push to Cloud';},3000);}
+      showSyncBar('ok','Pushed to cloud ✓',3500);
       var st=document.getElementById('gh-sync-status');if(st)st.textContent='Pushed: '+t;
       var su=document.getElementById('sync-users-count');if(su)su.textContent=cfg.users.length+' users';
       var ss=document.getElementById('sync-scans-count');if(ss)ss.textContent=cfg.sites.length+' sites';
@@ -1182,9 +1240,8 @@ function pinEnter() {
   pinBuf = '';
   updateDots(false);
   showTab(canGenerate ? 'generator' : 'scanner');
-  setTimeout(autoLoadConfig, 800);
-  // Auto-sync on login
-  setTimeout(fullSync, 1000);
+  setTimeout(autoLoadConfig, 800); // load config for operators
+  if (curUser && curUser.isAdmin) setTimeout(pushConfigToGitHub, 2000); // admin pushes on login
 }
 function doSignOut() {
   stopScan();
@@ -1804,8 +1861,7 @@ window.bulkPrint = function() {
   iframePrint('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
     + css + '</style></head><body>'
     + '<div class="grid">' + labels + '</div>'
-    + '<iframe id="print-iframe" style="display:none;position:fixed;top:0;left:0;width:0;height:0;border:0;" title="print"></iframe>
-</body></html>');
+    + '</body></html>');
 
   printed += sel.length; updateStats();
 };
@@ -1845,9 +1901,7 @@ window.printOne = function(id, cb) {
       + '<span>PO No: ' + esc(ship) + '</span>'
       + '<span>' + esc(site) + '</span>'
       + '</div></div></div>'
-      + '<iframe id="print-iframe" style="display:none;position:fixed;top:0;left:0;width:0;height:0;border:0;" title="print"></iframe>
-</body></html>');
-
+      + '</body></html>');
     printed++; updateStats(); cb&&cb();
   }
 
