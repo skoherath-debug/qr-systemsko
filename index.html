@@ -381,8 +381,8 @@ body::before{
 #site-list .s-row{display:flex;align-items:center;background:var(--c2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;gap:10px;}
 
 /* Print */
-#print-area{display:none;position:fixed;inset:0;background:#fff;z-index:9999;overflow:auto;}
-#print-area-single{display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;}
+#print-area{display:none;position:fixed;inset:0;background:#fff!important;z-index:9999;overflow:auto;}
+#print-area-single{display:none;position:fixed;inset:0;background:#fff!important;z-index:9999;align-items:center;justify-content:center;}
 .print-page{width:190mm;margin:0 auto;padding:4mm 0;}
 .print-grid{display:grid;gap:5mm;}
 .pl{border:2px solid #111;border-radius:2mm;background:#fff;overflow:hidden;break-inside:avoid;page-break-inside:avoid;display:flex;flex-direction:column;}
@@ -401,14 +401,18 @@ body::before{
 .sl-m{font-family:Arial,sans-serif;font-size:8pt;color:#555;margin-top:2.5mm;display:flex;justify-content:space-between;gap:2mm;}
 @media print{
   @page{size:A4 portrait;margin:10mm;}
-  html,body{background:#fff!important;color:#000!important;}
-  body::before{display:none!important;}
-  body>*:not(#print-area):not(#print-area-single){display:none!important;}
-  #print-area{display:block!important;position:static!important;height:auto!important;background:#fff!important;}
+  *{background:#fff!important;color:#000!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  body::before,body::after{display:none!important;}
+  body>*:not(#print-area):not(#print-area-single){display:none!important;visibility:hidden!important;}
+  #print-area{display:block!important;position:static!important;height:auto!important;width:100%!important;overflow:visible!important;background:#fff!important;}
   #print-area-single{display:flex!important;position:static!important;height:auto!important;background:#fff!important;}
-  .print-page,.pl,.sl,.pl-qr,.sl-qr,.pl-inf,.sl-inf{background:#fff!important;}
-  .pl-d,.sl-d{color:#111!important;} .pl-m,.sl-m{color:#555!important;}
-  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .print-page{width:100%;padding:0;background:#fff!important;}
+  .pl,.sl{border:2px solid #000!important;background:#fff!important;}
+  .pl-qr,.sl-qr{background:#fff!important;padding:4mm!important;}
+  .pl-qr img,.sl-qr img{display:block!important;}
+  .pl-d,.sl-d{color:#111!important;font-weight:700!important;}
+  .pl-m,.sl-m{color:#444!important;}
+  .pl-ln,.sl-ln{background:#000!important;}
 }
 
 /* Bottom nav */
@@ -1710,8 +1714,18 @@ window.bulkPrint = function() {
     g.appendChild(d);
   });
   printed += sel.length; updateStats();
-  var pa = document.getElementById('print-area'); pa.style.display = 'block';
-  setTimeout(function() { window.print(); setTimeout(function() { pa.style.display='none'; }, 600); }, 400);
+  var pa = document.getElementById('print-area'); 
+  pa.style.cssText = 'display:block;background:#fff;';
+  document.body.style.background = '#fff';
+  document.documentElement.style.background = '#fff';
+  setTimeout(function() {
+    window.print();
+    setTimeout(function() {
+      pa.style.cssText = 'display:none;';
+      document.body.style.background = '';
+      document.documentElement.style.background = '';
+    }, 800);
+  }, 300);
 };
 window.printOneByOne = function() {
   var sel = items.filter(function(i) { return i.sel && i.gen; });
@@ -1727,8 +1741,19 @@ window.printOne = function(id, cb) {
     document.getElementById('sl-c').textContent = mkCode(it);
     var _sp=document.getElementById('sl-po');if(_sp)_sp.textContent='PO No: '+(document.getElementById('s-ship').value||'');
     var _ss=document.getElementById('sl-site');if(_ss)_ss.textContent=document.getElementById('s-site').value||'Sanken Overseas';
-    var pa = document.getElementById('print-area-single'); pa.style.display = 'flex';
-    setTimeout(function(){ window.print(); setTimeout(function(){ pa.style.display='none'; printed++; updateStats(); cb&&cb(); },600); },400);
+    var pa = document.getElementById('print-area-single');
+    pa.style.cssText = 'display:flex;background:#fff;';
+    document.body.style.background = '#fff';
+    document.documentElement.style.background = '#fff';
+    setTimeout(function(){
+      window.print();
+      setTimeout(function(){
+        pa.style.cssText = 'display:none;';
+        document.body.style.background = '';
+        document.documentElement.style.background = '';
+        printed++; updateStats(); cb&&cb();
+      }, 800);
+    }, 300);
   };
   if (!it.gen) genQR(it, 800, go); else go();
 };
