@@ -642,7 +642,12 @@ body::before{
 
     <!-- ADMIN -->
     <div id="screen-admin" class="screen">
-      <div class="pg-title">Admin Panel</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+        <div class="pg-title" style="margin-bottom:0;">Admin Panel</div>
+        <div id="admin-logged-user" style="background:var(--bluedim);border:1px solid var(--blueborder);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;color:var(--blue2);display:flex;align-items:center;gap:6px;">
+          <span>&#128100;</span><span id="admin-username-display"></span>
+        </div>
+      </div>
       <div class="pg-sub">Users &middot; Sites &middot; Reports</div>
       <div class="adm-wrap">
 
@@ -703,6 +708,7 @@ body::before{
           <div id="sync-err-box" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;margin-bottom:10px;"></div>
           <div style="border-top:1px solid var(--border);padding-top:12px;">
             <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">GitHub Token (admin, once only)</div>
+            <div id="token-status-ok" style="display:none;font-size:12px;color:var(--green);font-weight:600;margin-bottom:8px;">&#10003; Token configured</div>
             <div style="display:flex;gap:8px;margin-bottom:6px;" id="token-row">
               <input class="add-inp" id="gh-token-inp" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                 autocomplete="off" autocorrect="off" spellcheck="false"
@@ -821,6 +827,7 @@ body::before{
 <script>
 'use strict';
 // ── CONSTANTS ──────────────────────────────────────────────────────────────────
+var GH_FIXED_TOKEN = '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';  // ← Admin: paste GitHub token here once to skip UI entry
 var AK  = 'so_auth_v7';
 var SK  = 'so_scans_v3';
 var _AP = String.fromCharCode(57,56,55,54);
@@ -1203,12 +1210,27 @@ function showTab(t) {
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
 function renderAdmin() {
   try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; }
+  // Show logged-in user name
+  var udisp = document.getElementById('admin-username-display');
+  if (udisp && curUser) udisp.textContent = curUser.name + ' (' + (curUser.role||'Admin') + ')';
   renderSites();
   // Show token status
   var tok=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';
-  var row=document.getElementById('token-row'),hint=document.getElementById('token-hint');
-  if(tok){if(row)row.style.display='none';if(hint)hint.style.display='none';}
-  else{if(row)row.style.display='flex';if(hint)hint.style.display='block';}
+  var row=document.getElementById('token-row');
+  var hint=document.getElementById('token-hint');
+  var tokOk=document.getElementById('token-status-ok');
+  if(GH_FIXED_TOKEN){
+    if(row)row.style.display='none';
+    if(hint)hint.style.display='none';
+  } else if(tok){
+    if(row)row.style.display='none';
+    if(hint)hint.style.display='none';
+    if(tokOk){tokOk.style.display='block';tokOk.textContent='\u2713 Token saved on this device';}
+  } else {
+    if(row)row.style.display='flex';
+    if(hint)hint.style.display='block';
+    if(tokOk)tokOk.style.display='none';
+  }
   var su=document.getElementById('sync-users-count');
   if(su)su.textContent=users.filter(function(u){return !u.isAdmin;}).length+' users';
   var ss=document.getElementById('sync-scans-count');
@@ -1702,30 +1724,63 @@ window.printFromQp  = function() { if (qpItem) { closeQrSheet(); setTimeout(func
 
 // ── PRINT ─────────────────────────────────────────────────────────────────────
 window.bulkPrint = function() {
-  var sel = items.filter(function(i) { return i.sel && i.gen; });
+  var sel = items.filter(function(it) { return it.sel && it.gen; });
   if (!sel.length) { alert('Select generated items first.'); return; }
-  var cols = parseInt(document.getElementById('s-cols').value)||2, ship = document.getElementById('s-ship').value||'', site = document.getElementById('s-site').value||'Sanken Overseas';
-  var g = document.getElementById('print-grid'); g.style.gridTemplateColumns = 'repeat('+cols+',1fr)'; g.innerHTML = '';
+  var cols = parseInt(document.getElementById('s-cols').value)||2;
+  var ship = document.getElementById('s-ship').value||'';
+  var site = document.getElementById('s-site').value||'';
+
+  var labels = '';
   sel.forEach(function(it) {
-    var d = document.createElement('div'); d.className = 'pl';
-    d.innerHTML = '<div class="pl-qr"><img src="'+it.url+'" alt="QR"></div><div class="pl-ln"></div>' +
-      '<div class="pl-inf"><div class="pl-d">'+esc(it.desc)+'</div>' +
-      '<div class="pl-m"><span>'+esc(mkCode(it))+'</span><span>PO No: '+esc(ship)+'</span><span>'+esc(site)+'</span></div></div>';
-    g.appendChild(d);
+    labels += '<div class="pl">'
+      + '<div class="pl-qr"><img src="' + it.url + '" width="100%"></div>'
+      + '<div class="pl-ln"></div>'
+      + '<div class="pl-inf">'
+      + '<div class="pl-d">' + esc(it.desc) + '</div>'
+      + '<div class="pl-m">'
+      + '<span>' + esc(mkCode(it)) + '</span>'
+      + '<span>PO No: ' + esc(ship) + '</span>'
+      + '<span>' + esc(site) + '</span>'
+      + '</div></div></div>';
   });
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
+    + '@page{size:A4 portrait;margin:10mm;}'
+    + 'html,body{background:#fff;margin:0;padding:0;font-family:Arial,sans-serif;}'
+    + '.grid{display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:5mm;width:190mm;margin:0 auto;padding:2mm;}'
+    + '.pl{border:2px solid #111;background:#fff;overflow:hidden;break-inside:avoid;page-break-inside:avoid;}'
+    + '.pl-qr{padding:4mm 4mm 2mm;background:#fff;text-align:center;}'
+    + '.pl-qr img{max-width:100%;height:auto;display:inline-block;}'
+    + '.pl-ln{height:1.5px;background:#222;margin:0 4mm;}'
+    + '.pl-inf{padding:3mm 4mm 4mm;}'
+    + '.pl-d{font-size:8.5pt;font-weight:700;color:#111;line-height:1.4;word-break:break-word;}'
+    + '.pl-m{font-size:6pt;color:#555;margin-top:2mm;display:flex;justify-content:space-between;}'
+    + '</style></head><body>'
+    + '<div class="grid">' + labels + '</div>'
+    + '</body></html>';
+
+  var blob = new Blob([html], {type:'text/html'});
+  var url  = URL.createObjectURL(blob);
+  var w    = window.open(url, '_blank');
+  if (!w) { alert('Allow popups for this site to print.'); return; }
+
+  // Wait for window to load then print
+  w.addEventListener('load', function() {
+    // Wait for all images
+    var imgs = w.document.images;
+    var total = imgs.length, done = 0;
+    if (total === 0) { w.print(); return; }
+    function onLoad() {
+      done++;
+      if (done >= total) { setTimeout(function(){ w.print(); }, 200); }
+    }
+    for (var i = 0; i < imgs.length; i++) {
+      if (imgs[i].complete) { onLoad(); }
+      else { imgs[i].onload = imgs[i].onerror = onLoad; }
+    }
+  });
+
   printed += sel.length; updateStats();
-  var pa = document.getElementById('print-area'); 
-  pa.style.cssText = 'display:block;background:#fff;';
-  document.body.style.background = '#fff';
-  document.documentElement.style.background = '#fff';
-  setTimeout(function() {
-    window.print();
-    setTimeout(function() {
-      pa.style.cssText = 'display:none;';
-      document.body.style.background = '';
-      document.documentElement.style.background = '';
-    }, 800);
-  }, 300);
 };
 window.printOneByOne = function() {
   var sel = items.filter(function(i) { return i.sel && i.gen; });
@@ -1733,29 +1788,49 @@ window.printOneByOne = function() {
   var idx=0; (function nx(){ if(idx>=sel.length)return; printOne(sel[idx].id,function(){idx++;setTimeout(nx,1500);}); })();
 };
 window.printOne = function(id, cb) {
-  var it = items.find(function(i) { return i.id===id; }); if (!it) { cb&&cb(); return; }
+  var it = items.find(function(x) { return x.id === id; });
+  if (!it) { cb&&cb(); return; }
   var ship = document.getElementById('s-ship').value||'';
-  var go = function() {
-    document.getElementById('sl-img').src = it.url;
-    document.getElementById('sl-d').textContent = it.desc;
-    document.getElementById('sl-c').textContent = mkCode(it);
-    var _sp=document.getElementById('sl-po');if(_sp)_sp.textContent='PO No: '+(document.getElementById('s-ship').value||'');
-    var _ss=document.getElementById('sl-site');if(_ss)_ss.textContent=document.getElementById('s-site').value||'Sanken Overseas';
-    var pa = document.getElementById('print-area-single');
-    pa.style.cssText = 'display:flex;background:#fff;';
-    document.body.style.background = '#fff';
-    document.documentElement.style.background = '#fff';
-    setTimeout(function(){
-      window.print();
-      setTimeout(function(){
-        pa.style.cssText = 'display:none;';
-        document.body.style.background = '';
-        document.documentElement.style.background = '';
-        printed++; updateStats(); cb&&cb();
-      }, 800);
-    }, 300);
-  };
-  if (!it.gen) genQR(it, 800, go); else go();
+  var site = document.getElementById('s-site').value||'';
+
+  function doPrint() {
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
+      + '@page{size:A4 portrait;margin:20mm;}'
+      + 'html,body{background:#fff;margin:0;padding:0;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;}'
+      + '.sl{border:2.5px solid #111;background:#fff;width:140mm;}'
+      + '.sl-qr{padding:6mm 6mm 3mm;text-align:center;}'
+      + '.sl-qr img{width:128mm;height:128mm;display:inline-block;}'
+      + '.sl-ln{height:2px;background:#222;margin:0 5mm;}'
+      + '.sl-inf{padding:4mm 6mm 5mm;}'
+      + '.sl-d{font-size:11pt;font-weight:700;color:#111;line-height:1.4;}'
+      + '.sl-m{font-size:8pt;color:#555;margin-top:2.5mm;display:flex;justify-content:space-between;}'
+      + '</style></head><body>'
+      + '<div class="sl">'
+      + '<div class="sl-qr"><img src="' + it.url + '"></div>'
+      + '<div class="sl-ln"></div>'
+      + '<div class="sl-inf">'
+      + '<div class="sl-d">' + esc(it.desc) + '</div>'
+      + '<div class="sl-m">'
+      + '<span>' + esc(mkCode(it)) + '</span>'
+      + '<span>PO No: ' + esc(ship) + '</span>'
+      + '<span>' + esc(site) + '</span>'
+      + '</div></div></div>'
+      + '</body></html>';
+
+    var blob = new Blob([html], {type:'text/html'});
+    var url  = URL.createObjectURL(blob);
+    var w    = window.open(url, '_blank');
+    if (!w) { alert('Allow popups for this site to print.'); return; }
+    w.addEventListener('load', function() {
+      var img = w.document.querySelector('img');
+      function go(){ setTimeout(function(){ w.print(); }, 200); }
+      if (!img || img.complete) { go(); }
+      else { img.onload = img.onerror = go; }
+    });
+    printed++; updateStats(); cb&&cb();
+  }
+
+  if (!it.gen) genQR(it, 800, doPrint); else doPrint();
 };
 
 // ── DOWNLOAD ──────────────────────────────────────────────────────────────────
