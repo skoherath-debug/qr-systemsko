@@ -705,9 +705,13 @@ body::before{
             <div class="rs gn"><div class="rs-lbl">Users Synced</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-users-count">—</div></div>
             <div class="rs cy"><div class="rs-lbl">Scans on Cloud</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-scans-count">—</div></div>
           </div>
-          <button type="button" class="add-sub" onclick="fullSync()" style="display:flex;align-items:center;justify-content:center;gap:8px;" id="sync-now-btn">
+          <button type="button" class="add-sub" onclick="fullSync()"
+            style="display:flex;align-items:center;justify-content:center;gap:8px;" id="sync-now-btn">
             <span id="sync-btn-icon">&#8635;</span> Sync Now
           </button>
+          <div id="sync-err-box" style="display:none;margin-top:10px;background:rgba(248,113,113,.1);
+            border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;
+            font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;"></div>
         </div>
 
         <div class="sec-hd" style="margin-top:22px;"><div class="sec-title">Scan Reports</div><span class="sec-badge bd-blue" id="scan-count-badge">0 scans</span></div>
@@ -973,7 +977,8 @@ function ghGetToken() {
 var _ghBranch = null;
 async function ghGetBranch() {
   if (_ghBranch) return _ghBranch;
-  for (var br of ['main','master','gh-pages']) {
+  var branches=['main','master','gh-pages'];
+  for (var bi=0;bi<branches.length;bi++) { var br=branches[bi];
     try {
       var res = await fetch('https://api.github.com/repos/' + GH_REPO + '/git/ref/heads/' + br,
         { headers: ghHeaders() });
@@ -1126,24 +1131,73 @@ async function pushScanToGitHub(rec) {
 // ── FULL SYNC ─────────────────────────────────────────────────────────────────
 async function fullSync() {
   var tok = ghGetToken();
+  setErrBox('');
   if (!tok) {
-    showSyncAnim('off', 'Token not set in app code');
+    showSyncAnim('off','Enter token above first');
+    setErrBox('No token saved. Paste your GitHub token and tap Save.');
     return;
   }
   showSyncAnim('syncing');
+
+  // Step 1: verify token works at all
+  try {
+    var testRes = await fetch('https://api.github.com/repos/'+GH_REPO, {headers:ghHeaders()});
+    if (testRes.status===401) {
+      showSyncAnim('err','Token rejected (401)');
+      setErrBox('Token invalid or expired. Generate a new one at github.com/settings/tokens (Classic, repo scope).');
+      return;
+    }
+    if (testRes.status===403) {
+      showSyncAnim('err','Token lacks permission (403)');
+      setErrBox('Token does not have "repo" scope. Generate a new token and select the "repo" checkbox.');
+      return;
+    }
+    if (testRes.status===404) {
+      showSyncAnim('err','Repo not found (404)');
+      setErrBox('Repository "'+GH_REPO+'" not found. Check the repo name is correct and the token has access.');
+      return;
+    }
+    if (!testRes.ok) {
+      var errTxt = await testRes.text();
+      showSyncAnim('err','API error '+testRes.status);
+      setErrBox('GitHub API error '+testRes.status+': '+errTxt.substring(0,200));
+      return;
+    }
+  } catch(netErr) {
+    showSyncAnim('err','Network error');
+    setErrBox('Network error: '+netErr.message+'. Check internet connection.');
+    return;
+  }
+
+  // Step 2: detect branch
+  var branch = await ghGetBranch();
+  setErrBox('Branch detected: '+branch+'. Writing files...');
+
+  // Step 3: sync config and scans
   var ok1 = await syncConfigFromGitHub();
   var ok2 = await syncScansFromGitHub();
+
   if (ok1 && ok2) {
     var t = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    showSyncAnim('ok', 'Synced at ' + t);
-    var sl = document.getElementById('sync-last-time');   if(sl) sl.textContent = t;
-    var su = document.getElementById('sync-users-count'); if(su) su.textContent = users.filter(function(u){return !u.isAdmin;}).length;
-    var sc2= document.getElementById('sync-scans-count'); if(sc2)sc2.textContent = scans.length;
+    showSyncAnim('ok','Synced at '+t);
+    setErrBox('');
+    var sl = document.getElementById('sync-last-time');   if(sl) sl.textContent=t;
+    var su = document.getElementById('sync-users-count'); if(su) su.textContent=users.filter(function(u){return !u.isAdmin;}).length;
+    var sc2= document.getElementById('sync-scans-count'); if(sc2)sc2.textContent=scans.length;
     renderAdmin();
   } else {
-    showSyncAnim('err', 'Check console for details (F12)');
+    showSyncAnim('err','Read/write failed');
+    setErrBox('Could not read/write to repo. Make sure token has "repo" scope (not just "public_repo").');
   }
 }
+
+function setErrBox(msg) {
+  var el = document.getElementById('sync-err-box');
+  if (!el) return;
+  el.style.display = msg ? 'block' : 'none';
+  el.textContent   = msg;
+}
+
 
 function showSyncAnim(state, msg) {
   var pill    = document.getElementById('nav-sync-pill');
