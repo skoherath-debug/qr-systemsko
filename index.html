@@ -677,30 +677,36 @@ body::before{
         </div>
 
         <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">&#9729; Cloud Sync</div></div>
-        <div class="add-card" style="padding:16px;">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-            <div id="sync-spinner" style="width:28px;height:28px;flex-shrink:0;"><span style="width:10px;height:10px;border-radius:50%;background:var(--muted);margin:9px;display:inline-block;"></span></div>
-            <div style="flex:1;"><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">&#9729; Cloud Sync</div><div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Operators auto-load config on login</div></div>
+        <div class="add-card" style="padding:18px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;">&#9729; Cloud Sync</div>
+          <div style="font-size:11px;color:var(--muted2);margin-bottom:14px;" id="gh-sync-status">Operators auto-load users &amp; sites on login</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+            <div class="rs bl"><div class="rs-lbl">Users on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-users-count">&#8212;</div></div>
+            <div class="rs gn"><div class="rs-lbl">Sites on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-scans-count">&#8212;</div></div>
           </div>
-          <div class="rpt-stats" style="margin-bottom:14px;">
-            <div class="rs bl"><div class="rs-lbl">Last Push</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-last-time">Never</div></div>
-            <div class="rs gn"><div class="rs-lbl">Users</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-users-count">&#8212;</div></div>
-            <div class="rs cy"><div class="rs-lbl">Sites</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-scans-count">&#8212;</div></div>
+          <div style="font-size:11px;color:var(--muted2);line-height:1.9;padding:10px 12px;background:rgba(74,144,217,.07);border-radius:9px;border:1px solid var(--blueborder);margin-bottom:14px;">
+            <strong style="color:var(--text)">Admin:</strong> Enter token once &rarr; tap Push to Cloud<br>
+            <strong style="color:var(--text)">Add user/site?</strong> Tap Push to Cloud again<br>
+            <strong style="color:var(--text)">Operators/Staff:</strong> auto-loads on every login
           </div>
-          <div style="background:rgba(74,144,217,.07);border:1px solid var(--blueborder);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:var(--muted2);line-height:1.8;">
-            &#128100; <strong style="color:var(--text)">Operators / Staff</strong> &mdash; auto-gets users &amp; site list when they login. No token needed.<br>
-            &#128737; <strong style="color:var(--text)">Admin</strong> &mdash; enter token once below, then tap <strong style="color:var(--text)">Push to Cloud</strong> after any changes.
-          </div>
-          <button type="button" class="add-sub" onclick="pushConfigToGitHub()" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;font-size:13px;">&#8679;&nbsp; Push Users &amp; Sites to Cloud</button>
-          <button type="button" style="width:100%;background:var(--c2);border:1px solid var(--border);border-radius:10px;padding:10px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:700;color:var(--muted2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-transform:uppercase;letter-spacing:.5px;" onclick="fullSync()" id="sync-now-btn"><span id="sync-btn-icon">&#8635;</span> Pull Latest</button>
-          <div id="sync-err-box" style="display:none;margin-top:10px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;"></div>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
-            <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Admin GitHub Token (once only)</div>
+          <button type="button" id="push-btn" onclick="pushConfigToGitHub()"
+            style="width:100%;background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;border:none;border-radius:11px;padding:14px;font-family:DM Sans,sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;">
+            &#8679; Push to Cloud
+          </button>
+          <div id="sync-err-box" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;margin-bottom:10px;"></div>
+          <div style="border-top:1px solid var(--border);padding-top:12px;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">GitHub Token (admin, once only)</div>
             <div style="display:flex;gap:8px;margin-bottom:6px;" id="token-row">
-              <input class="add-inp" id="gh-token-inp" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" style="flex:1;font-family:Space Mono,monospace;font-size:12px;" oninput="onTokenInput()" onkeydown="if(event.key==='Enter')saveGhToken()">
-              <button type="button" class="add-sub" id="token-save-btn" onclick="saveGhToken()" style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">Save</button>
+              <input class="add-inp" id="gh-token-inp" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                autocomplete="off" autocorrect="off" spellcheck="false"
+                style="flex:1;font-family:Space Mono,monospace;font-size:12px;"
+                oninput="onTokenInput()" onkeydown="if(event.key==='Enter')saveGhToken()">
+              <button type="button" class="add-sub" id="token-save-btn" onclick="saveGhToken()"
+                style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">Save</button>
             </div>
-            <div id="token-hint" style="font-size:10px;color:var(--muted);line-height:1.6;">github.com &#8594; Settings &#8594; Developer settings &#8594; Tokens (Classic) &#8594; tick <strong>repo</strong></div>
+            <div id="token-hint" style="font-size:10px;color:var(--muted);line-height:1.6;">
+              github.com &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens &rarr; Classic &rarr; tick <strong style="color:var(--blue2)">repo</strong>
+            </div>
           </div>
         </div>
         <div class="sec-hd" style="margin-top:22px;"><div class="sec-title">Scan Reports</div><span class="sec-badge bd-blue" id="scan-count-badge">0 scans</span></div>
@@ -944,257 +950,87 @@ function checkUrlHash() {
   } catch(e) { /* ignore */ }
 }
 
-// ── GITHUB SYNC ─────────────────────────────────────────────────────────────
-// Auto-syncs on login, after every scan, and every 3 minutes.
-// Token stored in localStorage once — no manual sync needed.
+// ── CLOUD SYNC ───────────────────────────────────────────────────────
+var CLOUD_READ='https://raw.githubusercontent.com/skoherath-debug/qr-systemsko/main/so-config.json';
+var CLOUD_WRITE='https://api.github.com/repos/skoherath-debug/qr-systemsko/contents/so-config.json';
+var GH_TOKEN_KEY='so_gh_token';
+var ghToken='';
+function ghTok(){if(!ghToken)ghToken=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';return ghToken;}
 
-var GH_REPO     = 'skoherath-debug/qr-systemsko';
-var GH_API      = 'https://api.github.com/repos/' + GH_REPO + '/contents/';
-var GH_CFG_FILE = 'so-config.json';
-var GH_SCAN_FILE= 'so-scans.json';
-var GH_TOKEN_KEY= 'so_gh_token';
-var ghToken     = '';
-
-function ghTok() {
-  if (!ghToken) ghToken = GH_FIXED_TOKEN || localStorage.getItem(GH_TOKEN_KEY) || '';
-  return ghToken;
+// All users: reads config on login - no token needed
+function autoLoadConfig(){
+  fetch(CLOUD_READ+'?nc='+Date.now())
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(cfg){
+      if(!cfg)return;
+      if(Array.isArray(cfg.users)){
+        var a=users.filter(function(u){return u.isAdmin;});
+        users=a.concat(cfg.users.filter(function(u){return !u.isAdmin;}));
+        localStorage.setItem(AK,JSON.stringify(users));
+      }
+      if(Array.isArray(cfg.sites)&&cfg.sites.length){
+        sitesList=cfg.sites;
+        localStorage.setItem(SITES_KEY,JSON.stringify(sitesList));
+        populateSiteDropdown();
+      }
+      var st=document.getElementById('gh-sync-status');
+      if(st)st.textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    }).catch(function(){});
 }
 
-// ── Core read/write ────────────────────────────────────────────────────────────
-async function ghGet(file) {
-  try {
-    var r = await fetch(GH_API + file + '?t=' + Date.now(), {
-      headers: { Authorization:'token '+ghTok(), Accept:'application/vnd.github.v3+json' }
-    });
-    if (r.status === 404) return { data: null, sha: null };
-    if (!r.ok) return null;
-    var j = await r.json();
-    return {
-      data: JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\s/g,''))))),
-      sha: j.sha
-    };
-  } catch(e) { return null; }
-}
-
-async function ghPut(file, data, sha) {
-  if (!ghTok()) return false;
-  var body = {
-    message: 'sync',
-    content: btoa(unescape(encodeURIComponent(JSON.stringify(data))))
-  };
-  if (sha) body.sha = sha;
-  try {
-    var r = await fetch(GH_API + file, {
-      method: 'PUT',
-      headers: {
-        Authorization:'token '+ghTok(),
-        'Content-Type':'application/json',
-        Accept:'application/vnd.github.v3+json'
-      },
-      body: JSON.stringify(body)
-    });
-    // 422 = SHA conflict — refetch SHA and retry once
-    if (r.status === 422) {
-      var cur = await ghGet(file);
-      if (!cur) return false;
-      body.sha = cur.sha;
-      r = await fetch(GH_API + file, {
-        method: 'PUT',
-        headers: {
-          Authorization:'token '+ghTok(),
-          'Content-Type':'application/json',
-          Accept:'application/vnd.github.v3+json'
-        },
-        body: JSON.stringify(body)
-      });
-    }
-    return r.ok || r.status === 201;
-  } catch(e) { return false; }
-}
-
-// ── Config sync ────────────────────────────────────────────────────────────────
-async function syncConfig() {
-  var result = await ghGet(GH_CFG_FILE);
-  if (!result) return false;
-  var cfg = result.data;
-  if (cfg) {
-    if (Array.isArray(cfg.users)) {
-      var admins = users.filter(function(u){ return u.isAdmin; });
-      users = admins.concat(cfg.users.filter(function(u){ return !u.isAdmin; }));
-      localStorage.setItem(AK, JSON.stringify(users));
-    }
-    if (Array.isArray(cfg.sites) && cfg.sites.length) {
-      sitesList = cfg.sites;
-      localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
-      populateSiteDropdown();
-    }
-  }
-  // Push local state back (merge any new local users/sites)
-  var push = {
-    users: users.filter(function(u){ return !u.isAdmin; }),
-    sites: sitesList,
-    t: new Date().toISOString()
-  };
-  await ghPut(GH_CFG_FILE, push, result.sha);
-  return true;
-}
-
-// ── Scan sync ──────────────────────────────────────────────────────────────────
-async function syncScans() {
-  var result = await ghGet(GH_SCAN_FILE);
-  if (!result) return false;
-  var remote = (result.data && Array.isArray(result.data)) ? result.data : [];
-  // Merge local + remote
-  var merged = remote.slice();
-  scans.forEach(function(ls) {
-    if (!merged.some(function(rs){ return rs.ts===ls.ts&&rs.code===ls.code; }))
-      merged.push(ls);
-  });
-  merged.sort(function(a,b){ return new Date(a.ts)-new Date(b.ts); });
-  scans = merged;
-  try { localStorage.setItem(SK, JSON.stringify(scans)); } catch(e) {}
-  renderRptTable();
-  await ghPut(GH_SCAN_FILE, merged, result.sha);
-  return true;
-}
-
-// ── Push single scan (fast, non-blocking) ─────────────────────────────────────
-async function pushScanToGitHub(rec) {
-  if (!ghTok()) return;
-  var result = await ghGet(GH_SCAN_FILE);
-  if (!result) return;
-  var arr = (result.data && Array.isArray(result.data)) ? result.data : [];
-  if (!arr.some(function(s){ return s.ts===rec.ts&&s.code===rec.code; }))
-    arr.push(rec);
-  await ghPut(GH_SCAN_FILE, arr, result.sha);
-}
-
-// ── Push config (called on user/site changes) ─────────────────────────────────
-async function pushConfigToGitHub() {
-  if (!ghTok()) return;
-  var result = await ghGet(GH_CFG_FILE);
-  var push = {
-    users: users.filter(function(u){ return !u.isAdmin; }),
-    sites: sitesList,
-    t: new Date().toISOString()
-  };
-  if (result) await ghPut(GH_CFG_FILE, push, result.sha);
-}
-
-// ── MASTER AUTO-SYNC ──────────────────────────────────────────────────────────
-var _syncTimer = null;
-
-async function fullSync() {
-  if (!ghTok()) {
-    syncUI('off', 'Paste token below to enable sync');
-    return;
-  }
-  syncUI('syncing');
+// Admin: push users + sites to GitHub
+async function pushConfigToGitHub(){
+  var tok=ghTok();
+  if(!tok){setErrBox('Enter GitHub token first, then tap Push to Cloud.');return;}
+  var btn=document.getElementById('push-btn');
+  if(btn){btn.disabled=true;btn.textContent='Pushing\u2026';}
   setErrBox('');
-
-  // Quick token check
-  try {
-    var chk = await fetch('https://api.github.com/repos/'+GH_REPO,
-      { headers:{ Authorization:'token '+ghTok(), Accept:'application/vnd.github.v3+json' }});
-    if (chk.status === 401) { syncUI('err'); setErrBox('Token invalid — generate a new one (Classic, repo scope)'); return; }
-    if (chk.status === 403) { syncUI('err'); setErrBox('Token missing "repo" scope — tick the full "repo" checkbox'); return; }
-    if (chk.status === 404) { syncUI('err'); setErrBox('Repo not found — check repo name'); return; }
-    if (!chk.ok) { syncUI('err'); setErrBox('GitHub API error: '+chk.status); return; }
-  } catch(e) { syncUI('err'); setErrBox('Network error: '+e.message); return; }
-
-  var c = await syncConfig();
-  var s = await syncScans();
-
-  if (c && s) {
-    var t = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    syncUI('ok', 'Synced '+t);
-    var sl=document.getElementById('sync-last-time');   if(sl) sl.textContent=t;
-    var su=document.getElementById('sync-users-count'); if(su) su.textContent=users.filter(function(u){return !u.isAdmin;}).length;
-    var sc=document.getElementById('sync-scans-count'); if(sc) sc.textContent=scans.length;
-    renderAdmin();
-    // Auto-repeat every 3 min
-    clearInterval(_syncTimer);
-    _syncTimer = setInterval(function(){ silentSync(); }, 3*60*1000);
-  } else {
-    syncUI('err');
-    setErrBox('Read/write failed — ensure "repo" scope is selected for the token');
-  }
+  var cfg={users:users.filter(function(u){return !u.isAdmin;}),sites:sitesList};
+  try{
+    var sha=null;
+    var g=await fetch(CLOUD_WRITE,{headers:{Authorization:'token '+tok,Accept:'application/vnd.github.v3+json'}});
+    if(g.ok){var gj=await g.json();sha=gj.sha;}
+    else if(g.status===401){setErrBox('Token invalid \u2014 generate a new Classic token with repo scope.');if(btn){btn.disabled=false;btn.textContent='\u2191 Push to Cloud';}return;}
+    else if(g.status===403){setErrBox('Token missing repo scope \u2014 tick the full repo checkbox.');if(btn){btn.disabled=false;btn.textContent='\u2191 Push to Cloud';}return;}
+    var body={message:'update config',content:btoa(unescape(encodeURIComponent(JSON.stringify(cfg))))};
+    if(sha)body.sha=sha;
+    var p=await fetch(CLOUD_WRITE,{method:'PUT',headers:{Authorization:'token '+tok,'Content-Type':'application/json',Accept:'application/vnd.github.v3+json'},body:JSON.stringify(body)});
+    if(p.ok||p.status===201){
+      var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      if(btn){btn.disabled=false;btn.textContent='\u2713 Pushed '+t;setTimeout(function(){btn.textContent='\u2191 Push to Cloud';},3000);}
+      var st=document.getElementById('gh-sync-status');if(st)st.textContent='Pushed: '+t;
+      var su=document.getElementById('sync-users-count');if(su)su.textContent=cfg.users.length+' users';
+      var ss=document.getElementById('sync-scans-count');if(ss)ss.textContent=cfg.sites.length+' sites';
+    }else{
+      var ej=await p.json();
+      setErrBox('Failed ('+p.status+'): '+(ej.message||'unknown'));
+      if(btn){btn.disabled=false;btn.textContent='\u2191 Push to Cloud';}
+    }
+  }catch(e){setErrBox('Error: '+e.message);if(btn){btn.disabled=false;btn.textContent='\u2191 Push to Cloud';}}
 }
 
-// Silent background sync (no UI changes unless error)
-async function silentSync() {
-  if (!ghTok()) return;
-  await syncConfig();
-  await syncScans();
-  var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  var sl=document.getElementById('sync-last-time'); if(sl) sl.textContent=t;
-  var su=document.getElementById('sync-users-count'); if(su) su.textContent=users.filter(function(u){return !u.isAdmin;}).length;
-  var sc=document.getElementById('sync-scans-count'); if(sc) sc.textContent=scans.length;
-}
-
-function syncUI(state, msg) {
-  var pill=document.getElementById('nav-sync-pill');
-  var ico=document.getElementById('nav-sync-icon');
-  var txt=document.getElementById('nav-sync-text');
-  var sp=document.getElementById('sync-spinner');
-  var st=document.getElementById('gh-sync-status');
-  var ti=document.getElementById('gh-sync-title');
-  var sb=document.getElementById('sync-now-btn');
-  var bi=document.getElementById('sync-btn-icon');
-  if (state==='syncing') {
-    if(pill){pill.className='nav-sync-pill show';} if(ico)ico.className='nav-spin'; if(txt)txt.textContent='Syncing';
-    if(sp)sp.innerHTML='<span class="sync-ring"></span>'; if(st)st.textContent='Syncing\u2026';
-    if(sb){sb.disabled=true;sb.style.opacity='.6';} if(bi)bi.textContent='\u23F3';
-  } else if (state==='ok') {
-    if(pill){pill.className='nav-sync-pill show ok';setTimeout(function(){pill.classList.remove('show');},4000);}
-    if(ico){ico.className='';ico.textContent='\u2713';} if(txt)txt.textContent='Synced';
-    if(sp)sp.innerHTML='<span class="sync-dot"></span>'; if(st)st.textContent=msg||'All devices in sync';
-    if(ti)ti.textContent='\u2601 Cloud Sync \u2014 Connected'; if(sb){sb.disabled=false;sb.style.opacity='';}
-    if(bi)bi.textContent='\u2713';
-  } else if (state==='err') {
-    if(pill){pill.className='nav-sync-pill show err';setTimeout(function(){pill.classList.remove('show');},7000);}
-    if(ico){ico.className='';ico.textContent='\u2715';} if(txt)txt.textContent='Error';
-    if(sp)sp.innerHTML='<span class="sync-err-dot"></span>'; if(sb){sb.disabled=false;sb.style.opacity='';}
-    if(bi)bi.textContent='\u21BB';
-  } else {
-    if(pill)pill.classList.remove('show');
-    if(sp)sp.innerHTML='<span style="width:10px;height:10px;border-radius:50%;background:var(--muted);margin:9px;display:inline-block;"></span>';
-    if(st)st.textContent=msg||'Token not set';
-  }
-}
-
-function setErrBox(msg) {
-  var el=document.getElementById('sync-err-box');
-  if(!el)return;
-  el.style.display=msg?'block':'none';
-  el.textContent=msg;
-}
-
-window.saveGhToken = function() {
+function setErrBox(m){var el=document.getElementById('sync-err-box');if(!el)return;el.style.display=m?'block':'none';el.textContent=m;}
+window.saveGhToken=function(){
   var inp=document.getElementById('gh-token-inp');
   var val=(inp?inp.value:'').trim();
-  if (!val) { if(inp){inp.style.border='2px solid var(--red)';setTimeout(function(){inp.style.border='';},1500);} return; }
-  localStorage.setItem(GH_TOKEN_KEY, val);
-  ghToken=val; GH_FIXED_TOKEN=val;
+  if(!val){if(inp){inp.style.border='2px solid var(--red)';setTimeout(function(){inp.style.border='';},1500);}return;}
+  localStorage.setItem(GH_TOKEN_KEY,val);ghToken=val;GH_FIXED_TOKEN=val;
   if(inp)inp.value='';
-  var row=document.getElementById('token-row');
-  var hint=document.getElementById('token-hint');
-  if(row)row.style.display='none';
-  if(hint)hint.style.display='none';
-  fullSync();
+  var row=document.getElementById('token-row');if(row)row.style.display='none';
+  var hint=document.getElementById('token-hint');if(hint)hint.style.display='none';
+  var st=document.getElementById('gh-sync-status');if(st)st.textContent='Token saved \u2014 tap Push to Cloud';
+  setErrBox('Token saved! Now tap Push to Cloud.');
 };
-
-window.onTokenInput = function() {
-  var inp=document.getElementById('gh-token-inp');
-  if(!inp)return; inp.style.border='';
+window.onTokenInput=function(){
+  var inp=document.getElementById('gh-token-inp');if(!inp)return;inp.style.border='';
   var btn=document.getElementById('token-save-btn');
-  if(btn) btn.style.background=inp.value.trim().length>10
-    ?'linear-gradient(135deg,var(--green),#059669)':'';
+  if(btn)btn.style.background=inp.value.trim().length>10?'linear-gradient(135deg,var(--green),#059669)':'';
 };
-
-// showSyncAnim is now syncUI — alias kept for compatibility
-function showSyncAnim(s,m){ syncUI(s,m); }
+function fullSync(){pushConfigToGitHub();}
+function pushScanToGitHub(){}
+function showSyncAnim(){}
 function setSyncStatus(){}
+function syncUI(){}
 
 // ── SITES ─────────────────────────────────────────────────────────────────────
 var SITES_KEY = 'so_sites_v1';
@@ -1332,6 +1168,7 @@ function pinEnter() {
   pinBuf = '';
   updateDots(false);
   showTab(canGenerate ? 'generator' : 'scanner');
+  setTimeout(autoLoadConfig, 800);
   // Auto-sync on login
   setTimeout(fullSync, 1000);
 }
@@ -1361,61 +1198,14 @@ function renderAdmin() {
   try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; }
   renderSites();
   // Show token status
-  var tok = GH_FIXED_TOKEN || localStorage.getItem(GH_TOKEN_KEY) || '';
-  var row  = document.getElementById('token-row');
-  var hint = document.getElementById('token-hint');
-  var sinp = document.getElementById('gh-token-inp');
-  var ss   = document.getElementById('gh-sync-status');
-  if (tok) {
-    if (row)  row.style.display  = 'none';
-    if (hint) hint.style.display = 'none';
-    if (ss && ss.textContent === 'Enter token below to connect')
-      ss.textContent = 'Token set — tap Sync Now';
-  } else {
-    if (row)  row.style.display  = 'flex';
-    if (hint) hint.style.display = 'block';
-    if (ss)   ss.textContent = 'Enter token below to connect';
-  }
-  var lc = document.getElementById('scan-live-count'); if(lc) lc.textContent = scans.length + ' scan' + (scans.length===1?'':' s');
-  var list = document.getElementById('user-list');
-  list.innerHTML = '';
-  var pal = ['#2196f3','#00bcd4','#7c6fff','#00e676','#ff9800','#e91e63','#03a9f4'];
-  users.forEach(function(u) {
-    var ci  = u.pin.split('').reduce(function(a,c) { return a + c.charCodeAt(0); }, 0) % pal.length;
-    var col = u.isAdmin ? '#f0a500' : pal[ci];
-    var ini = u.name.split(' ').map(function(w) { return w[0] || ''; }).join('').substring(0, 2).toUpperCase() || '??';
-
-    var row = document.createElement('div'); row.className = 'u-row';
-    var av  = document.createElement('div'); av.className = 'u-av'; av.style.background = col; av.textContent = ini;
-    var inf = document.createElement('div'); inf.className = 'u-info';
-    var nm  = document.createElement('div'); nm.className = 'u-name'; nm.textContent = u.name;
-    var mt  = document.createElement('div'); mt.className = 'u-meta';
-    mt.textContent = u.role + (u.addedAt ? ' · ' + new Date(u.addedAt).toLocaleDateString() : '');
-    inf.appendChild(nm); inf.appendChild(mt);
-
-    var act = document.createElement('div'); act.className = 'u-acts';
-    var bdg = document.createElement('span');
-    bdg.className = 'sec-badge ' + (u.isAdmin ? 'bd-gold' : 'bd-blue');
-    bdg.textContent = u.isAdmin ? '★ Admin' : '✓ Active';
-    act.appendChild(bdg);
-
-    if (!u.isAdmin) {
-      var rb = document.createElement('button'); rb.type = 'button'; rb.className = 'rm-btn';
-      rb.textContent = '✕ Remove'; rb.dataset.pin = u.pin;
-      rb.addEventListener('touchend', function(e) { e.preventDefault(); handleRemove(this.dataset.pin); });
-      rb.addEventListener('click',    function()  { handleRemove(this.dataset.pin); });
-      act.appendChild(rb);
-    }
-    row.appendChild(av); row.appendChild(inf); row.appendChild(act);
-    list.appendChild(row);
-  });
-  if (users.filter(function(u) { return !u.isAdmin; }).length === 0) {
-    var mt = document.createElement('div');
-    mt.style.cssText = 'padding:16px;color:var(--muted2);font-size:13px;text-align:center;background:var(--s2);border-radius:10px;border:1px dashed var(--border);';
-    mt.textContent = 'No staff users yet. Add one below.';
-    list.appendChild(mt);
-  }
-  document.getElementById('u-count').textContent = users.length;
+  var tok=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';
+  var row=document.getElementById('token-row'),hint=document.getElementById('token-hint');
+  if(tok){if(row)row.style.display='none';if(hint)hint.style.display='none';}
+  else{if(row)row.style.display='flex';if(hint)hint.style.display='block';}
+  var su=document.getElementById('sync-users-count');
+  if(su)su.textContent=users.filter(function(u){return !u.isAdmin;}).length+' users';
+  var ss=document.getElementById('sync-scans-count');
+  if(ss)ss.textContent=sitesList.length+' sites';
   renderRptTable();
 }
 
