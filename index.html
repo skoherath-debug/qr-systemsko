@@ -680,10 +680,25 @@ body::before{
         <div class="add-card" style="padding:16px;">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
             <div id="sync-spinner" style="width:28px;height:28px;flex-shrink:0;"></div>
-            <div>
+            <div style="flex:1;">
               <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">Cloud Sync</div>
-              <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Tap Sync Now to connect</div>
+              <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Enter token below to connect</div>
             </div>
+          </div>
+          <!-- Token input — set once, stored on device -->
+          <div style="display:flex;gap:8px;margin-bottom:12px;" id="token-row">
+            <input class="add-inp" id="gh-token-inp" type="password"
+              placeholder="Paste GitHub token: ghp_xxxx..."
+              autocomplete="off" autocorrect="off" spellcheck="false"
+              style="flex:1;font-family:Space Mono,monospace;font-size:12px;"
+              oninput="onTokenInput()" onkeydown="if(event.key==='Enter')saveGhToken()">
+            <button type="button" class="add-sub" id="token-save-btn" onclick="saveGhToken()"
+              style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">
+              Save
+            </button>
+          </div>
+          <div id="token-hint" style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+            Get free token: <strong style="color:var(--blue2)">github.com → Settings → Developer settings → Personal access tokens → Classic → repo scope</strong>
           </div>
           <div class="rpt-stats" style="margin-bottom:14px;">
             <div class="rs bl"><div class="rs-lbl">Last Sync</div><div style="font-size:12px;font-weight:700;margin-top:4px;" id="sync-last-time">Never</div></div>
@@ -954,6 +969,20 @@ function ghGetToken() {
   return ghToken;
 }
 
+// Detect default branch of the repo (main / master / gh-pages)
+var _ghBranch = null;
+async function ghGetBranch() {
+  if (_ghBranch) return _ghBranch;
+  for (var br of ['main','master','gh-pages']) {
+    try {
+      var res = await fetch('https://api.github.com/repos/' + GH_REPO + '/git/ref/heads/' + br,
+        { headers: ghHeaders() });
+      if (res.ok) { _ghBranch = br; return br; }
+    } catch(e) {}
+  }
+  _ghBranch = 'main'; return 'main';
+}
+
 function ghHeaders() {
   var tok = ghGetToken();
   return {
@@ -971,7 +1000,8 @@ function toB64(str) {
 // Read file from GitHub. Returns {content, sha} or null.
 async function ghRead(file) {
   try {
-    var url = GH_BASE + file + '?ref=main&t=' + Date.now();
+    var branch = await ghGetBranch();
+    var url = GH_BASE + file + '?ref=' + branch + '&t=' + Date.now();
     var res = await fetch(url, { headers: ghHeaders() });
     if (res.status === 404) return { content: null, sha: null }; // file doesn't exist yet
     if (!res.ok) {
@@ -996,7 +1026,7 @@ async function ghWrite(file, data, sha) {
     var body = {
       message: 'sync: update ' + file,
       content: toB64(JSON.stringify(data, null, 2)),
-      branch: 'main'
+      branch: _ghBranch || 'main'
     };
     if (sha) body.sha = sha;
     var res = await fetch(GH_BASE + file, {
@@ -1323,11 +1353,21 @@ function renderAdmin() {
   try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; }
   renderSites();
   // Show token status
-  var tok = localStorage.getItem(GH_TOKEN_KEY) || '';
+  var tok = GH_FIXED_TOKEN || localStorage.getItem(GH_TOKEN_KEY) || '';
+  var row  = document.getElementById('token-row');
+  var hint = document.getElementById('token-hint');
   var sinp = document.getElementById('gh-token-inp');
-  if (sinp) sinp.placeholder = tok ? ('Token set: ghp_' + tok.substring(4,8) + '****') : 'ghp_xxxxxxxxxxxxxxxxxxxx';
-  var ss = document.getElementById('gh-sync-status');
-  if (ss && !ss.textContent) ss.textContent = tok ? 'Token set — tap Sync Now' : 'No token — local storage only';
+  var ss   = document.getElementById('gh-sync-status');
+  if (tok) {
+    if (row)  row.style.display  = 'none';
+    if (hint) hint.style.display = 'none';
+    if (ss && ss.textContent === 'Enter token below to connect')
+      ss.textContent = 'Token set — tap Sync Now';
+  } else {
+    if (row)  row.style.display  = 'flex';
+    if (hint) hint.style.display = 'block';
+    if (ss)   ss.textContent = 'Enter token below to connect';
+  }
   var lc = document.getElementById('scan-live-count'); if(lc) lc.textContent = scans.length + ' scan' + (scans.length===1?'':' s');
   var list = document.getElementById('user-list');
   list.innerHTML = '';
@@ -1979,13 +2019,36 @@ window.googleItem = function() {
 };
 
 window.saveGhToken = function() {
-  var val = (document.getElementById('gh-token-inp').value || '').trim();
-  if (!val) { alert('Enter a token first.'); return; }
+  var inp = document.getElementById('gh-token-inp');
+  var val = (inp ? inp.value : '').trim();
+  if (!val) {
+    if(inp){ inp.style.border='2px solid var(--red)'; setTimeout(function(){inp.style.border='';},1500); }
+    return;
+  }
   localStorage.setItem(GH_TOKEN_KEY, val);
   ghToken = val;
-  document.getElementById('gh-token-inp').value = '';
-  setSyncStatus('Token saved. Syncing...', 'info');
+  GH_FIXED_TOKEN = val;  // update in-memory too
+  _ghBranch = null;      // reset branch detection
+  if (inp) inp.value = '';
+  // Update UI to show token is saved
+  var row = document.getElementById('token-row');
+  var hint = document.getElementById('token-hint');
+  var btn  = document.getElementById('token-save-btn');
+  if (row)  row.style.display = 'none';
+  if (hint) hint.style.display = 'none';
+  if (btn)  btn.textContent = '✓ Saved';
   fullSync();
+};
+
+window.onTokenInput = function() {
+  var inp = document.getElementById('gh-token-inp');
+  if (!inp) return;
+  inp.style.border = '';
+  var v = inp.value.trim();
+  var btn = document.getElementById('token-save-btn');
+  if (btn) btn.style.background = v.length > 10
+    ? 'linear-gradient(135deg,var(--green),#059669)'
+    : '';
 };
 
 window.testSaveRecord = function() {
