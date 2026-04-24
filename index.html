@@ -623,13 +623,12 @@ body::before{
 
         <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">Share Access</div></div>
         <div class="share-box">
-          <div class="share-desc">After adding users, tap <strong>Copy Share Link</strong> and send via WhatsApp. Workers open it once and PINs load automatically.</div>
+          <div class="share-desc">After adding users, tap <strong>Copy Share Link</strong> and send via WhatsApp. Workers open it once &mdash; users &amp; sites load automatically.</div>
           <button type="button" class="share-link-btn" onclick="copyShareLink()">&#128279; Copy Share Link</button>
           <div class="share-code-box" id="share-code-box" onclick="copyShareLink()"></div>
           <div class="share-note" id="share-note"></div>
         </div>
 
-        <!-- SITES -->
         <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">Sites / Projects</div><span class="sec-badge bd-blue" id="site-count">0</span></div>
         <div id="site-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
         <div class="add-card" style="padding:14px;">
@@ -639,12 +638,9 @@ body::before{
           </div>
         </div>
 
-        <!-- GITHUB SYNC -->
         <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">&#9729; Cloud Sync (GitHub)</div></div>
         <div class="add-card" style="padding:16px;">
-          <div style="font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:12px;">
-            Sync users, sites &amp; scans across <strong style="color:var(--text)">all devices</strong>. Enter a GitHub <strong style="color:var(--text)">Personal Access Token</strong> (repo write permission) — stored only on this device. Once set, all data syncs automatically.
-          </div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:12px;">Sync users, sites &amp; scans across <strong style="color:var(--text)">all devices</strong>. Enter a GitHub <strong style="color:var(--text)">Personal Access Token</strong> (repo scope) &mdash; stored only on this device. Once set, all data syncs automatically.</div>
           <div style="display:flex;gap:8px;margin-bottom:10px;">
             <input class="add-inp" id="gh-token-inp" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" style="flex:1;font-family:Space Mono,monospace;font-size:12px;">
             <button type="button" class="add-sub" onclick="saveGhToken()" style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">Save Token</button>
@@ -653,9 +649,7 @@ body::before{
             <button type="button" class="rpt-btn g" onclick="fullSync()" style="padding:9px 16px;">&#8635; Sync Now</button>
             <span id="gh-sync-status" style="font-size:12px;color:var(--muted2);">Not synced yet</span>
           </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.6;">
-            Token is stored locally only. Get one at <strong style="color:var(--blue2)">github.com → Settings → Developer settings → Tokens</strong>. Select <em>repo</em> scope.
-          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.6;">Get a token at <strong style="color:var(--blue2)">github.com &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens</strong>. Select <em>repo</em> scope.</div>
         </div>
 
         <div class="sec-hd" style="margin-top:22px;"><div class="sec-title">Scan Reports</div><span class="sec-badge bd-blue" id="scan-count-badge">0 scans</span></div>
@@ -677,9 +671,9 @@ body::before{
             <tbody id="rpt-body"></tbody>
           </table>
         </div>
+
       </div>
     </div>
-  </div>
 
   <!-- Mobile bottom nav -->
   <div class="bot-nav">
