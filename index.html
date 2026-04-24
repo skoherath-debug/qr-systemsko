@@ -639,6 +639,25 @@ body::before{
           </div>
         </div>
 
+        <!-- GITHUB SYNC -->
+        <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">&#9729; Cloud Sync (GitHub)</div></div>
+        <div class="add-card" style="padding:16px;">
+          <div style="font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:12px;">
+            Sync users, sites &amp; scans across <strong style="color:var(--text)">all devices</strong>. Enter a GitHub <strong style="color:var(--text)">Personal Access Token</strong> (repo write permission) — stored only on this device. Once set, all data syncs automatically.
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <input class="add-inp" id="gh-token-inp" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" style="flex:1;font-family:Space Mono,monospace;font-size:12px;">
+            <button type="button" class="add-sub" onclick="saveGhToken()" style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">Save Token</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button type="button" class="rpt-btn g" onclick="fullSync()" style="padding:9px 16px;">&#8635; Sync Now</button>
+            <span id="gh-sync-status" style="font-size:12px;color:var(--muted2);">Not synced yet</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.6;">
+            Token is stored locally only. Get one at <strong style="color:var(--blue2)">github.com → Settings → Developer settings → Tokens</strong>. Select <em>repo</em> scope.
+          </div>
+        </div>
+
         <div class="sec-hd" style="margin-top:22px;"><div class="sec-title">Scan Reports</div><span class="sec-badge bd-blue" id="scan-count-badge">0 scans</span></div>
         <div class="rpt-stats">
           <div class="rs bl"><div class="rs-lbl">Total Scans</div><div class="rs-val" id="rpt-tot">0</div></div>
@@ -858,22 +877,186 @@ function checkUrlHash() {
     var hash = window.location.hash;
     if (!hash || hash.indexOf('#U=') !== 0) return;
     var code = hash.slice(3);
-    var imported = JSON.parse(decodeURIComponent(escape(atob(code))));
-    if (!Array.isArray(imported) || !imported.length) return;
+    var payload = JSON.parse(decodeURIComponent(escape(atob(code))));
+    // Support both old format (array) and new format ({users, sites})
+    var importedUsers = Array.isArray(payload) ? payload : (payload.users || []);
+    var importedSites = Array.isArray(payload) ? [] : (payload.sites || []);
     var changed = false;
-    imported.forEach(function(u) {
+    importedUsers.forEach(function(u) {
       if (!u.name || !u.pin || u.isAdmin) return;
       u.isAdmin = false;
       if (!users.find(function(x) { return x.pin === u.pin; })) {
-        users.push(u);
-        changed = true;
+        users.push(u); changed = true;
       }
     });
-    if (changed) saveUsers();
+    if (changed) { localStorage.setItem(AK, JSON.stringify(users)); }
+    if (importedSites.length) {
+      importedSites.forEach(function(s) { if (sitesList.indexOf(s) === -1) sitesList.push(s); });
+      saveSites();
+    }
     // Clean the URL hash silently
     history.replaceState(null, '', window.location.pathname + window.location.search);
   } catch(e) { /* ignore */ }
 }
+
+// ── GITHUB SYNC ───────────────────────────────────────────────────────────────
+// Uses GitHub Contents API to store config.json and scans.json in the repo.
+// Public repo reads are free; writes need a Personal Access Token.
+// Admin sets token once in Admin Panel — stored locally in localStorage.
+
+var GH_TOKEN_KEY = 'so_gh_token';
+var GH_REPO      = 'skoherath-debug/qr-systemsko';
+var GH_CFG_PATH  = 'data/config.json';
+var GH_SCAN_PATH = 'data/scans.json';
+var GH_BASE      = 'https://api.github.com/repos/' + GH_REPO + '/contents/';
+
+var ghToken = '';
+
+function ghGetToken() {
+  if (!ghToken) ghToken = localStorage.getItem(GH_TOKEN_KEY) || '';
+  return ghToken;
+}
+
+function ghHeaders(write) {
+  var h = { 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' };
+  var tok = ghGetToken();
+  if (tok) h['Authorization'] = 'token ' + tok;
+  return h;
+}
+
+// Read a file from GitHub — returns {content, sha} or null
+async function ghRead(path) {
+  try {
+    var res = await fetch(GH_BASE + path + '?t=' + Date.now(), { headers: ghHeaders(false) });
+    if (!res.ok) return null;
+    var j = await res.json();
+    var content = JSON.parse(atob(j.content.replace(/\n/g,'')));
+    return { content: content, sha: j.sha };
+  } catch(e) { return null; }
+}
+
+// Write a file to GitHub (create or update)
+async function ghWrite(path, data, sha) {
+  var tok = ghGetToken();
+  if (!tok) { console.warn('No GitHub token — skipping sync'); return false; }
+  try {
+    var body = {
+      message: 'update ' + path.split('/').pop(),
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))),
+    };
+    if (sha) body.sha = sha;
+    var res = await fetch(GH_BASE + path, {
+      method: 'PUT',
+      headers: ghHeaders(true),
+      body: JSON.stringify(body)
+    });
+    return res.ok || res.status === 201;
+  } catch(e) { return false; }
+}
+
+// ── SYNC CONFIG (users + sites) to/from GitHub ────────────────────────────────
+var _cfgSha = null;
+
+async function syncConfigFromGitHub() {
+  var result = await ghRead(GH_CFG_PATH);
+  if (!result) return false;
+  _cfgSha = result.sha;
+  var cfg = result.content;
+  // Import users (skip admin)
+  if (Array.isArray(cfg.users)) {
+    var existing = users.filter(function(u){ return u.isAdmin; });
+    var imported = cfg.users.filter(function(u){ return !u.isAdmin; });
+    users = existing.concat(imported);
+    saveUsers();
+  }
+  // Import sites
+  if (Array.isArray(cfg.sites) && cfg.sites.length) {
+    sitesList = cfg.sites;
+    saveSites();
+    populateSiteDropdown();
+  }
+  return true;
+}
+
+async function pushConfigToGitHub() {
+  var tok = ghGetToken();
+  if (!tok) return;
+  var cfg = {
+    users: users.filter(function(u){ return !u.isAdmin; }),
+    sites: sitesList,
+    updatedAt: new Date().toISOString()
+  };
+  var ok = await ghWrite(GH_CFG_PATH, cfg, _cfgSha);
+  if (ok) {
+    // Refresh SHA after write
+    var r2 = await ghRead(GH_CFG_PATH);
+    if (r2) _cfgSha = r2.sha;
+  }
+  return ok;
+}
+
+// ── SYNC SCANS to/from GitHub ─────────────────────────────────────────────────
+var _scanSha = null;
+
+async function syncScansFromGitHub() {
+  var result = await ghRead(GH_SCAN_PATH);
+  if (!result) return false;
+  _scanSha = result.sha;
+  if (Array.isArray(result.content)) {
+    // Merge: keep local scans not on server, add server scans not local
+    var local = scans;
+    var remote = result.content;
+    var merged = remote.slice();
+    local.forEach(function(ls) {
+      var exists = merged.some(function(rs){ return rs.ts === ls.ts && rs.code === ls.code; });
+      if (!exists) merged.push(ls);
+    });
+    // Sort by timestamp
+    merged.sort(function(a,b){ return new Date(a.ts)-new Date(b.ts); });
+    scans = merged;
+    try { localStorage.setItem(SK, JSON.stringify(scans)); } catch(e) {}
+    renderRptTable();
+  }
+  return true;
+}
+
+async function pushScanToGitHub(rec) {
+  var tok = ghGetToken();
+  if (!tok) return;
+  // Get latest first to avoid SHA conflicts
+  var latest = await ghRead(GH_SCAN_PATH);
+  var arr = (latest && Array.isArray(latest.content)) ? latest.content : [];
+  _scanSha = latest ? latest.sha : null;
+  // Add if not already there
+  if (!arr.some(function(s){ return s.ts === rec.ts && s.code === rec.code; })) {
+    arr.push(rec);
+  }
+  await ghWrite(GH_SCAN_PATH, arr, _scanSha);
+  // Refresh SHA
+  var r2 = await ghRead(GH_SCAN_PATH);
+  if (r2) _scanSha = r2.sha;
+}
+
+// ── SYNC STATUS UI ────────────────────────────────────────────────────────────
+function setSyncStatus(msg, type) {
+  var el = document.getElementById('gh-sync-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = type === 'ok' ? 'var(--green)' : type === 'err' ? 'var(--red)' : 'var(--muted2)';
+}
+
+async function fullSync() {
+  setSyncStatus('Syncing...', 'info');
+  var ok1 = await syncConfigFromGitHub();
+  var ok2 = await syncScansFromGitHub();
+  if (ok1 || ok2) {
+    setSyncStatus('✓ Synced ' + new Date().toLocaleTimeString(), 'ok');
+    renderAdmin();
+  } else {
+    setSyncStatus('No connection or no token set', 'err');
+  }
+}
+
 
 // ── SITES ─────────────────────────────────────────────────────────────────────
 var SITES_KEY = 'so_sites_v1';
@@ -887,6 +1070,7 @@ function loadSites() {
 
 function saveSites() {
   localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
+  pushConfigToGitHub();
 }
 
 function populateSiteDropdown() {
@@ -960,7 +1144,7 @@ function loadUsers() {
   users.unshift({ name: 'Administrator', pin: _AP, role: 'Admin', isAdmin: true, addedAt: new Date().toISOString() });
   saveUsers();
 }
-function saveUsers() { localStorage.setItem(AK, JSON.stringify(users)); }
+function saveUsers() { localStorage.setItem(AK, JSON.stringify(users)); pushConfigToGitHub(); }
 function loadScans() { try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; } }
 function saveScans() { localStorage.setItem(SK, JSON.stringify(scans)); }
 
@@ -1010,6 +1194,8 @@ function pinEnter() {
   pinBuf = '';
   updateDots(false);
   showTab(canGenerate ? 'generator' : 'scanner');
+  // Sync from GitHub when user logs in
+  setTimeout(fullSync, 800);
 }
 function doSignOut() {
   stopScan();
@@ -1036,6 +1222,12 @@ function showTab(t) {
 function renderAdmin() {
   try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; }
   renderSites();
+  // Show token status
+  var tok = localStorage.getItem(GH_TOKEN_KEY) || '';
+  var sinp = document.getElementById('gh-token-inp');
+  if (sinp) sinp.placeholder = tok ? ('Token set: ghp_' + tok.substring(4,8) + '****') : 'ghp_xxxxxxxxxxxxxxxxxxxx';
+  var ss = document.getElementById('gh-sync-status');
+  if (ss && !ss.textContent) ss.textContent = tok ? 'Token set — tap Sync Now' : 'No token — local storage only';
   var lc = document.getElementById('scan-live-count'); if(lc) lc.textContent = scans.length + ' scan' + (scans.length===1?'':' s');
   var list = document.getElementById('user-list');
   list.innerHTML = '';
@@ -1121,7 +1313,9 @@ window.onPinInput = function() {
 window.copyShareLink = function() {
   var staff = users.filter(function(u) { return !u.isAdmin; });
   if (!staff.length) { alert('Add users first, then generate the share link.'); return; }
-  var code = btoa(unescape(encodeURIComponent(JSON.stringify(staff))));
+  // Include sites in share payload so workers get them without GitHub
+  var payload = { users: staff, sites: sitesList };
+  var code = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
   var url  = window.location.href.split('#')[0] + '#U=' + code;
   document.getElementById('share-code-box').style.display = 'block';
   document.getElementById('share-code-box').textContent = url;
@@ -1292,6 +1486,9 @@ function onQrDetected(raw) {
     scans.push(rec);
     total = scans.length;
   }
+
+  // Push to GitHub async (non-blocking)
+  pushScanToGitHub(rec);
 
   // --- TOAST ---
   var toast = document.getElementById('scan-toast');
@@ -1679,6 +1876,16 @@ window.googleItem = function() {
     var q = encodeURIComponent(desc.textContent.trim());
     window.open('https://www.google.com/search?q=' + q + '&tbm=isch', '_blank');
   }
+};
+
+window.saveGhToken = function() {
+  var val = (document.getElementById('gh-token-inp').value || '').trim();
+  if (!val) { alert('Enter a token first.'); return; }
+  localStorage.setItem(GH_TOKEN_KEY, val);
+  ghToken = val;
+  document.getElementById('gh-token-inp').value = '';
+  setSyncStatus('Token saved. Syncing...', 'info');
+  fullSync();
 };
 
 window.testSaveRecord = function() {
