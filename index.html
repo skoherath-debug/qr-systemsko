@@ -1,20 +1,4 @@
-  var tok=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';
-  var row=document.getElementById('token-row');
-  var hint=document.getElementById('token-hint');
-  var tokOk=document.getElementById('token-status-ok');
-  if(tok){
-    if(row)row.style.display='none';
-    if(hint)hint.style.display='none';
-    if(tokOk)tokOk.style.display='block';
-  } else {
-    if(row)row.style.display='flex';
-    if(hint)hint.style.display='block';
-    if(tokOk)tokOk.style.display='none';
-  }
-  var su=document.getElementById('sync-users-count');
-  if(su)su.textContent=users.filter(function(u){return !u.isAdmin;}).length+' users';
-  var ss=document.getElementById('sync-scans-count');
-  if(ss)ss.textContent=sitesList.length+' sites';<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1425,7 +1409,23 @@ function renderAdmin() {
   var udisp = document.getElementById('admin-username-display');
   if (udisp && curUser) udisp.textContent = curUser.name + ' (' + (curUser.role||'Admin') + ')';
   renderSites();
-  // Show token status
+  var tok=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';
+  var row=document.getElementById('token-row');
+  var hint=document.getElementById('token-hint');
+  var tokOk=document.getElementById('token-status-ok');
+  if(tok){
+    if(row)row.style.display='none';
+    if(hint)hint.style.display='none';
+    if(tokOk)tokOk.style.display='block';
+  } else {
+    if(row)row.style.display='flex';
+    if(hint)hint.style.display='block';
+    if(tokOk)tokOk.style.display='none';
+  }
+  var su=document.getElementById('sync-users-count');
+  if(su)su.textContent=users.filter(function(u){return !u.isAdmin;}).length+' users';
+  var ss=document.getElementById('sync-scans-count');
+  if(ss)ss.textContent=sitesList.length+' sites';  // Show token status
   var tok=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';
   var row=document.getElementById('token-row');
   var hint=document.getElementById('token-hint');
