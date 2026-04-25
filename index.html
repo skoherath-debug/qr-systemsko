@@ -6,7 +6,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a1628">
-<title>Sanken Overseas — QR Asset</title>
+<title>Sanken Overseas — Asset Management</title>
 <link rel="manifest" id="pwa-manifest">
 <meta name="apple-mobile-web-app-title" content="SO Assets">
 <link rel="apple-touch-icon" id="apple-touch-icon">
@@ -614,7 +614,7 @@ body::before{
         <button type="button" class="pkey pkey-zero" id="pk0">0</button>
         <button type="button" class="pkey pkey-enter" id="pkenter">Enter</button>
       </div>
-      <div class="pin-foot">Admin default PIN: <strong style="color:var(--blue2);font-family:Space Mono,monospace;letter-spacing:2px;">9876</strong></div>
+      <div class="pin-foot">Contact your administrator to get access</div>
     </div>
   </div>
 </div>
@@ -955,8 +955,8 @@ body::before{
 'use strict';
 // ── CONSTANTS ──────────────────────────────────────────────────────────────────
 var GH_FIXED_TOKEN = ''; // Enter token in Admin Panel — never embed in code // embedded // embedded
-var AK  = 'so_auth_v9';
-var SK  = 'so_scans_v4';
+var AK  = 'so_auth_v10';
+var SK  = 'so_scans_v5';
 var _AP = String.fromCharCode(57,56,55,54);
 
 // ── STATE ──────────────────────────────────────────────────────────────────────
@@ -1242,7 +1242,7 @@ function setSyncStatus(){}
 function syncUI(){}
 
 // ── SITES ─────────────────────────────────────────────────────────────────────
-var SITES_KEY = 'so_sites_v2';
+var SITES_KEY = 'so_sites_v3';
 var sitesList = [];
 
 function loadSites() {
