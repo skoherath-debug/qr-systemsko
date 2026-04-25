@@ -1,4 +1,20 @@
-<!DOCTYPE html>
+  var tok=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';
+  var row=document.getElementById('token-row');
+  var hint=document.getElementById('token-hint');
+  var tokOk=document.getElementById('token-status-ok');
+  if(tok){
+    if(row)row.style.display='none';
+    if(hint)hint.style.display='none';
+    if(tokOk)tokOk.style.display='block';
+  } else {
+    if(row)row.style.display='flex';
+    if(hint)hint.style.display='block';
+    if(tokOk)tokOk.style.display='none';
+  }
+  var su=document.getElementById('sync-users-count');
+  if(su)su.textContent=users.filter(function(u){return !u.isAdmin;}).length+' users';
+  var ss=document.getElementById('sync-scans-count');
+  if(ss)ss.textContent=sitesList.length+' sites';<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -94,6 +110,81 @@ body{font-family:'DM Sans',sans-serif;background:var(--c0);color:var(--text);}
   animation:fadeSlideIn .3s ease;
 }
 #sync-live-bar.hide{display:none!important;}
+
+
+/* ── PREMIUM ANIMATIONS ── */
+@keyframes slideUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+@keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
+@keyframes popScale  { 0%{transform:scale(.85);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
+@keyframes shimmer   { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+@keyframes glowPulse { 0%,100%{box-shadow:0 0 0 0 rgba(74,144,217,.4)} 50%{box-shadow:0 0 0 8px rgba(74,144,217,0)} }
+@keyframes countUp   { from{opacity:0;transform:translateY(6px) scale(.9)} to{opacity:1;transform:none} }
+@keyframes borderFlow{
+  0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%}
+}
+
+/* Animated gradient border on active stat cards */
+.stat.bl::before { animation:borderFlow 3s ease infinite; background-size:200% 200%; }
+.stat.gn::before { animation:borderFlow 3s ease infinite 1s; }
+
+/* Screen transitions */
+.screen { animation:slideUp .3s ease; }
+
+/* Card hover glow */
+.ic:hover { box-shadow:0 4px 20px rgba(74,144,217,.15); transform:translateY(-1px); }
+.ic { transition:all .2s; }
+
+/* Scan pulse effect */
+.scan-vp::after {
+  content:''; position:absolute; inset:0; border-radius:20px; pointer-events:none;
+  opacity:0; transition:opacity .3s;
+}
+.scan-vp.active-scan::after {
+  background:radial-gradient(circle,rgba(52,211,153,.15) 0%,transparent 70%);
+  opacity:1; animation:pulse 2s infinite;
+}
+
+/* Toast upgrade */
+#scan-toast {
+  border-radius:16px !important;
+  box-shadow:0 8px 32px rgba(52,211,153,.5) !important;
+  animation:popScale .35s cubic-bezier(.22,1,.36,1) !important;
+}
+
+/* Live counter pulse */
+#scan-live-count { transition:all .2s; }
+.scan-count-pulse { animation:glowPulse .5s ease; }
+
+/* Admin panel entry animation */
+.u-row { animation:slideUp .25s ease; }
+.u-row:nth-child(2) { animation-delay:.05s; }
+.u-row:nth-child(3) { animation-delay:.1s; }
+.u-row:nth-child(4) { animation-delay:.15s; }
+
+/* Sync bar shimmer when syncing */
+#sync-live-bar.syncing {
+  background:linear-gradient(90deg, rgba(10,22,40,.97) 0%, rgba(74,144,217,.15) 50%, rgba(10,22,40,.97) 100%);
+  background-size:200% 100%;
+  animation:shimmer 1.5s infinite;
+}
+
+/* Login screen hero text animation */
+.ll-hero h1 { animation:slideDown .6s ease; }
+.ll-desc    { animation:slideDown .7s ease; }
+.ll-features .ll-feat { opacity:0; animation:slideUp .5s ease forwards; }
+.ll-features .ll-feat:nth-child(1) { animation-delay:.4s; }
+.ll-features .ll-feat:nth-child(2) { animation-delay:.5s; }
+.ll-features .ll-feat:nth-child(3) { animation-delay:.6s; }
+.ll-features .ll-feat:nth-child(4) { animation-delay:.7s; }
+
+/* PIN dot fill animation */
+.pin-dot.filled { animation:popScale .2s cubic-bezier(.22,1,.36,1); }
+
+/* Button press effect */
+.gbtn-blue:active, .add-sub:active { transform:scale(.96) !important; }
+
+/* Stat number animation when updated */
+.stat-v { transition:all .3s; }
 
 /* ── GRID TEXTURE ── */
 body::before{
@@ -711,37 +802,66 @@ body::before{
           </div>
         </div>
 
-        <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">&#9729; Cloud Sync</div></div>
+        <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">&#9729; Cloud Sync</div><span class="sec-badge bd-blue" id="sync-status-badge">Offline</span></div>
         <div class="add-card" style="padding:18px;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;">&#9729; Cloud Sync</div>
-          <div style="font-size:11px;color:var(--muted2);margin-bottom:14px;" id="gh-sync-status">Operators auto-load users &amp; sites on login</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+
+          <!-- Animated status row -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <div id="sync-anim-dot" style="width:12px;height:12px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .4s;"></div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">&#9729; Cloud Sync</div>
+              <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Operators auto-load users &amp; sites on login</div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
             <div class="rs bl"><div class="rs-lbl">Users on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-users-count">&#8212;</div></div>
             <div class="rs gn"><div class="rs-lbl">Sites on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-scans-count">&#8212;</div></div>
           </div>
+
+          <!-- Info box -->
           <div style="font-size:11px;color:var(--muted2);line-height:1.9;padding:10px 12px;background:rgba(74,144,217,.07);border-radius:9px;border:1px solid var(--blueborder);margin-bottom:14px;">
-            <strong style="color:var(--text)">Admin:</strong> Enter token once &rarr; tap Push to Cloud<br>
-            <strong style="color:var(--text)">Add user/site?</strong> Tap Push to Cloud again<br>
-            <strong style="color:var(--text)">Operators/Staff:</strong> auto-loads on every login
+            <strong style="color:var(--text)">How it works:</strong><br>
+            1&#65039;&#8419; Enter GitHub token below once &rarr; tap <strong style="color:var(--text)">Push to Cloud</strong><br>
+            2&#65039;&#8419; After adding users/sites &rarr; tap Push again<br>
+            3&#65039;&#8419; Operators &amp; Staff auto-load on every login automatically<br>
+            <span style="color:var(--gold);font-size:10px;">&#9888; Never share your token in chat — enter it here only</span>
           </div>
+
+          <!-- PUSH BUTTON -->
           <button type="button" id="push-btn" onclick="pushConfigToGitHub()"
-            style="width:100%;background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;border:none;border-radius:11px;padding:14px;font-family:DM Sans,sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;">
-            &#8679; Push to Cloud
+            style="width:100%;background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;border:none;border-radius:11px;padding:14px;font-family:DM Sans,sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;">
+            <span id="push-btn-icon">&#8679;</span> Push to Cloud
           </button>
+
+          <!-- Pull button -->
+          <button type="button" onclick="autoLoadConfig()"
+            style="width:100%;background:var(--c2);border:1px solid var(--border);border-radius:10px;padding:10px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:700;color:var(--muted2);cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;text-transform:uppercase;">
+            &#8681; Pull Latest from Cloud
+          </button>
+
+          <!-- Error box -->
           <div id="sync-err-box" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;margin-bottom:10px;"></div>
-          <div style="border-top:1px solid var(--border);padding-top:12px;">
-            <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">GitHub Token (admin, once only)</div>
-            <div id="token-status-ok" style="display:none;font-size:12px;color:var(--green);font-weight:600;margin-bottom:8px;">&#10003; Token configured</div>
+
+          <!-- Token input -->
+          <div style="border-top:1px solid var(--border);padding-top:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">GitHub Token (once, this device)</div>
+              <div id="token-status-ok" style="display:none;font-size:11px;color:var(--green);font-weight:700;">&#10003; Token saved</div>
+            </div>
             <div style="display:flex;gap:8px;margin-bottom:6px;" id="token-row">
-              <input class="add-inp" id="gh-token-inp" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+              <input class="add-inp" id="gh-token-inp" type="password"
+                placeholder="github.com/settings/tokens → Classic → repo"
                 autocomplete="off" autocorrect="off" spellcheck="false"
-                style="flex:1;font-family:Space Mono,monospace;font-size:12px;"
+                style="flex:1;font-family:Space Mono,monospace;font-size:11px;"
                 oninput="onTokenInput()" onkeydown="if(event.key==='Enter')saveGhToken()">
               <button type="button" class="add-sub" id="token-save-btn" onclick="saveGhToken()"
                 style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">Save</button>
             </div>
             <div id="token-hint" style="font-size:10px;color:var(--muted);line-height:1.6;">
-              github.com &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens &rarr; Classic &rarr; tick <strong style="color:var(--blue2)">repo</strong>
+              Get at: <strong style="color:var(--blue2)">github.com → Settings → Developer settings → Personal access tokens → Classic</strong> → tick <strong>repo</strong> → No expiration<br>
+              <span style="color:var(--gold);">&#9888; Enter here only — do not paste in chat messages</span>
             </div>
           </div>
         </div>
@@ -850,9 +970,9 @@ body::before{
 <script>
 'use strict';
 // ── CONSTANTS ──────────────────────────────────────────────────────────────────
-var GH_FIXED_TOKEN = String.fromCharCode(103,104,112,95,112,54,90,107,118,81,66,104,110,80,56,51,102,122,70,83,115,98,109,112,103,113,112,122,68,119,50,65,103,75,48,84,117,52,89,100); // embedded
-var AK  = 'so_auth_v7';
-var SK  = 'so_scans_v3';
+var GH_FIXED_TOKEN = ''; // Enter token in Admin Panel — never embed in code // embedded // embedded
+var AK  = 'so_auth_v9';
+var SK  = 'so_scans_v4';
 var _AP = String.fromCharCode(57,56,55,54);
 
 // ── STATE ──────────────────────────────────────────────────────────────────────
@@ -996,33 +1116,66 @@ function ghTok(){if(!ghToken)ghToken=GH_FIXED_TOKEN||localStorage.getItem(GH_TOK
 
 // All users: reads config on login - no token needed
 function showSyncBar(state, msg, autohide) {
-  var bar  = document.getElementById('sync-live-bar');
-  var dot  = document.getElementById('sync-dot');
-  var txt  = document.getElementById('sync-bar-text');
-  var pill = document.getElementById('nav-sync-pill');
-  if (!bar) return;
-  bar.classList.remove('hide');
-  if (dot) { dot.className = 'sync-live-dot ' + state; }
+  var bar    = document.getElementById('sync-live-bar');
+  var dot    = document.getElementById('sync-dot');
+  var txt    = document.getElementById('sync-bar-text');
+  var pill   = document.getElementById('nav-sync-pill');
+  var adot   = document.getElementById('sync-anim-dot');
+  var badge  = document.getElementById('sync-status-badge');
+  var picon  = document.getElementById('push-btn-icon');
+  var pbtn   = document.getElementById('push-btn');
+
+  // Sync live bar
+  if (bar) { bar.classList.remove('hide'); bar.classList.add('syncing'); setTimeout(function(){if(bar&&state!=='syncing')bar.classList.remove('syncing');},1500); }
+  if (dot) dot.className = 'sync-live-dot ' + state;
   if (txt) txt.textContent = msg || '';
+
+  // Animated dot in admin card
+  if (adot) {
+    if (state==='syncing')      { adot.style.background='var(--blue)';  adot.style.boxShadow='0 0 0 0 rgba(74,144,217,.6)'; adot.style.animation='syncPulse 1s infinite'; }
+    else if (state==='ok')      { adot.style.background='var(--green)'; adot.style.boxShadow='0 0 12px var(--green)'; adot.style.animation='syncOkPulse 1.5s 2'; }
+    else if (state==='err')     { adot.style.background='var(--red)';   adot.style.boxShadow='none'; adot.style.animation='none'; }
+    else                        { adot.style.background='var(--muted)'; adot.style.boxShadow='none'; adot.style.animation='none'; }
+  }
+
+  // Badge
+  if (badge) {
+    if (state==='syncing') { badge.textContent='Syncing'; badge.style.background='var(--bluedim)'; badge.style.color='var(--blue2)'; }
+    else if (state==='ok') { badge.textContent='Synced'; badge.style.background='rgba(52,211,153,.1)'; badge.style.color='var(--green)'; }
+    else if (state==='err'){ badge.textContent='Error'; badge.style.background='rgba(248,113,113,.1)'; badge.style.color='var(--red)'; }
+    else                   { badge.textContent='Offline'; badge.style.background=''; badge.style.color=''; }
+  }
+
+  // Push button animation
+  if (pbtn && picon) {
+    if (state==='syncing')  { pbtn.style.opacity='.7'; pbtn.disabled=true; picon.textContent='⏳'; }
+    else if (state==='ok')  { pbtn.style.opacity=''; pbtn.disabled=false; picon.textContent='✓'; setTimeout(function(){if(picon)picon.textContent='♹';},2000); }
+    else if (state==='err') { pbtn.style.opacity=''; pbtn.disabled=false; picon.textContent='♹'; }
+    else                    { pbtn.style.opacity=''; pbtn.disabled=false; picon.textContent='♹'; }
+  }
+
   // Nav pill
   if (pill) {
-    if (state === 'syncing') {
-      pill.className = 'nav-sync-pill show';
+    if (state==='syncing') {
+      pill.className='nav-sync-pill show';
       var ico=document.getElementById('nav-sync-icon'); if(ico)ico.className='nav-spin';
       var ntxt=document.getElementById('nav-sync-text'); if(ntxt)ntxt.textContent='Syncing';
-    } else if (state === 'ok') {
-      pill.className = 'nav-sync-pill show ok';
-      var ico=document.getElementById('nav-sync-icon'); if(ico){ico.className='';ico.textContent='\u2713';}
+    } else if (state==='ok') {
+      pill.className='nav-sync-pill show ok';
+      var ico=document.getElementById('nav-sync-icon'); if(ico){ico.className='';ico.textContent='✓';}
       var ntxt=document.getElementById('nav-sync-text'); if(ntxt)ntxt.textContent='Synced';
-      setTimeout(function(){if(pill)pill.classList.remove('show');},3000);
-    } else if (state === 'err') {
-      pill.className = 'nav-sync-pill show err';
-      var ico=document.getElementById('nav-sync-icon'); if(ico){ico.className='';ico.textContent='\u2715';}
+      setTimeout(function(){if(pill)pill.classList.remove('show');},3500);
+    } else if (state==='err') {
+      pill.className='nav-sync-pill show err';
+      var ico=document.getElementById('nav-sync-icon'); if(ico){ico.className='';ico.textContent='✕';}
       var ntxt=document.getElementById('nav-sync-text'); if(ntxt)ntxt.textContent='Error';
-      setTimeout(function(){if(pill)pill.classList.remove('show');},5000);
+      setTimeout(function(){if(pill)pill.classList.remove('show');},6000);
+    } else {
+      if(pill)pill.classList.remove('show');
     }
   }
-  if (autohide) setTimeout(function(){ if(bar) bar.classList.add('hide'); }, autohide);
+
+  if (autohide) setTimeout(function(){ if(bar)bar.classList.add('hide'); }, autohide);
 }
 
 function autoLoadConfig(){
@@ -1105,7 +1258,7 @@ function setSyncStatus(){}
 function syncUI(){}
 
 // ── SITES ─────────────────────────────────────────────────────────────────────
-var SITES_KEY = 'so_sites_v1';
+var SITES_KEY = 'so_sites_v2';
 var sitesList = [];
 
 function loadSites() {
@@ -1419,6 +1572,7 @@ window.startScan = function() {
       scanStr = stream; sVideo.srcObject = stream; sVideo.play();
       document.getElementById('scan-stat').textContent = 'Scanning — point at QR code';
       document.getElementById('scan-stat').className = 'scan-stat on';
+      var sv=document.getElementById('scan-vp');if(sv)sv.classList.add('active-scan');
       document.getElementById('btn-start').disabled = true;
       document.getElementById('btn-stop').disabled  = false;
       requestAnimationFrame(doFrame);
@@ -1434,6 +1588,7 @@ window.stopScan = function() {
   if (sVideo)  { sVideo.srcObject = null; }
   var ss = document.getElementById('scan-stat'); var bs = document.getElementById('btn-start'); var be = document.getElementById('btn-stop');
   if (ss) { ss.textContent = 'Camera off — press Start'; ss.className = 'scan-stat'; }
+  var sv2=document.getElementById('scan-vp');if(sv2)sv2.classList.remove('active-scan');
   if (bs) bs.disabled = false; if (be) be.disabled = true;
 };
 // Dedicated small canvas for jsQR — 400×400 is optimal for speed+accuracy
@@ -1525,7 +1680,7 @@ function onQrDetected(raw) {
 
   // --- COUNTER ---
   var lc = document.getElementById('scan-live-count');
-  if (lc) lc.textContent = total + ' scan' + (total===1?'':'s');
+  if (lc) { lc.textContent = total + ' scan' + (total===1?'':'s'); lc.classList.add('scan-count-pulse'); setTimeout(function(){lc.classList.remove('scan-count-pulse');},500); }
 
   // --- INLINE BOX ---
   var sl = document.getElementById('scan-last');
@@ -1995,38 +2150,9 @@ window.googleItem = function() {
   }
 };
 
-window.saveGhToken = function() {
-  var inp = document.getElementById('gh-token-inp');
-  var val = (inp ? inp.value : '').trim();
-  if (!val) {
-    if(inp){ inp.style.border='2px solid var(--red)'; setTimeout(function(){inp.style.border='';},1500); }
-    return;
-  }
-  localStorage.setItem(GH_TOKEN_KEY, val);
-  ghToken = val;
-  GH_FIXED_TOKEN = val;  // update in-memory too
-  _ghBranch = null;      // reset branch detection
-  if (inp) inp.value = '';
-  // Update UI to show token is saved
-  var row = document.getElementById('token-row');
-  var hint = document.getElementById('token-hint');
-  var btn  = document.getElementById('token-save-btn');
-  if (row)  row.style.display = 'none';
-  if (hint) hint.style.display = 'none';
-  if (btn)  btn.textContent = '✓ Saved';
-  fullSync();
-};
 
-window.onTokenInput = function() {
-  var inp = document.getElementById('gh-token-inp');
-  if (!inp) return;
-  inp.style.border = '';
-  var v = inp.value.trim();
-  var btn = document.getElementById('token-save-btn');
-  if (btn) btn.style.background = v.length > 10
-    ? 'linear-gradient(135deg,var(--green),#059669)'
-    : '';
-};
+
+
 
 window.testSaveRecord = function() {
   var rec = { code:'TEST-001', desc:'Test Item - Storage Check', ship:'TEST', by: curUser ? curUser.name : 'Admin', ts:new Date().toISOString(), lat:'', lng:'', acc:'', manualLoc:'Test Location' };
