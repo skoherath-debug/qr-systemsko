@@ -1182,6 +1182,9 @@ function autoLoadConfig(){
       var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
       if(st)st.textContent='Auto-updated '+t;
       showSyncBar('ok','Config synced ✓',3000);
+      // Refresh admin panel if open
+      var ascreen=document.getElementById('screen-admin');
+      if(ascreen&&ascreen.classList.contains('active')){ renderUsers(); renderSites(); }
     }).catch(function(){ showSyncBar('err','Config sync failed',4000); });
 }
 
@@ -1403,8 +1406,57 @@ function showTab(t) {
 }
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
+function renderUsers() {
+  var list = document.getElementById('user-list');
+  var countEl = document.getElementById('u-count');
+  if (!list) return;
+  var staff = users.filter(function(u){ return !u.isAdmin; });
+  if (countEl) countEl.textContent = staff.length;
+  list.innerHTML = '';
+  if (!staff.length) {
+    list.innerHTML = '<div style="padding:14px;color:var(--muted);font-size:13px;text-align:center;background:var(--c2);border-radius:12px;border:1px dashed var(--border);">No users authorised yet.</div>';
+    return;
+  }
+  var colours = ['#4a90d9','#34d399','#f0a500','#f87171','#a78bfa','#38bdf8','#fb923c'];
+  staff.forEach(function(u, idx) {
+    var row = document.createElement('div');
+    row.className = 'u-row';
+    row.style.animationDelay = (idx * 0.06) + 's';
+
+    var av = document.createElement('div');
+    av.className = 'u-av';
+    av.style.background = colours[idx % colours.length];
+    av.textContent = u.name.charAt(0).toUpperCase();
+
+    var info = document.createElement('div');
+    info.className = 'u-info';
+    var nm = document.createElement('div'); nm.className = 'u-name'; nm.textContent = u.name;
+    var meta = document.createElement('div'); meta.className = 'u-meta';
+    var roleBadge = u.role === 'Operator' || u.role === 'operator'
+      ? '<span style="color:var(--gold);font-weight:700;">Operator</span>'
+      : '<span style="color:var(--blue2);font-weight:700;">Staff</span>';
+    meta.innerHTML = roleBadge + ' &nbsp;|&nbsp; PIN: ' + '\u25cf'.repeat(u.pin.length);
+    info.appendChild(nm); info.appendChild(meta);
+
+    var acts = document.createElement('div'); acts.className = 'u-acts';
+    var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm-btn';
+    rm.textContent = '\u00D7 Remove';
+    rm.dataset.pin = u.pin;
+    function makeRemove(pin) {
+      rm.addEventListener('touchend', function(e){ e.preventDefault(); handleRemove(pin); }, {passive:false});
+      rm.addEventListener('click', function(){ handleRemove(pin); });
+    }
+    makeRemove(u.pin);
+    acts.appendChild(rm);
+
+    row.appendChild(av); row.appendChild(info); row.appendChild(acts);
+    list.appendChild(row);
+  });
+}
+
 function renderAdmin() {
   try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; }
+  renderUsers();
   // Show logged-in user name
   var udisp = document.getElementById('admin-username-display');
   if (udisp && curUser) udisp.textContent = curUser.name + ' (' + (curUser.role||'Admin') + ')';
@@ -1454,7 +1506,7 @@ function handleRemove(pin) {
   if (!u || u.isAdmin) return;
   if (!confirm('Remove ' + u.name + '?')) return;
   users = users.filter(function(x) { return x.pin !== pin; });
-  saveUsers(); renderAdmin();
+  saveUsers(); renderUsers(); renderAdmin();
 }
 
 function adminAdd() {
@@ -1467,6 +1519,7 @@ function adminAdd() {
   if (users.find(function(u) { return u.pin === pin; })) { alert('Code already in use — choose another.'); return; }
   users.push({ name: name, pin: pin, role: role, isAdmin: false, addedAt: new Date().toISOString() });
   saveUsers();
+  renderUsers();
   document.getElementById('add-name').value = '';
   document.getElementById('add-pin').value  = '';
   document.getElementById('add-role').value = 'Staff';
