@@ -1095,6 +1095,7 @@ function checkUrlHash() {
 }
 
 // ── CLOUD SYNC ───────────────────────────────────────────────────────
+var CLOUD_READ_API='https://api.github.com/repos/skoherath-debug/qr-systemsko/contents/so-config.json';
 var CLOUD_READ='https://raw.githubusercontent.com/skoherath-debug/qr-systemsko/main/so-config.json';
 var CLOUD_WRITE='https://api.github.com/repos/skoherath-debug/qr-systemsko/contents/so-config.json';
 var GH_TOKEN_KEY='so_gh_token';
@@ -1199,93 +1200,74 @@ function silentPush() {
 }
 
 function autoLoadConfig(){
-  // Show syncing on login screen
   var lss = document.getElementById('login-sync-status');
-  if (lss) lss.textContent = '↻ Syncing users & sites...';
+  if (lss) { lss.style.color='var(--blue2)'; lss.textContent='\u21BB Syncing...'; }
 
-  fetch(CLOUD_READ+'?nc='+Date.now())
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(cfg){
-      if (!cfg) {
-        if (lss) lss.textContent = '';
-        return;
-      }
+  var urls = [
+    'https://api.github.com/repos/skoherath-debug/qr-systemsko/contents/so-config.json',
+    'https://raw.githubusercontent.com/skoherath-debug/qr-systemsko/main/so-config.json',
+    'https://raw.githubusercontent.com/skoherath-debug/qr-systemsko/gh-pages/so-config.json',
+    'https://raw.githubusercontent.com/skoherath-debug/qr-systemsko/master/so-config.json'
+  ];
 
-      // Merge users: keep local admins, add/update cloud staff+operators
-      if (Array.isArray(cfg.users) && cfg.users.length) {
-        var admins = users.filter(function(u){ return u.isAdmin; });
-        var cloudStaff = cfg.users.filter(function(u){ return !u.isAdmin; });
-        // Merge: prefer cloud version of each user (matched by PIN)
-        var merged = admins.slice();
-        cloudStaff.forEach(function(cu){
-          if (!merged.find(function(x){ return x.pin === cu.pin; })) {
-            merged.push(cu);
-          }
-        });
-        users = merged;
-        localStorage.setItem(AK, JSON.stringify(users));
-      }
-
-      // Update sites
-      if (Array.isArray(cfg.sites) && cfg.sites.length) {
-        sitesList = cfg.sites;
-        localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
-        populateSiteDropdown();
-      }
-
-      // Update login screen
-      if (lss) {
-        lss.style.color = 'var(--green)';
-        lss.textContent = '✓ ' + users.filter(function(u){return !u.isAdmin;}).length + ' users loaded';
-        setTimeout(function(){ lss.textContent = ''; lss.style.color = ''; }, 3000);
-      }
-
-      // Update sync status in admin panel if open
-      var st = document.getElementById('gh-sync-status');
-      var t  = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      if (st) st.textContent = 'Auto-updated ' + t;
-      showSyncBar('ok', 'Config synced ✓', 3000);
-      var ascreen = document.getElementById('screen-admin');
-      if (ascreen && ascreen.classList.contains('active')) { renderUsers(); renderSites(); }
-    })
-    .catch(function(){
-      if (lss) lss.textContent = '';
-    });
-}
-
-// Admin: push users + sites to GitHub
-async function pushConfigToGitHub(){
-  var tok=ghTok();
-  if(!tok){setErrBox('Enter GitHub token first, then tap Push to Cloud.');return;}
-  var btn=document.getElementById('push-btn');
-  if(btn){btn.disabled=true;btn.textContent='Pushing\u2026';}
-  setErrBox('');
-  showSyncBar('syncing','Pushing to cloud...');
-  var cfg={users:users.filter(function(u){return !u.isAdmin;}),sites:sitesList};
-  try{
-    var sha=null;
-    var g=await fetch(CLOUD_WRITE,{headers:{Authorization:'token '+tok,Accept:'application/vnd.github.v3+json'}});
-    if(g.ok){var gj=await g.json();sha=gj.sha;}
-    else if(g.status===401){setErrBox('Token invalid \u2014 generate a new Classic token with repo scope.');if(btn){btn.disabled=false;btn.textContent='\u2191 Push to Cloud';}return;}
-    else if(g.status===403){setErrBox('Token missing repo scope \u2014 tick the full repo checkbox.');if(btn){btn.disabled=false;btn.textContent='\u2191 Push to Cloud';}return;}
-    var body={message:'update config',content:btoa(unescape(encodeURIComponent(JSON.stringify(cfg))))};
-    if(sha)body.sha=sha;
-    var p=await fetch(CLOUD_WRITE,{method:'PUT',headers:{Authorization:'token '+tok,'Content-Type':'application/json',Accept:'application/vnd.github.v3+json'},body:JSON.stringify(body)});
-    if(p.ok||p.status===201){
-      var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      if(btn){btn.disabled=false;btn.textContent='\u2713 Pushed '+t;setTimeout(function(){btn.textContent='\u2191 Push to Cloud';},3000);}
-      showSyncBar('ok','Pushed to cloud ✓',3500);
-      var st=document.getElementById('gh-sync-status');if(st)st.textContent='Pushed: '+t;
-      var su=document.getElementById('sync-users-count');if(su)su.textContent=cfg.users.length+' users';
-      var ss=document.getElementById('sync-scans-count');if(ss)ss.textContent=cfg.sites.length+' sites';
-    }else{
-      var ej=await p.json();
-      setErrBox('Failed ('+p.status+'): '+(ej.message||'unknown'));
-      if(btn){btn.disabled=false;btn.textContent='\u2191 Push to Cloud';}
+  function applyConfig(cfg) {
+    if (!cfg) return;
+    if (Array.isArray(cfg.users) && cfg.users.length) {
+      var admins = users.filter(function(u){ return u.isAdmin; });
+      var cloud  = cfg.users.filter(function(u){ return !u.isAdmin; });
+      var merged = admins.slice();
+      cloud.forEach(function(cu){
+        if (!merged.find(function(x){ return x.pin===cu.pin; })) merged.push(cu);
+      });
+      users = merged;
+      localStorage.setItem(AK, JSON.stringify(users));
     }
-  }catch(e){setErrBox('Error: '+e.message);if(btn){btn.disabled=false;btn.textContent='\u2191 Push to Cloud';}}
-}
+    if (Array.isArray(cfg.sites) && cfg.sites.length) {
+      sitesList = cfg.sites;
+      localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
+      populateSiteDropdown();
+    }
+    var cnt = users.filter(function(u){ return !u.isAdmin; }).length;
+    if (lss) {
+      lss.style.color='var(--green)';
+      lss.textContent = cnt ? ('\u2713 ' + cnt + ' user' + (cnt>1?'s':'') + ' ready') : '\u2713 Connected';
+      setTimeout(function(){ if(lss){lss.textContent='';lss.style.color='';} }, 3000);
+    }
+    var st=document.getElementById('gh-sync-status');
+    if (st) st.textContent='Last synced: '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    var su=document.getElementById('sync-users-count'); if(su) su.textContent=(cfg.users?cfg.users.length:0)+' users';
+    var ss=document.getElementById('sync-scans-count'); if(ss) ss.textContent=(cfg.sites?cfg.sites.length:0)+' sites';
+    showSyncBar('ok','Config synced \u2713',3000);
+    var asc=document.getElementById('screen-admin');
+    if (asc&&asc.classList.contains('active')) { renderUsers(); renderSites(); }
+  }
 
+  function tryUrl(idx) {
+    if (idx >= urls.length) { if(lss)lss.textContent=''; return; }
+    var url = urls[idx];
+    var isApi = url.indexOf('api.github.com') !== -1;
+    fetch(url + (isApi?'':'?nc='+Date.now()), {
+      headers: isApi ? {Accept:'application/vnd.github.v3+json'} : {}
+    })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      if (!data) { tryUrl(idx+1); return; }
+      if (isApi && data.content) {
+        try {
+          var cfg = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\s/g,'')))));
+          applyConfig(cfg);
+        } catch(e) { tryUrl(idx+1); }
+      } else if (data.users || data.sites) {
+        applyConfig(data);
+      } else {
+        tryUrl(idx+1);
+      }
+    })
+    .catch(function(){ tryUrl(idx+1); });
+  }
+
+  tryUrl(0);
+}
 function setErrBox(m){var el=document.getElementById('sync-err-box');if(!el)return;el.style.display=m?'block':'none';el.textContent=m;}
 window.saveGhToken=function(){
   var inp=document.getElementById('gh-token-inp');
@@ -1295,8 +1277,11 @@ window.saveGhToken=function(){
   if(inp)inp.value='';
   var row=document.getElementById('token-row');if(row)row.style.display='none';
   var hint=document.getElementById('token-hint');if(hint)hint.style.display='none';
-  var st=document.getElementById('gh-sync-status');if(st)st.textContent='Token saved \u2014 tap Push to Cloud';
-  setErrBox('Token saved! Now tap Push to Cloud.');
+  var tokOk=document.getElementById('token-status-ok');if(tokOk){tokOk.style.display='block';tokOk.textContent='✓ Token saved';}
+  setErrBox('');
+  pushConfigToGitHub();
+
+  pushConfigToGitHub();
 };
 window.onTokenInput=function(){
   var inp=document.getElementById('gh-token-inp');if(!inp)return;inp.style.border='';
@@ -1468,6 +1453,7 @@ function showTab(t) {
   document.querySelectorAll('[data-tab="' + t + '"]').forEach(function(b) { b.classList.add('active'); });
   if (t !== 'scanner') stopScan();
   if (t === 'admin')   renderAdmin();
+  if (t === 'generator') { autoLoadConfig(); populateSiteDropdown(); }
 }
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
