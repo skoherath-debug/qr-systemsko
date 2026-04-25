@@ -615,6 +615,7 @@ body::before{
         <button type="button" class="pkey pkey-enter" id="pkenter">Enter</button>
       </div>
       <div class="pin-foot">Contact your administrator to get access</div>
+      <div id="login-sync-status" style="margin-top:10px;font-size:11px;color:var(--blue2);text-align:center;min-height:16px;animation:fadeSlideIn .4s ease;"></div>
     </div>
   </div>
 </div>
@@ -982,6 +983,8 @@ window.addEventListener('DOMContentLoaded', function() {
   loadScans();
   loadSites();
   checkUrlHash();   // auto-import users from share link
+  // Load cloud config on page open so operator PINs are ready before login
+  autoLoadConfig();
 
   sVideo = document.getElementById('scan-video');
   sCvs   = document.getElementById('scan-canvas');
@@ -1162,30 +1165,92 @@ function showSyncBar(state, msg, autohide) {
   if (autohide) setTimeout(function(){ if(bar)bar.classList.add('hide'); }, autohide);
 }
 
+// Silent push — called automatically on every save (no error UI spam)
+function silentPush() {
+  var tok = ghTok();
+  if (!tok) return; // no token yet, skip silently
+  var cfg = {
+    users: users.filter(function(u){ return !u.isAdmin; }),
+    sites: sitesList
+  };
+  fetch(CLOUD_WRITE, {
+    headers: { Authorization:'token '+tok, Accept:'application/vnd.github.v3+json' }
+  }).then(function(g){
+    var sha = null;
+    return g.ok ? g.json().then(function(j){ sha=j.sha; return sha; }) : Promise.resolve(null);
+  }).then(function(sha){
+    var body = {
+      message: 'update config',
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(cfg))))
+    };
+    if (sha) body.sha = sha;
+    return fetch(CLOUD_WRITE, {
+      method: 'PUT',
+      headers: { Authorization:'token '+tok, 'Content-Type':'application/json', Accept:'application/vnd.github.v3+json' },
+      body: JSON.stringify(body)
+    });
+  }).then(function(p){
+    if (p && (p.ok || p.status===201)) {
+      showSyncBar('ok', 'Pushed ✓', 2500);
+      var su=document.getElementById('sync-users-count'); if(su)su.textContent=cfg.users.length+' users';
+      var ss=document.getElementById('sync-scans-count'); if(ss)ss.textContent=cfg.sites.length+' sites';
+    }
+  }).catch(function(){});
+}
+
 function autoLoadConfig(){
-  showSyncBar('syncing','Loading config from cloud...');
+  // Show syncing on login screen
+  var lss = document.getElementById('login-sync-status');
+  if (lss) lss.textContent = '↻ Syncing users & sites...';
+
   fetch(CLOUD_READ+'?nc='+Date.now())
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(cfg){
-      if(!cfg)return;
-      if(Array.isArray(cfg.users)){
-        var a=users.filter(function(u){return u.isAdmin;});
-        users=a.concat(cfg.users.filter(function(u){return !u.isAdmin;}));
-        localStorage.setItem(AK,JSON.stringify(users));
+      if (!cfg) {
+        if (lss) lss.textContent = '';
+        return;
       }
-      if(Array.isArray(cfg.sites)&&cfg.sites.length){
-        sitesList=cfg.sites;
-        localStorage.setItem(SITES_KEY,JSON.stringify(sitesList));
+
+      // Merge users: keep local admins, add/update cloud staff+operators
+      if (Array.isArray(cfg.users) && cfg.users.length) {
+        var admins = users.filter(function(u){ return u.isAdmin; });
+        var cloudStaff = cfg.users.filter(function(u){ return !u.isAdmin; });
+        // Merge: prefer cloud version of each user (matched by PIN)
+        var merged = admins.slice();
+        cloudStaff.forEach(function(cu){
+          if (!merged.find(function(x){ return x.pin === cu.pin; })) {
+            merged.push(cu);
+          }
+        });
+        users = merged;
+        localStorage.setItem(AK, JSON.stringify(users));
+      }
+
+      // Update sites
+      if (Array.isArray(cfg.sites) && cfg.sites.length) {
+        sitesList = cfg.sites;
+        localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
         populateSiteDropdown();
       }
-      var st=document.getElementById('gh-sync-status');
-      var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      if(st)st.textContent='Auto-updated '+t;
-      showSyncBar('ok','Config synced ✓',3000);
-      // Refresh admin panel if open
-      var ascreen=document.getElementById('screen-admin');
-      if(ascreen&&ascreen.classList.contains('active')){ renderUsers(); renderSites(); }
-    }).catch(function(){ showSyncBar('err','Config sync failed',4000); });
+
+      // Update login screen
+      if (lss) {
+        lss.style.color = 'var(--green)';
+        lss.textContent = '✓ ' + users.filter(function(u){return !u.isAdmin;}).length + ' users loaded';
+        setTimeout(function(){ lss.textContent = ''; lss.style.color = ''; }, 3000);
+      }
+
+      // Update sync status in admin panel if open
+      var st = document.getElementById('gh-sync-status');
+      var t  = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      if (st) st.textContent = 'Auto-updated ' + t;
+      showSyncBar('ok', 'Config synced ✓', 3000);
+      var ascreen = document.getElementById('screen-admin');
+      if (ascreen && ascreen.classList.contains('active')) { renderUsers(); renderSites(); }
+    })
+    .catch(function(){
+      if (lss) lss.textContent = '';
+    });
 }
 
 // Admin: push users + sites to GitHub
@@ -1254,9 +1319,9 @@ function loadSites() {
   populateSiteDropdown();
 }
 
-function saveSites() { /* auto-push to GitHub */
+function saveSites() {
   localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
-  pushConfigToGitHub();
+  silentPush();
 }
 
 function populateSiteDropdown() {
@@ -1331,7 +1396,7 @@ function loadUsers() {
   // Save locally only — don't push to GitHub on load
   localStorage.setItem(AK, JSON.stringify(users));
 }
-function saveUsers() { /* auto-push to GitHub */ localStorage.setItem(AK, JSON.stringify(users)); pushConfigToGitHub(); }
+function saveUsers() { localStorage.setItem(AK, JSON.stringify(users)); silentPush(); }
 function loadScans() { try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; } }
 function saveScans() { localStorage.setItem(SK, JSON.stringify(scans)); }
 
@@ -1381,8 +1446,8 @@ function pinEnter() {
   pinBuf = '';
   updateDots(false);
   showTab(canGenerate ? 'generator' : 'scanner');
-  setTimeout(autoLoadConfig, 800); // load config for operators
-  if (curUser && curUser.isAdmin) setTimeout(pushConfigToGitHub, 2000); // admin pushes on login
+  // Push config if admin (non-blocking)
+  if (curUser && curUser.isAdmin) setTimeout(pushConfigToGitHub, 1500);
 }
 function doSignOut() {
   stopScan();
