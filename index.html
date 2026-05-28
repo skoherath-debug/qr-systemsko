@@ -1002,16 +1002,45 @@ body::before{
           
           <div class="card" style="padding:18px; margin-bottom:16px;">
             <div class="f-card-hd">
-              <span class="f-card-title">&#9729; Server Database Sync</span>
+              <span class="f-card-title">&#9729; Cloud Sync Command Center</span>
               <span class="sec-badge" id="sync-status-badge" style="background:#10b981; color:#fff; font-weight:700;">ONLINE</span>
             </div>
             
             <div class="add-card" style="margin-top:12px; padding:14px; border:none; background:transparent;">
+              <!-- Mode selector tabs -->
+              <div style="display:flex; background:var(--c0); border-radius:10px; padding:4px; margin-bottom:16px; border:1px solid var(--border);">
+                <button type="button" id="sync-mode-server" onclick="setSyncMode('server')" style="flex:1; padding:8px; border:none; background:transparent; color:var(--muted); font-size:11px; font-weight:700; cursor:pointer; text-transform:uppercase; border-radius:7px; transition:all .2s;">Local Server</button>
+                <button type="button" id="sync-mode-github" onclick="setSyncMode('github')" style="flex:1; padding:8px; border:none; background:transparent; color:var(--muted); font-size:11px; font-weight:700; cursor:pointer; text-transform:uppercase; border-radius:7px; transition:all .2s;">GitHub Pages</button>
+              </div>
+
+              <!-- Common sync indicator -->
               <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
                 <div id="sync-anim-dot" style="width:12px;height:12px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;flex-shrink:0;transition:all .4s;"></div>
                 <div style="flex:1;">
-                  <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">&#9729; Live Sync Active</div>
-                  <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Connected to server database instance</div>
+                  <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">Sync Standby</div>
+                  <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Ready to synchronize operational states</div>
+                </div>
+              </div>
+
+              <!-- GitHub Token Panel (only visible in github mode) -->
+              <div id="github-token-panel" style="display:none; background:rgba(74,144,217,.04); border:1px solid var(--blueborder); border-radius:12px; padding:14px; margin-bottom:16px;">
+                <div style="font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--blue2); margin-bottom:8px;">GitHub Credentials PAT</div>
+                
+                <!-- Unsaved Token input -->
+                <div id="gh-token-unsaved-ui" style="display:block;">
+                  <div style="display:flex; gap:8px;">
+                    <input class="add-inp" id="gh-token-input" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" style="flex:1; margin-bottom:0; font-size:13px;">
+                    <button type="button" class="add-sub" onclick="handleSaveToken()" style="flex:0; width:auto; padding:0 16px; font-size:11px; border-radius:8px; margin-bottom:0;">Save</button>
+                  </div>
+                  <div style="font-size:9px; color:var(--muted2); margin-top:6px; line-height:1.4;">Enter a fine-grained token with "contents: read & write" access to skoherath-debug/qr-systemsko.</div>
+                </div>
+
+                <!-- Saved Token state UI -->
+                <div id="gh-token-saved-ui" style="display:none; align-items:center; justify-content:space-between;">
+                  <span style="font-size:12px; color:var(--green); font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <span>✔</span> Token saved on this device
+                  </span>
+                  <button type="button" class="rm-btn" onclick="handleClearToken()" style="padding:4px 10px; font-size:10px;">Change</button>
                 </div>
               </div>
 
@@ -1020,18 +1049,16 @@ body::before{
                 <div class="rs gn" style="padding: 10px;"><div class="rs-lbl">Sites synced</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-scans-count">&#8212;</div></div>
               </div>
 
-              <div style="font-size:11px;color:var(--muted2);line-height:1.8;padding:10px 12px;background:rgba(16,185,129,.05);border-radius:9px;border:1px solid rgba(16,185,129,.2);margin-bottom:14px;">
-                <strong style="color:var(--text)">Direct Sync Enabled:</strong> Operator accesses, delivery sites list, active visual themes, and GPS-tagged scan logs are securely hosted on the central server. No tokens or GitHub accounts are required.
-              </div>
+              <div id="sync-mode-desc" style="font-size:11px;color:var(--muted2);line-height:1.8;padding:10px 12px;background:rgba(16,185,129,.05);border-radius:9px;border:1px solid rgba(16,185,129,.2);margin-bottom:14px;"></div>
 
               <button type="button" id="push-btn" onclick="pushConfigToGitHub()"
                 style="width:100%;background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;border:none;border-radius:8px;padding:12px;font-family:DM Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;">
-                <span id="push-btn-icon">&#x21BB;</span> Push State to Server
+                <span id="push-btn-icon">&#x21BB;</span> <span id="push-btn-text">Push State</span>
               </button>
 
-              <button type="button" onclick="autoLoadConfig()"
+              <button type="button" id="pull-btn" onclick="autoLoadConfig()"
                 style="width:100%;background:var(--c2);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:DM Sans,sans-serif;font-size:11px;font-weight:700;color:var(--muted2);cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;text-transform:uppercase;border:1px solid var(--blueborder);">
-                &#8681; Pull State from Server
+                <span id="pull-btn-text">Pull State</span>
               </button>
 
               <div id="sync-err-box" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;margin-bottom:10px;"></div>
@@ -1510,6 +1537,8 @@ window.addEventListener('DOMContentLoaded', function() {
     update();
     setInterval(update, 1000);
   })();
+  
+  if (window.initSync) window.initSync();
 });
 
 // ── URL HASH AUTO-IMPORT ───────────────────────────────────────────────────────
@@ -1544,9 +1573,20 @@ function checkUrlHash() {
 var CLOUD_READ_API='https://api.github.com/repos/skoherath-debug/qr-systemsko/contents/so-config.json';
 var CLOUD_READ='https://raw.githubusercontent.com/skoherath-debug/qr-systemsko/main/so-config.json';
 var CLOUD_WRITE='https://api.github.com/repos/skoherath-debug/qr-systemsko/contents/so-config.json';
+var SCANS_READ_API='https://api.github.com/repos/skoherath-debug/qr-systemsko/contents/so-scans.json';
+var SCANS_WRITE='https://api.github.com/repos/skoherath-debug/qr-systemsko/contents/so-scans.json';
 var GH_TOKEN_KEY='so_gh_token';
 var ghToken='';
 function ghTok(){if(!ghToken)ghToken=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';return ghToken;}
+function saveGhToken(tok) {
+  var clean = (tok || '').trim();
+  localStorage.setItem(GH_TOKEN_KEY, clean);
+  ghToken = clean;
+}
+function clearGhToken() {
+  localStorage.removeItem(GH_TOKEN_KEY);
+  ghToken = '';
+}
 
 // All users: reads config on login - no token needed
 function showSyncBar(state, msg, autohide) {
@@ -1672,25 +1712,73 @@ function pushConfigToGitHub() {
     theme: localStorage.getItem('so_asset_theme') || 'classic'
   };
 
-  fetch('/api/config', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(cfg)
-  })
-  .then(function(res) {
-    if (!res.ok) throw new Error('Server returned status ' + res.status);
-    return res.json();
-  })
-  .then(function() {
-    showSyncBar('ok', 'Server Database Sync OK', 3000);
-    setErrBox('');
-    var su = document.getElementById('sync-users-count'); if(su) su.textContent = cfg.users.length + ' users';
-    var ss = document.getElementById('sync-scans-count'); if(ss) ss.textContent = cfg.sites.length + ' sites';
-  })
-  .catch(function(err) {
-    showSyncBar('err', 'Sync Failed');
-    setErrBox('Failed to write changes to local server disk: ' + (err.message || err));
-  });
+  var syncMode = localStorage.getItem('so_sync_mode');
+  if (syncMode === 'github' && ghTok()) {
+    // GitHub API Mode
+    fetch(CLOUD_READ_API, {
+      headers: {
+        'Authorization': 'Bearer ' + ghTok(),
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    })
+    .then(function(res) {
+      if (res.status === 404) return { sha: null }; // File doesn't exist yet
+      if (!res.ok) throw new Error('Failed to read config from GitHub (Status ' + res.status + ')');
+      return res.json();
+    })
+    .then(function(data) {
+      var bodyPayload = {
+        message: 'Sync config state from web console',
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(cfg))))
+      };
+      if (data.sha) bodyPayload.sha = data.sha;
+
+      return fetch(CLOUD_WRITE, {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + ghTok(),
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json'
+        },
+        body: JSON.stringify(bodyPayload)
+      });
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('GitHub returned status ' + res.status);
+      return res.json();
+    })
+    .then(function() {
+      showSyncBar('ok', 'GitHub Sync OK ✓', 3000);
+      setErrBox('');
+      var su = document.getElementById('sync-users-count'); if(su) su.textContent = cfg.users.length + ' users';
+      var ss = document.getElementById('sync-scans-count'); if(ss) ss.textContent = cfg.sites.length + ' sites';
+    })
+    .catch(function(err) {
+      showSyncBar('err', 'Sync Failed');
+      setErrBox(formatSyncError(err));
+    });
+  } else {
+    // Local Node Server Mode
+    fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cfg)
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Server returned status ' + res.status);
+      return res.json();
+    })
+    .then(function() {
+      showSyncBar('ok', 'Server Database Sync OK ✓', 3000);
+      setErrBox('');
+      var su = document.getElementById('sync-users-count'); if(su) su.textContent = cfg.users.length + ' users';
+      var ss = document.getElementById('sync-scans-count'); if(ss) ss.textContent = cfg.sites.length + ' sites';
+    })
+    .catch(function(err) {
+      showSyncBar('err', 'Sync Failed');
+      setErrBox('Failed to write changes to local server disk: ' + (err.message || err));
+    });
+  }
 }
 
 function autoLoadConfig(isSilent){
@@ -1700,103 +1788,217 @@ function autoLoadConfig(isSilent){
     showSyncBar('syncing', 'Syncing Data...', 0);
   }
 
-  // 1. Fetch server database config (users, sites, theme)
-  fetch('/api/config')
-  .then(function(res) {
-    if (!res.ok) throw new Error('Status ' + res.status);
-    return res.json();
-  })
-  .then(function(cfg) {
-    if (!cfg) return;
-    
-    // Apply Users Sync
-    if (Array.isArray(cfg.users) && cfg.users.length) {
-      var admins = users.filter(function(u){ return u.isAdmin; });
-      var cloud  = cfg.users.filter(function(u){ return !u.isAdmin; });
-      var merged = admins.slice();
-      cloud.forEach(function(cu){
-        if (!merged.find(function(x){ return x.pin===cu.pin; })) merged.push(cu);
-      });
-      users = merged;
-      localStorage.setItem(AK, JSON.stringify(users));
-    }
-    
-    // Apply Sites Sync
-    if (Array.isArray(cfg.sites) && cfg.sites.length) {
-      sitesList = cfg.sites;
-      localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
-      populateSiteDropdown();
-    }
-    
-    // Apply Theme Sync
-    if (cfg.theme) {
-      applyTheme(cfg.theme, true);
-    }
-    
-    var cnt = users.filter(function(u){ return !u.isAdmin; }).length;
-    if (!isSilent && lss) {
-      lss.style.color='var(--green)';
-      lss.textContent = cnt ? ('\u2713 ' + cnt + ' user' + (cnt>1?'s':'') + ' ready') : '\u2713 Connected';
-      setTimeout(function(){ if(lss){lss.textContent='';lss.style.color='';} }, 3000);
-    }
-    
-    var st=document.getElementById('gh-sync-status');
-    if (st) st.textContent='Last synced: '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    var su=document.getElementById('sync-users-count'); if(su) su.textContent=(cfg.users?cfg.users.length:0)+' users';
-    var ss=document.getElementById('sync-scans-count'); if(ss) ss.textContent=(cfg.sites?cfg.sites.length:0)+' sites';
-    
-    var asc=document.getElementById('screen-admin');
-    if (asc&&asc.classList.contains('active')) { renderUsers(); renderSites(); }
-    
-    // 2. Fetch server database scans (centralized operational logging)
-    return fetch('/api/scans');
-  })
-  .then(function(res) {
-    if (!res) return;
-    if (!res.ok) throw new Error('Status ' + res.status);
-    return res.json();
-  })
-  .then(function(serverScans) {
-    if (Array.isArray(serverScans)) {
-      // Merge server scans with local scans based on uniqueness
-      // Unique key: code + ts
-      var localScans = [];
-      try { localScans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) {}
-      if (!Array.isArray(localScans)) localScans = [];
+  var syncMode = localStorage.getItem('so_sync_mode');
+  if (syncMode === 'github' && ghTok()) {
+    // GitHub API Sync Mode
+    fetch(CLOUD_READ_API, {
+      headers: {
+        'Authorization': 'Bearer ' + ghTok(),
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    })
+    .then(function(res) {
+      if (res.status === 404) return null; // File doesn't exist yet
+      if (!res.ok) throw new Error('Failed to read config from GitHub (Status ' + res.status + ')');
+      return res.json();
+    })
+    .then(function(data) {
+      if (!data || !data.content) return null;
+      var rawString = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+      var cfg = JSON.parse(rawString);
       
-      var mergedMap = {};
-      serverScans.forEach(function(s) {
-        if (s && s.code && s.ts) mergedMap[s.code + '_' + s.ts] = s;
-      });
-      localScans.forEach(function(s) {
-        if (s && s.code && s.ts) mergedMap[s.code + '_' + s.ts] = s;
-      });
+      // Apply Users Sync
+      if (cfg && Array.isArray(cfg.users)) {
+        var admins = users.filter(function(u){ return u.isAdmin; });
+        var cloud  = cfg.users.filter(function(u){ return !u.isAdmin; });
+        var merged = admins.slice();
+        cloud.forEach(function(cu){
+          if (!merged.find(function(x){ return x.pin===cu.pin; })) merged.push(cu);
+        });
+        users = merged;
+        localStorage.setItem(AK, JSON.stringify(users));
+      }
       
-      var mergedScans = Object.values(mergedMap);
-      // Sort chronologically by date/time
-      mergedScans.sort(function(a, b) {
-        return new Date(b.ts).getTime() - new Date(a.ts).getTime();
+      // Apply Sites Sync
+      if (cfg && Array.isArray(cfg.sites)) {
+        sitesList = cfg.sites;
+        localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
+        populateSiteDropdown();
+      }
+      
+      // Apply Theme Sync
+      if (cfg && cfg.theme) {
+        applyTheme(cfg.theme, true);
+      }
+      
+      var cnt = users.filter(function(u){ return !u.isAdmin; }).length;
+      if (!isSilent && lss) {
+        lss.style.color='var(--green)';
+        lss.textContent = cnt ? ('\u2713 ' + cnt + ' user' + (cnt>1?'s':'') + ' ready') : '\u2713 Connected';
+        setTimeout(function(){ if(lss){lss.textContent='';lss.style.color='';} }, 3000);
+      }
+      
+      var st=document.getElementById('gh-sync-status');
+      if (st) st.textContent='Last synced: '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      var su=document.getElementById('sync-users-count'); if(su) su.textContent=((cfg && cfg.users)?cfg.users.length:0)+' users';
+      var ss=document.getElementById('sync-scans-count'); if(ss) ss.textContent=((cfg && cfg.sites)?cfg.sites.length:0)+' sites';
+      
+      var asc=document.getElementById('screen-admin');
+      if (asc&&asc.classList.contains('active')) { renderUsers(); renderSites(); }
+      
+      // Now fetch scans from GitHub
+      return fetch(SCANS_READ_API, {
+        headers: {
+          'Authorization': 'Bearer ' + ghTok(),
+          'Accept': 'application/vnd.github.v3+json'
+        }
       });
+    })
+    .then(function(res) {
+      if (!res) return null;
+      if (res.status === 404) return []; // Scans file doesn't exist yet
+      if (!res.ok) throw new Error('Failed to read scans from GitHub (Status ' + res.status + ')');
+      return res.json();
+    })
+    .then(function(data) {
+      if (!data) return;
+      var serverScans = [];
+      if (data.content) {
+        var rawString = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+        serverScans = JSON.parse(rawString);
+      }
       
-      localStorage.setItem(SK, JSON.stringify(mergedScans));
-      scans = mergedScans;
-      renderRptTable();
+      if (Array.isArray(serverScans)) {
+        var localScans = [];
+        try { localScans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) {}
+        if (!Array.isArray(localScans)) localScans = [];
+        
+        var mergedMap = {};
+        serverScans.forEach(function(s) {
+          if (s && s.code && s.ts) mergedMap[s.code + '_' + s.ts] = s;
+        });
+        localScans.forEach(function(s) {
+          if (s && s.code && s.ts) mergedMap[s.code + '_' + s.ts] = s;
+        });
+        
+        var mergedScans = Object.values(mergedMap);
+        mergedScans.sort(function(a, b) {
+          return new Date(b.ts).getTime() - new Date(a.ts).getTime();
+        });
+        
+        localStorage.setItem(SK, JSON.stringify(mergedScans));
+        scans = mergedScans;
+        renderRptTable();
+        
+        var sbc = document.getElementById('scan-count-badge'); if (sbc) sbc.textContent = scans.length + ' scans';
+      }
       
-      // Update badge scan counters
-      var sbc = document.getElementById('scan-count-badge'); if (sbc) sbc.textContent = scans.length + ' scans';
-    }
-    if (!isSilent) {
-      showSyncBar('ok', 'Sync Complete ✓', 2500);
-      setErrBox('');
-    }
-  })
-  .catch(function(err) {
-    console.error('Auto sync error:', err);
-    if (!isSilent) {
-      showSyncBar('err', 'Sync Offline', 3000);
-      setErrBox('Synchronization failed: ' + (err.message || err));
-    }
-  });
+      if (!isSilent) {
+        showSyncBar('ok', 'Sync Complete ✓', 2500);
+        setErrBox('');
+      }
+    })
+    .catch(function(err) {
+      console.error('GitHub Sync autoLoad error:', err);
+      if (!isSilent) {
+        showSyncBar('err', 'Sync Offline');
+        setErrBox(formatSyncError(err));
+      }
+    });
+  } else {
+    // Local Node Server Mode
+    fetch('/api/config')
+    .then(function(res) {
+      if (!res.ok) throw new Error('Status ' + res.status);
+      return res.json();
+    })
+    .then(function(cfg) {
+      if (!cfg) return;
+      
+      // Apply Users Sync
+      if (Array.isArray(cfg.users) && cfg.users.length) {
+        var admins = users.filter(function(u){ return u.isAdmin; });
+        var cloud  = cfg.users.filter(function(u){ return !u.isAdmin; });
+        var merged = admins.slice();
+        cloud.forEach(function(cu){
+          if (!merged.find(function(x){ return x.pin===cu.pin; })) merged.push(cu);
+        });
+        users = merged;
+        localStorage.setItem(AK, JSON.stringify(users));
+      }
+      
+      // Apply Sites Sync
+      if (Array.isArray(cfg.sites) && cfg.sites.length) {
+        sitesList = cfg.sites;
+        localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
+        populateSiteDropdown();
+      }
+      
+      // Apply Theme Sync
+      if (cfg.theme) {
+        applyTheme(cfg.theme, true);
+      }
+      
+      var cnt = users.filter(function(u){ return !u.isAdmin; }).length;
+      if (!isSilent && lss) {
+        lss.style.color='var(--green)';
+        lss.textContent = cnt ? ('\u2713 ' + cnt + ' user' + (cnt>1?'s':'') + ' ready') : '\u2713 Connected';
+        setTimeout(function(){ if(lss){lss.textContent='';lss.style.color='';} }, 3000);
+      }
+      
+      var st=document.getElementById('gh-sync-status');
+      if (st) st.textContent='Last synced: '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      var su=document.getElementById('sync-users-count'); if(su) su.textContent=(cfg.users?cfg.users.length:0)+' users';
+      var ss=document.getElementById('sync-scans-count'); if(ss) ss.textContent=(cfg.sites?cfg.sites.length:0)+' sites';
+      
+      var asc=document.getElementById('screen-admin');
+      if (asc&&asc.classList.contains('active')) { renderUsers(); renderSites(); }
+      
+      return fetch('/api/scans');
+    })
+    .then(function(res) {
+      if (!res) return;
+      if (!res.ok) throw new Error('Status ' + res.status);
+      return res.json();
+    })
+    .then(function(serverScans) {
+      if (Array.isArray(serverScans)) {
+        var localScans = [];
+        try { localScans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) {}
+        if (!Array.isArray(localScans)) localScans = [];
+        
+        var mergedMap = {};
+        serverScans.forEach(function(s) {
+          if (s && s.code && s.ts) mergedMap[s.code + '_' + s.ts] = s;
+        });
+        localScans.forEach(function(s) {
+          if (s && s.code && s.ts) mergedMap[s.code + '_' + s.ts] = s;
+        });
+        
+        var mergedScans = Object.values(mergedMap);
+        mergedScans.sort(function(a, b) {
+          return new Date(b.ts).getTime() - new Date(a.ts).getTime();
+        });
+        
+        localStorage.setItem(SK, JSON.stringify(mergedScans));
+        scans = mergedScans;
+        renderRptTable();
+        
+        var sbc = document.getElementById('scan-count-badge'); if (sbc) sbc.textContent = scans.length + ' scans';
+      }
+      if (!isSilent) {
+        showSyncBar('ok', 'Sync Complete ✓', 2500);
+        setErrBox('');
+      }
+    })
+    .catch(function(err) {
+      console.error('Auto sync error:', err);
+      if (!isSilent) {
+        showSyncBar('err', 'Sync Offline');
+        setErrBox('Synchronization failed: ' + (err.message || err));
+      }
+    });
+  }
 }
 
 function setErrBox(m){var el=document.getElementById('sync-err-box');if(!el)return;el.style.display=m?'block':'none';el.textContent=m;}
@@ -1806,21 +2008,153 @@ function pushScanToGitHub(rec){
   try { fullList = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) {}
   if (!Array.isArray(fullList)) fullList = scans;
 
-  fetch('/api/scans', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(fullList)
-  })
-  .then(function(res) {
-    if (!res.ok) throw new Error('Status ' + res.status);
-  })
-  .catch(function(err) {
-    console.error('Error auto-uploading scan log:', err);
-  });
+  var syncMode = localStorage.getItem('so_sync_mode');
+  if (syncMode === 'github' && ghTok()) {
+    // GitHub API scans push
+    fetch(SCANS_READ_API, {
+      headers: {
+        'Authorization': 'Bearer ' + ghTok(),
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    })
+    .then(function(res) {
+      if (res.status === 404) return { sha: null }; // File doesn't exist yet
+      if (!res.ok) throw new Error('Failed to read scans from GitHub (Status ' + res.status + ')');
+      return res.json();
+    })
+    .then(function(data) {
+      var bodyPayload = {
+        message: 'Sync scans state from web console',
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(fullList))))
+      };
+      if (data.sha) bodyPayload.sha = data.sha;
+
+      return fetch(SCANS_WRITE, {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + ghTok(),
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json'
+        },
+        body: JSON.stringify(bodyPayload)
+      });
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('GitHub returned status ' + res.status);
+    })
+    .catch(function(err) {
+      console.error('GitHub scans sync failed', err);
+    });
+  } else {
+    // Local Node Server Mode
+    fetch('/api/scans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fullList)
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Status ' + res.status);
+    })
+    .catch(function(err) {
+      console.error('Error auto-uploading scan log:', err);
+    });
+  }
 }
 function showSyncAnim(){}
 function setSyncStatus(){}
 function syncUI(){}
+
+// ── DUAL MODE SYNC HELPERS ──
+window.setSyncMode = function(mode) {
+  localStorage.setItem('so_sync_mode', mode);
+  
+  var btnServer = document.getElementById('sync-mode-server');
+  var btnGithub = document.getElementById('sync-mode-github');
+  var tokPanel  = document.getElementById('github-token-panel');
+  var modeDesc  = document.getElementById('sync-mode-desc');
+  var pushTxt   = document.getElementById('push-btn-text');
+  var pullTxt   = document.getElementById('pull-btn-text');
+  var ghTitle   = document.getElementById('gh-sync-title');
+  var ghStatus  = document.getElementById('gh-sync-status');
+  
+  if (mode === 'github') {
+    if(btnGithub) {
+      btnGithub.style.background = 'linear-gradient(135deg,var(--blue),var(--accent))';
+      btnGithub.style.color = '#fff';
+    }
+    if(btnServer) {
+      btnServer.style.background = 'transparent';
+      btnServer.style.color = 'var(--muted)';
+    }
+    
+    if (tokPanel) tokPanel.style.display = 'block';
+    if (modeDesc) modeDesc.innerHTML = '<strong style="color:var(--text)">GitHub Cloud Sync Active:</strong> Serverless architecture enabled. Syncs directly to your GitHub repository using secure personal tokens.';
+    if (pushTxt) pushTxt.textContent = 'Push State to Serverless Cloud';
+    if (pullTxt) pullTxt.textContent = 'Pull State from Serverless Cloud';
+    if (ghTitle) ghTitle.textContent = 'GitHub Sync Active';
+    if (ghStatus) ghStatus.textContent = 'Connected via GitHub REST API';
+    
+    updateTokenUI();
+  } else {
+    if(btnServer) {
+      btnServer.style.background = 'linear-gradient(135deg,var(--blue),var(--accent))';
+      btnServer.style.color = '#fff';
+    }
+    if(btnGithub) {
+      btnGithub.style.background = 'transparent';
+      btnGithub.style.color = 'var(--muted)';
+    }
+    
+    if (tokPanel) tokPanel.style.display = 'none';
+    if (modeDesc) modeDesc.innerHTML = '<strong style="color:var(--text)">Local Server Sync Active:</strong> Operations securely saved locally on port 3000 Node backend. No tokens required.';
+    if (pushTxt) pushTxt.textContent = 'Push State to Local Server';
+    if (pullTxt) pullTxt.textContent = 'Pull State from Local Server';
+    if (ghTitle) ghTitle.textContent = 'Local Sync Active';
+    if (ghStatus) ghStatus.textContent = 'Connected to server database instance';
+  }
+};
+
+window.updateTokenUI = function() {
+  var savedUi = document.getElementById('gh-token-saved-ui');
+  var unsavedUi = document.getElementById('gh-token-unsaved-ui');
+  if (ghTok()) {
+    if (savedUi) savedUi.style.display = 'flex';
+    if (unsavedUi) unsavedUi.style.display = 'none';
+  } else {
+    if (savedUi) savedUi.style.display = 'none';
+    if (unsavedUi) unsavedUi.style.display = 'block';
+  }
+};
+
+window.handleSaveToken = function() {
+  var inp = document.getElementById('gh-token-input');
+  var tok = inp ? inp.value.trim() : '';
+  if (!tok) { alert('Please enter a valid GitHub token.'); return; }
+  saveGhToken(tok);
+  if (inp) inp.value = '';
+  updateTokenUI();
+  setSyncMode('github');
+  autoLoadConfig();
+};
+
+window.handleClearToken = function() {
+  if (!confirm('Are you sure you want to remove the GitHub token from this device?')) return;
+  clearGhToken();
+  updateTokenUI();
+  setSyncMode('server');
+};
+
+window.initSync = function() {
+  var mode = localStorage.getItem('so_sync_mode');
+  if (!mode) {
+    if (window.location.protocol === 'file:' || (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')) {
+      mode = 'github';
+    } else {
+      mode = 'server';
+    }
+  }
+  setSyncMode(mode);
+};
 
 // ── SITES ─────────────────────────────────────────────────────────────────────
 var SITES_KEY = 'so_sites_v3';
