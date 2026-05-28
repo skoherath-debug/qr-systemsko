@@ -1349,7 +1349,7 @@ var THEMES = [
   }
 ];
 
-window.applyTheme = function(themeId) {
+window.applyTheme = function(themeId, fromCloud) {
   var tItem = THEMES.find(function(t) { return t.id === themeId; });
   if (!tItem) return;
   localStorage.setItem('so_asset_theme', themeId);
@@ -1357,6 +1357,9 @@ window.applyTheme = function(themeId) {
     document.documentElement.style.setProperty(key, tItem.vars[key]);
   });
   renderThemeOptions();
+  if (!fromCloud && typeof curUser !== 'undefined' && curUser && curUser.isAdmin) {
+    silentPush();
+  }
 };
 
 window.initTheme = function() {
@@ -1626,7 +1629,8 @@ function silentPush() {
   if (!tok) return; // no token yet, skip silently
   var cfg = {
     users: users.filter(function(u){ return !u.isAdmin; }),
-    sites: sitesList
+    sites: sitesList,
+    theme: localStorage.getItem('so_asset_theme') || 'classic'
   };
   fetch(CLOUD_WRITE, {
     headers: { Authorization:'token '+tok, Accept:'application/vnd.github.v3+json' }
@@ -1665,7 +1669,8 @@ function pushConfigToGitHub() {
 
   var cfg = {
     users: users.filter(function(u){ return !u.isAdmin; }),
-    sites: sitesList
+    sites: sitesList,
+    theme: localStorage.getItem('so_asset_theme') || 'classic'
   };
 
   fetch(CLOUD_WRITE, {
@@ -1745,6 +1750,9 @@ function autoLoadConfig(){
       sitesList = cfg.sites;
       localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
       populateSiteDropdown();
+    }
+    if (cfg.theme) {
+      applyTheme(cfg.theme, true);
     }
     var cnt = users.filter(function(u){ return !u.isAdmin; }).length;
     if (lss) {
