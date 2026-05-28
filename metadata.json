@@ -1,0 +1,6 @@
+{
+  "name": "SO QR Asset Management 2.0",
+  "description": "Sanken Overseas QR asset label generator and camera scanner with GPS tracking.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

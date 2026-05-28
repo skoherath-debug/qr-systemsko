@@ -524,6 +524,120 @@ body::before{
 @keyframes popIn{from{transform:translateX(-50%) scale(.85);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
 #install-dismiss{color:rgba(255,255,255,.6);font-size:17px;cursor:pointer;padding:0 0 0 6px;}
 
+/* ── FUTURISTIC BENTO GRID & DESKTOP DESIGN ── */
+.f-card-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--blueborder);
+  padding-bottom: 11px;
+  margin-bottom: 14px;
+}
+.f-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.f-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 8px var(--blue);
+  animation: fGlowPulse 2.3s infinite ease-in-out;
+}
+@keyframes fGlowPulse {
+  0%, 100% { opacity: .3; transform: scale(.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Base scrollbar modifications for code panels */
+.user-list::-webkit-scrollbar,
+#site-list::-webkit-scrollbar,
+.tbl-wrap::-webkit-scrollbar {
+  width: 6px; height: 6px;
+}
+.user-list::-webkit-scrollbar-track,
+#site-list::-webkit-scrollbar-track,
+.tbl-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+.user-list::-webkit-scrollbar-thumb,
+#site-list::-webkit-scrollbar-thumb,
+.tbl-wrap::-webkit-scrollbar-thumb {
+  background: var(--c3);
+  border-radius: 4px;
+}
+.user-list::-webkit-scrollbar-thumb:hover,
+#site-list::-webkit-scrollbar-thumb:hover,
+.tbl-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--blue);
+}
+
+/* Widescreen Desktop dashboard layout rules */
+@media (min-width: 1024px) {
+  .desktop-bento-grid {
+    display: grid;
+    grid-template-columns: 390px 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-top: 10px;
+  }
+  .scanner-bento-grid {
+    display: grid;
+    grid-template-columns: 460px 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-top: 10px;
+  }
+  .admin-bento-grid {
+    display: grid;
+    grid-template-columns: 440px 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-top: 10px;
+  }
+  .desktop-sticky-sidebar {
+    position: sticky;
+    top: 84px;
+    z-index: 100;
+  }
+  .app-body {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 24px 20px 60px !important;
+  }
+  /* Show the tool card elegant layout when settings are loaded */
+  body:has(#gen-settings[style*="display: block"]) #desktop-toolbar-card,
+  body:has(#gen-settings[style*="display:block"]) #desktop-toolbar-card {
+    display: block !important;
+  }
+  /* Remove mobile bottom navigation padding on true desktop screens */
+  .bot-nav {
+    display: none !important;
+  }
+  /* Prevent screen content scaling too wide stretched */
+  .tbl-wrap {
+    max-height: 580px;
+    overflow-y: auto;
+  }
+}
+
+/* CSS Theme-switcher animation glow on buttons */
+#theme-btn {
+  transition: all 0.25s ease;
+}
+#theme-btn:hover {
+  background: var(--bluedim) !important;
+  transform: translateY(-1px);
+}
+
 /* Responsive */
 @media(max-width:900px){.ll{display:none;}.lr{width:100%;border:none;padding:36px 20px;}}
 @media(max-width:650px){
@@ -616,6 +730,13 @@ body::before{
       </div>
       <div class="pin-foot">Contact your administrator to get access</div>
       <div id="login-sync-status" style="margin-top:10px;font-size:11px;color:var(--blue2);text-align:center;min-height:16px;animation:fadeSlideIn .4s ease;"></div>
+      
+      <!-- App Version Mention -->
+      <div style="margin-top: 22px; text-align: center; border-top: 1px dashed var(--blueborder); padding-top: 18px;">
+        <div style="font-family:'Space Mono', monospace; font-size:11px; font-weight:700; color:var(--blue2); letter-spacing:1px; text-transform:uppercase; background:var(--bluedim); border:1px solid var(--blueborder); padding:6px 14px; border-radius:20px; display:inline-block; box-shadow: 0 0 8px rgba(74, 144, 217, 0.12);">
+          SO QR Asset Management 2.0
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -647,6 +768,7 @@ body::before{
     </div>
     <div class="tnright">
       <div class="tnuser" id="nav-user"></div>
+      <button type="button" class="tnsignout" id="theme-btn" style="margin-right:6px;border-color:var(--blueborder);color:var(--blue2)">🎨 Theme</button>
       <button type="button" class="tnsignout" id="signout-btn">Out</button>
     </div>
   </nav>
@@ -656,220 +778,328 @@ body::before{
   <div class="app-body">
     <!-- GENERATOR -->
     <div id="screen-generator" class="screen active">
-      <div class="pg-title">QR Generator</div>
-      <div class="pg-sub">Upload &middot; Generate &middot; Print</div>
-      <div class="upload-zone" id="upload-zone">
-        <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
-        <div class="uz-icon">&#128193;</div>
-        <div class="uz-title" id="uz-title">Drop your Excel or CSV here</div>
-        <div class="uz-sub" id="uz-sub">Auto-detects Description column</div>
-        <div class="uz-chips"><span class="uz-chip">XLSX</span><span class="uz-chip">XLS</span><span class="uz-chip">CSV</span></div>
-      </div>
-      <div id="gen-settings" style="display:none">
-        <div class="sg-grid">
-          <div class="sg"><label class="slbl">Code Prefix</label><input class="sinp" id="s-pre" value="SO-MV"></div>
-          <div class="sg"><label class="slbl">PO Number</label><input class="sinp" id="s-ship" value="PO-2026-031"></div>
-          <div class="sg full"><label class="slbl">Site / Project</label><select class="ssel" id="s-site"><option value="Hulhumale Phase II">Hulhumale Phase II</option></select></div>
-          <div class="sg"><label class="slbl">Print Columns</label>
-            <select class="ssel" id="s-cols">
-              <option value="2" selected>2 columns (A4)</option>
-              <option value="3">3 columns</option>
-              <option value="1">1 column (large)</option>
-            </select>
-          </div>
-          <div class="sg btns">
-            <button type="button" class="gbtn gbtn-blue" id="gen-btn" onclick="generateAll()">&#9889; Generate All</button>
-            <button type="button" class="gbtn gbtn-out" onclick="resetAll()" style="max-width:80px">&#8635; Reset</button>
-          </div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; border-bottom:1px solid var(--blueborder); padding-bottom:12px;">
+        <div>
+          <div class="pg-title" style="margin-bottom:2px;">SO QR Asset Management 2.0</div>
+          <div class="pg-sub">Bulk QR Labeling Engine &middot; Sanken Overseas</div>
         </div>
-        <div class="stats-row">
-          <div class="stat bl"><div class="stat-lbl">Total</div><div class="stat-v" id="st-tot">0</div></div>
-          <div class="stat gn"><div class="stat-lbl">Generated</div><div class="stat-v" id="st-gen">0</div></div>
-          <div class="stat cy"><div class="stat-lbl">Selected</div><div class="stat-v" id="st-sel">0</div></div>
-          <div class="stat gd"><div class="stat-lbl">Printed</div><div class="stat-v" id="st-prt">0</div></div>
-        </div>
-        <div class="prog" id="prog"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
-        <div class="toolbar">
-          <input class="tsrch" id="srch" placeholder="&#128269; Search items..." oninput="renderCards()">
-          <button type="button" class="tbtn" onclick="selAll()">&#9745; All</button>
-          <button type="button" class="tbtn" onclick="deselAll()">&#9744; None</button>
-          <button type="button" class="tbtn" onclick="dlAll()">&#8675; Save</button>
-          <button type="button" class="tbtn" onclick="printOneByOne()">&#128196; 1×1</button>
-          <button type="button" class="tbtn tbtn-blue" onclick="bulkPrint()">&#128424; Print A4</button>
+        <div style="font-family:'Space Mono',monospace; font-size:11px; background:var(--bluedim); border:1px solid var(--blueborder); padding:6px 14px; border-radius:20px; color:var(--blue2);" class="f-gtim">
+          SYSTEM ACTIVE &middot; <span id="clock-utc">UTC 2026-05-28 03:55</span>
         </div>
       </div>
-      <div class="items-grid" id="items-grid">
-        <div class="no-items"><div style="font-size:32px;margin-bottom:10px;opacity:.3">&#128203;</div>Upload a file to begin</div>
+      
+      <div class="desktop-bento-grid">
+        <!-- LHS Sticky Configuration Sidebar -->
+        <div class="desktop-sticky-sidebar">
+          <div class="card" style="padding:18px; margin-bottom:16px;">
+            <div class="f-card-hd">
+              <span class="f-card-title">&#128193; Shipment Data File</span>
+              <span class="f-pulse-dot"></span>
+            </div>
+            <div class="upload-zone" id="upload-zone" style="margin-top:12px; margin-bottom:0;">
+              <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
+              <div class="uz-icon">&#128193;</div>
+              <div class="uz-title" id="uz-title">Drop your Excel or CSV here</div>
+              <div class="uz-sub" id="uz-sub">Auto-detects Description column</div>
+              <div class="uz-chips"><span class="uz-chip">XLSX</span><span class="uz-chip">XLS</span><span class="uz-chip">CSV</span></div>
+            </div>
+          </div>
+          
+          <!-- Generator control center (only visible after file loaded) -->
+          <div id="gen-settings" style="display:none">
+            <div class="card" style="padding:18px; margin-bottom:16px;">
+              <div class="f-card-hd">
+                <span class="f-card-title">&#9881; Prefix & Site Meta</span>
+              </div>
+              <div class="sg-grid" style="grid-template-columns:1fr; gap:12px; margin-top:14px; display:grid;">
+                <div class="sg" style="grid-column:auto;"><label class="slbl">Code Prefix</label><input class="sinp" id="s-pre" value="SO-MV"></div>
+                <div class="sg" style="grid-column:auto;"><label class="slbl">PO Number</label><input class="sinp" id="s-ship" value="PO-2026-031"></div>
+                <div class="sg full" style="grid-column:auto;"><label class="slbl">Site / Project</label><select class="ssel" id="s-site"><option value="Hulhumale Phase II">Hulhumale Phase II</option></select></div>
+                <div class="sg" style="grid-column:auto;"><label class="slbl">Print Columns</label>
+                  <select class="ssel" id="s-cols">
+                    <option value="2" selected>2 columns (A4)</option>
+                    <option value="3">3 columns</option>
+                    <option value="1">1 column (large)</option>
+                  </select>
+                </div>
+                <div class="sg btns" style="display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:8px;">
+                  <button type="button" class="gbtn gbtn-blue" id="gen-btn" onclick="generateAll()">&#9889; Generate All</button>
+                  <button type="button" class="gbtn gbtn-out" onclick="resetAll()" style="width:54px; padding:0; display:flex; align-items:center; justify-content:center; aspect-ratio:1;">&#8635;</button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card" style="padding:18px; margin-bottom:16px;">
+              <div class="f-card-hd">
+                <span class="f-card-title">&#128202; Generation Telemetry</span>
+              </div>
+              <div class="stats-row" style="margin-top:14px; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:0;">
+                <div class="stat bl"><div class="stat-lbl">Total</div><div class="stat-v" id="st-tot">0</div></div>
+                <div class="stat gn"><div class="stat-lbl">Generated</div><div class="stat-v" id="st-gen">0</div></div>
+                <div class="stat cy"><div class="stat-lbl">Selected</div><div class="stat-v" id="st-sel">0</div></div>
+                <div class="stat gd"><div class="stat-lbl">Printed</div><div class="stat-v" id="st-prt">0</div></div>
+              </div>
+              <div class="prog" id="prog" style="margin-top:14px; margin-bottom:0;"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- RHS: Interactive Generated Labels Console -->
+        <div>
+          <!-- Settings dependent toolbar card (visible once file uploaded) -->
+          <div class="card" id="desktop-toolbar-card" style="padding:16px; margin-bottom:16px; display:none;">
+            <div class="toolbar" style="margin-bottom:0;">
+              <input class="tsrch" id="srch" placeholder="&#128269; Search items..." oninput="renderCards()">
+              <button type="button" class="tbtn" onclick="selAll()">&#9745; All</button>
+              <button type="button" class="tbtn" onclick="deselAll()">&#9744; None</button>
+              <button type="button" class="tbtn" onclick="dlAll()">&#8675; Save Zip</button>
+              <button type="button" class="tbtn" onclick="printOneByOne()">&#128196; 1&times;1</button>
+              <button type="button" class="tbtn tbtn-blue" onclick="bulkPrint()">&#128424; Print A4 Layout</button>
+            </div>
+          </div>
+          
+          <div class="card" style="padding:20px; min-height:500px;">
+            <div class="f-card-hd" style="margin-bottom:16px;">
+              <span class="f-card-title">&#127911; Asset Label Pipeline</span>
+              <span style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted);" id="pipeline-count-display">STANDBY</span>
+            </div>
+            <div class="items-grid" id="items-grid" style="margin-top:10px;">
+              <div class="no-items"><div style="font-size:32px;margin-bottom:10px;opacity:.3">&#128203;</div>Upload a file to begin</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- SCANNER -->
     <div id="screen-scanner" class="screen">
-      <div class="pg-title">Scanner</div>
-      <div class="pg-sub">Scan &middot; GPS &middot; Log</div>
-      <div class="scan-page">
-        <div class="scan-vp">
-          <video id="scan-video" playsinline autoplay muted></video>
-          <canvas id="scan-canvas"></canvas>
-          <div class="scan-ui">
-            <div class="scan-fout">
-              <div class="scan-bg"></div>
-              <div class="scan-bdr"></div>
-              <div class="scan-c c-tl"></div><div class="scan-c c-tr"></div>
-              <div class="scan-c c-bl"></div><div class="scan-c c-br"></div>
-              <div class="scan-sweep"></div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--blueborder); padding-bottom:12px;">
+        <div>
+          <div class="pg-title" style="margin-bottom:2px;">Operator Scanner 2.0</div>
+          <div class="pg-sub">Grounded GPS Log Pipeline &middot; Sanken Overseas</div>
+        </div>
+        <div style="font-family:'Space Mono',monospace; font-size:11px; background:var(--bluedim); border:1px solid var(--blueborder); padding:6px 14px; border-radius:20px; color:var(--blue2);" class="f-gtim">
+          GPS ACTIVE &middot; <span id="gps-status-text">ACQUIRING GLONASS</span>
+        </div>
+      </div>
+      
+      <div class="scanner-bento-grid">
+        <!-- LHS: Camera Viewport Panel -->
+        <div class="card" style="padding:18px;">
+          <div class="f-card-hd">
+            <span class="f-card-title">&#128247; Live Frame Pipeline</span>
+            <span class="f-pulse-dot" id="scanner-pulse" style="display:none; background:#ef4444; box-shadow:0 0 8px #ef4444;"></span>
+          </div>
+          <div class="scan-page" style="margin-top:16px; max-width:100%; width:100%;">
+            <div class="scan-vp" style="margin-bottom:16px; max-width:100%;">
+              <video id="scan-video" playsinline autoplay muted style="width:100%; border-radius:14px;"></video>
+              <canvas id="scan-canvas"></canvas>
+              <div class="scan-ui">
+                <div class="scan-fout">
+                  <div class="scan-bg"></div>
+                  <div class="scan-bdr"></div>
+                  <div class="scan-c c-tl"></div><div class="scan-c c-tr"></div>
+                  <div class="scan-c c-bl"></div><div class="scan-c c-br"></div>
+                  <div class="scan-sweep"></div>
+                </div>
+              </div>
+              <div class="scan-hint" id="scan-hint">Align QR code in the frame</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <div class="scan-stat" id="scan-stat" style="flex:1;margin:0; font-weight:600; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text);">Camera off &mdash; press Start</div>
+              <div id="scan-live-count" style="font-family:'Space Mono',monospace; font-size:12px; background:var(--bluedim); padding:5px 12px; border-radius:12px; font-weight:700; color:var(--accent);">0 scans</div>
+            </div>
+            <div class="scan-ctrls" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+              <button type="button" class="scbtn sc-start" id="btn-start" onclick="startScan()" style="width:100%; margin:0;">&#9654; Start Camera</button>
+              <button type="button" class="scbtn sc-stop"  id="btn-stop"  onclick="stopScan()" disabled style="width:100%; margin:0;">&#9646;&#9646; Stop</button>
             </div>
           </div>
-          <div class="scan-hint" id="scan-hint">Align QR code in the frame</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <div class="scan-stat" id="scan-stat" style="flex:1;margin:0;">Camera off &mdash; press Start</div>
-          <div id="scan-live-count">0 scans</div>
-        </div>
-        <div class="scan-ctrls">
-          <button type="button" class="scbtn sc-start" id="btn-start" onclick="startScan()">&#9654; Start Camera</button>
-          <button type="button" class="scbtn sc-stop"  id="btn-stop"  onclick="stopScan()" disabled>&#9646;&#9646; Stop</button>
-        </div>
-        <div class="scan-last" id="scan-last">
-          <div class="sl-lbl">Last Scanned</div>
-          <div class="sl-desc" id="sl-desc"></div>
-          <div class="sl-code" id="sl-code"></div>
-          <div class="sl-tags" id="sl-tags"></div>
+        
+        <!-- RHS: Realtime Scanner Feed telemetry and Scan database logger -->
+        <div>
+          <div class="card" style="padding:18px; margin-bottom:16px;">
+            <div class="f-card-hd">
+              <span class="f-card-title">&#128225; Active Scanner Telemetry</span>
+            </div>
+            <div class="scan-last" id="scan-last" style="margin-top:14px; min-height:160px; display:flex; flex-direction:column; justify-content:center; border:1px dashed var(--blueborder); background:rgba(74,144,217,.03); border-radius:14px; padding:20px;">
+              <div class="sl-lbl" style="text-transform:uppercase; letter-spacing:1px; font-size:10px; font-weight:700; color:var(--accent); margin-bottom:8px;">Last Scanned Record</div>
+              <div class="sl-desc" id="sl-desc" style="font-size:18px; font-weight:700; color:var(--text); line-height:1.4; margin-bottom:8px;">Ready &middot; Waiting to scan...</div>
+              <div class="sl-code" id="sl-code" style="font-family:'Space Mono',monospace; font-size:14px; color:var(--blue2); margin-top:2px;">—</div>
+              <div class="sl-tags" id="sl-tags" style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;"></div>
+            </div>
+          </div>
+          
+          <div class="card" style="padding:18px;">
+            <div class="f-card-hd" style="margin-bottom:14px;">
+              <span class="f-card-title">&#128712; Dispatch Guidelines & Diagnostic</span>
+            </div>
+            <div style="font-size:12px; color:var(--muted2); line-height:1.8;">
+              <ul style="padding-left:16px; margin:0; display:flex; flex-direction:column; gap:8px;">
+                <li>🔒 <strong>Database Authenticity:</strong> QR identifiers integrate high-precision PO links. Handlers must scan physically on-site.</li>
+                <li>📍 <strong>Precision GPS Locking:</strong> Smart coordinate lookup links geolocation instantly to the record. Active internet ensures direct cloud pipeline.</li>
+                <li>📦 <strong>Continuous Pipeline:</strong> Recorded labels automatically update logs. If offline, the data stacks until network recovers.</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- ADMIN -->
     <div id="screen-admin" class="screen">
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
-        <div class="pg-title" style="margin-bottom:0;">Admin Panel</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px; border-bottom: 1px solid var(--blueborder); padding-bottom:12px;">
+        <div>
+          <div class="pg-title" style="margin-top:0; margin-bottom:2px;">Admin Command Console</div>
+          <div class="pg-sub">Database, Users & Project Synchronization</div>
+        </div>
         <div id="admin-logged-user" style="background:var(--bluedim);border:1px solid var(--blueborder);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;color:var(--blue2);display:flex;align-items:center;gap:6px;">
           <span>&#128100;</span><span id="admin-username-display"></span>
         </div>
       </div>
-      <div class="pg-sub">Users &middot; Sites &middot; Reports</div>
-      <div class="adm-wrap">
-
-        <div class="sec-hd"><div class="sec-title">Authorised Users</div><span class="sec-badge bd-blue" id="u-count">0</span></div>
-        <div class="user-list" id="user-list"></div>
-
-        <div class="sec-hd" style="margin-top:18px;"><div class="sec-title">Add New User</div></div>
-        <div class="add-card">
-          <div class="add-row">
-            <input class="add-inp" id="add-name" placeholder="Full name" autocomplete="off">
-            <div>
-              <input class="add-inp" id="add-pin" type="tel" placeholder="Access code (min 4 digits)" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="off" oninput="onPinInput()">
-              <div class="pin-hint" id="pin-hint"></div>
+      
+      <div class="admin-bento-grid">
+        <!-- LHS column: Users, Permissions, & Cloud Backup -->
+        <div>
+          <div class="card" style="padding:18px; margin-bottom:16px;">
+            <div class="f-card-hd">
+              <span class="f-card-title">&#128101; Access Group Permissions</span>
+              <span class="sec-badge bd-blue" id="u-count">0</span>
+            </div>
+            <div class="user-list" id="user-list" style="margin-top:14px; margin-bottom:14px; max-height:220px; overflow-y:auto; padding-right: 4px;"></div>
+            
+            <div style="border-top:1px dashed var(--blueborder); padding-top:14px; margin-top:12px;">
+              <span style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--muted); letter-spacing:.5px;">Add New Authorized Team Worker</span>
+              <div class="add-card" style="margin-top:10px; padding:14px; border-radius:10px;">
+                <div class="add-row" style="margin-bottom: 8px;">
+                  <input class="add-inp" id="add-name" placeholder="Full name" autocomplete="off">
+                  <div>
+                    <input class="add-inp" id="add-pin" type="tel" placeholder="Access code (min 4 digits)" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="off" oninput="onPinInput()">
+                    <div class="pin-hint" id="pin-hint"></div>
+                  </div>
+                </div>
+                <div class="add-row" style="margin-bottom:10px;">
+                  <input class="add-inp" id="add-role" placeholder="Role: Staff / Operator" value="Staff">
+                  <div></div>
+                </div>
+                <div style="font-size:10px;color:var(--muted);margin-bottom:10px;line-height:1.6;"><strong style="color:var(--muted2)">Roles:</strong> <strong style="color:var(--text)">Staff</strong> = Scan only &nbsp;|&nbsp; <strong style="color:var(--text)">Operator</strong> = Scan + Gen QR</div>
+                <button type="button" class="add-sub" id="add-btn" style="width:100%; border-radius:8px;">+ Authorise User</button>
+              </div>
             </div>
           </div>
-          <div class="add-row" style="margin-bottom:10px;">
-            <input class="add-inp" id="add-role" placeholder="Role: Staff / Operator" value="Staff">
-            <div></div>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;"><strong style="color:var(--muted2)">Roles:</strong> <strong style="color:var(--text)">Staff</strong> = Scan only &nbsp;|&nbsp; <strong style="color:var(--text)">Operator</strong> = Scan + Generate QR</div>
-          <button type="button" class="add-sub" id="add-btn">+ Authorise User</button>
-        </div>
-
-        <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">Share Access</div></div>
-        <div class="share-box">
-          <div class="share-desc">After adding users, tap <strong>Copy Share Link</strong> and send via WhatsApp. Workers open it once &mdash; users &amp; sites load automatically.</div>
-          <button type="button" class="share-link-btn" onclick="copyShareLink()">&#128279; Copy Share Link</button>
-          <div class="share-code-box" id="share-code-box" onclick="copyShareLink()"></div>
-          <div class="share-note" id="share-note"></div>
-        </div>
-
-        <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">Sites / Projects</div><span class="sec-badge bd-blue" id="site-count">0</span></div>
-        <div id="site-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
-        <div class="add-card" style="padding:14px;">
-          <div style="display:flex;gap:8px;">
-            <input class="add-inp" id="add-site-inp" placeholder="e.g. Hulhumale Phase III" autocomplete="off" style="flex:1;" onkeydown="if(event.key==='Enter')addSite()">
-            <button type="button" class="add-sub" onclick="addSite()" style="flex:0;padding:12px 18px;font-size:12px;white-space:nowrap;width:auto;">+ Add</button>
-          </div>
-        </div>
-
-        <div class="sec-hd" style="margin-top:20px;"><div class="sec-title">&#9729; Cloud Sync</div><span class="sec-badge bd-blue" id="sync-status-badge">Offline</span></div>
-        <div class="add-card" style="padding:18px;">
-
-          <!-- Animated status row -->
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-            <div id="sync-anim-dot" style="width:12px;height:12px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .4s;"></div>
-            <div style="flex:1;">
-              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">&#9729; Cloud Sync</div>
-              <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Operators auto-load users &amp; sites on login</div>
+          
+          <div class="card" style="padding:18px; margin-bottom:16px;">
+            <div class="f-card-hd">
+              <span class="f-card-title">&#128279; Share Access Token Link</span>
+            </div>
+            <div class="share-box" style="margin-top:12px; margin-bottom:0; padding:14px; border-radius:10px; border:none; background:rgba(74,144,217,.03);">
+              <div class="share-desc" style="font-size:11px;">After adding users, tap <strong>Copy Share Link</strong> and send via WhatsApp. Workers open it once &mdash; users &amp; sites load automatically.</div>
+              <button type="button" class="share-link-btn" onclick="copyShareLink()" style="margin-top:12px; border-radius:8px; padding:10px;">&#128279; Copy Share Link</button>
+              <div class="share-code-box" id="share-code-box" onclick="copyShareLink()"></div>
+              <div class="share-note" id="share-note"></div>
             </div>
           </div>
-
-          <!-- Stats -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-            <div class="rs bl"><div class="rs-lbl">Users on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-users-count">&#8212;</div></div>
-            <div class="rs gn"><div class="rs-lbl">Sites on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-scans-count">&#8212;</div></div>
-          </div>
-
-          <!-- Info box -->
-          <div style="font-size:11px;color:var(--muted2);line-height:1.9;padding:10px 12px;background:rgba(74,144,217,.07);border-radius:9px;border:1px solid var(--blueborder);margin-bottom:14px;">
-            <strong style="color:var(--text)">How it works:</strong><br>
-            1&#65039;&#8419; Enter GitHub token below once &rarr; tap <strong style="color:var(--text)">Push to Cloud</strong><br>
-            2&#65039;&#8419; After adding users/sites &rarr; tap Push again<br>
-            3&#65039;&#8419; Operators &amp; Staff auto-load on every login automatically<br>
-            <span style="color:var(--gold);font-size:10px;">&#9888; Never share your token in chat — enter it here only</span>
-          </div>
-
-          <!-- PUSH BUTTON -->
-          <button type="button" id="push-btn" onclick="pushConfigToGitHub()"
-            style="width:100%;background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;border:none;border-radius:11px;padding:14px;font-family:DM Sans,sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;">
-            <span id="push-btn-icon">&#8679;</span> Push to Cloud
-          </button>
-
-          <!-- Pull button -->
-          <button type="button" onclick="autoLoadConfig()"
-            style="width:100%;background:var(--c2);border:1px solid var(--border);border-radius:10px;padding:10px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:700;color:var(--muted2);cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;text-transform:uppercase;">
-            &#8681; Pull Latest from Cloud
-          </button>
-
-          <!-- Error box -->
-          <div id="sync-err-box" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;margin-bottom:10px;"></div>
-
-          <!-- Token input -->
-          <div style="border-top:1px solid var(--border);padding-top:14px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">GitHub Token (once, this device)</div>
-              <div id="token-status-ok" style="display:none;font-size:11px;color:var(--green);font-weight:700;">&#10003; Token saved</div>
+          
+          <div class="card" style="padding:18px; margin-bottom:16px;">
+            <div class="f-card-hd">
+              <span class="f-card-title">&#9729; Cloud Sync Management</span>
+              <span class="sec-badge bd-blue" id="sync-status-badge">Offline</span>
             </div>
-            <div style="display:flex;gap:8px;margin-bottom:6px;" id="token-row">
-              <input class="add-inp" id="gh-token-inp" type="password"
-                placeholder="github.com/settings/tokens → Classic → repo"
-                autocomplete="off" autocorrect="off" spellcheck="false"
-                style="flex:1;font-family:Space Mono,monospace;font-size:11px;"
-                oninput="onTokenInput()" onkeydown="if(event.key==='Enter')saveGhToken()">
-              <button type="button" class="add-sub" id="token-save-btn" onclick="saveGhToken()"
-                style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;">Save</button>
-            </div>
-            <div id="token-hint" style="font-size:10px;color:var(--muted);line-height:1.6;">
-              Get at: <strong style="color:var(--blue2)">github.com → Settings → Developer settings → Personal access tokens → Classic</strong> → tick <strong>repo</strong> → No expiration<br>
-              <span style="color:var(--gold);">&#9888; Enter here only — do not paste in chat messages</span>
+            
+            <div class="add-card" style="margin-top:12px; padding:14px; border:none; background:transparent;">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <div id="sync-anim-dot" style="width:12px;height:12px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .4s;"></div>
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">&#9729; Cloud Sync</div>
+                  <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Operators auto-load database parameters</div>
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+                <div class="rs bl" style="padding: 10px;"><div class="rs-lbl">Users on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-users-count">&#8212;</div></div>
+                <div class="rs gn" style="padding: 10px;"><div class="rs-lbl">Sites on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-scans-count">&#8212;</div></div>
+              </div>
+
+              <div style="font-size:11px;color:var(--muted2);line-height:1.8;padding:10px 12px;background:rgba(74,144,217,.05);border-radius:9px;border:1px solid var(--blueborder);margin-bottom:14px;">
+                <strong style="color:var(--text)">Cloud Procedure:</strong> Setup your Fine-grained GitHub PAT below once to enable automatic background catalog syncing.
+              </div>
+
+              <button type="button" id="push-btn" onclick="pushConfigToGitHub()"
+                style="width:100%;background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;border:none;border-radius:8px;padding:12px;font-family:DM Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;">
+                <span id="push-btn-icon">&#8679;</span> Push to Cloud
+              </button>
+
+              <button type="button" onclick="autoLoadConfig()"
+                style="width:100%;background:var(--c2);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:DM Sans,sans-serif;font-size:11px;font-weight:700;color:var(--muted2);cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;text-transform:uppercase;">
+                &#8681; Pull Latest from Cloud
+              </button>
+
+              <div id="sync-err-box" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;margin-bottom:10px;"></div>
+
+              <div style="border-top:1px dashed var(--blueborder);padding-top:14px;margin-top:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">GitHub Token Value</div>
+                  <div id="token-status-ok" style="display:none;font-size:11px;color:var(--green);font-weight:700;">&#10003; Token saved</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:6px;" id="token-row">
+                  <input class="add-inp" id="gh-token-inp" type="password"
+                    placeholder="Enter Private Token..."
+                    autocomplete="off" autocorrect="off" spellcheck="false"
+                    style="flex:1;font-family:Space Mono,monospace;font-size:11px;"
+                    oninput="onTokenInput()" onkeydown="if(event.key==='Enter')saveGhToken()">
+                  <button type="button" class="add-sub" id="token-save-btn" onclick="saveGhToken()"
+                    style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;border-radius:8px;">Save</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="sec-hd" style="margin-top:22px;"><div class="sec-title">Scan Reports</div><span class="sec-badge bd-blue" id="scan-count-badge">0 scans</span></div>
-        <div class="rpt-stats">
-          <div class="rs bl"><div class="rs-lbl">Total Scans</div><div class="rs-val" id="rpt-tot">0</div></div>
-          <div class="rs gn"><div class="rs-lbl">Today</div><div class="rs-val" id="rpt-today">0</div></div>
-          <div class="rs cy"><div class="rs-lbl">Unique</div><div class="rs-val" id="rpt-uniq">0</div></div>
+        
+        <!-- RHS column: Authorized Sites & Scanner Live Reports -->
+        <div>
+          <div class="card" style="padding:18px; margin-bottom:16px;">
+            <div class="f-card-hd">
+              <span class="f-card-title">&#128205; Delivery Locations</span>
+              <span class="sec-badge bd-blue" id="site-count">0</span>
+            </div>
+            <div id="site-list" style="display:flex;flex-direction:column;gap:6px;margin-top:14px;margin-bottom:14px;max-height:190px;overflow-y:auto;padding-right:4px;"></div>
+            <div class="add-card" style="padding:10px; border-radius:10px;">
+              <div style="display:flex;gap:8px; margin-bottom: 0;">
+                <input class="add-inp" id="add-site-inp" placeholder="e.g. Hulhumale Phase III" autocomplete="off" style="flex:1; margin-bottom:0;" onkeydown="if(event.key==='Enter')addSite()">
+                <button type="button" class="add-sub" onclick="addSite()" style="flex:0;padding:10px 16px;font-size:12px;white-space:nowrap;width:auto;border-radius:8px;margin-bottom:0;">+ Add</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="padding:18px;">
+            <div class="f-card-hd">
+              <span class="f-card-title">&#128196; Realtime Dispatch Reports</span>
+              <span class="sec-badge bd-blue" id="scan-count-badge">0 scans</span>
+            </div>
+            
+            <div class="rpt-stats" style="margin-top:14px; margin-bottom:14px;">
+              <div class="rs bl"><div class="rs-lbl">Total Scans</div><div class="rs-val" id="rpt-tot">0</div></div>
+              <div class="rs gn"><div class="rs-lbl">Today</div><div class="rs-val" id="rpt-today">0</div></div>
+              <div class="rs cy"><div class="rs-lbl">Unique</div><div class="rs-val" id="rpt-uniq">0</div></div>
+            </div>
+            
+            <div class="rpt-btns" style="margin-bottom:14px;">
+              <button type="button" class="rpt-btn g" onclick="exportCSV()">&#8675; Export CSV Spreadsheet</button>
+              <button type="button" class="rpt-btn" onclick="testSaveRecord()">&#9654; Test Scan Insertion</button>
+              <button type="button" class="rpt-btn" onclick="clearScans()">&#128465; Wipe All Records</button>
+            </div>
+            
+            <input class="rpt-filter" id="rpt-filter" placeholder="&#128269; Filter tabular scans database by code, item, operator, location..." oninput="renderRptTable()" style="margin-bottom:14px; max-width:100%;">
+            
+            <div class="tbl-wrap" style="border-radius:10px; border:1px solid var(--border); overflow:hidden; background:rgba(10,22,40,0.2);">
+              <div class="no-data" id="no-data" style="padding:40px; text-align:center;">No scans recorded yet.</div>
+              <table class="rtbl" id="rpt-tbl" style="display:none; width:100%;">
+                <thead><tr><th>#</th><th>Description</th><th>Code</th><th>Scanned By</th><th>Date / Time</th><th>Location</th></tr></thead>
+                <tbody id="rpt-body"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <div class="rpt-btns">
-          <button type="button" class="rpt-btn g" onclick="exportCSV()">&#8675; CSV</button>
-          <button type="button" class="rpt-btn" onclick="testSaveRecord()">&#9654; Test</button>
-          <button type="button" class="rpt-btn" onclick="clearScans()">&#128465; Clear</button>
-        </div>
-        <input class="rpt-filter" id="rpt-filter" placeholder="Filter by code, item or user..." oninput="renderRptTable()">
-        <div class="tbl-wrap">
-          <div class="no-data" id="no-data">No scans recorded yet.</div>
-          <table class="rtbl" id="rpt-tbl" style="display:none">
-            <thead><tr><th>#</th><th>Description</th><th>Code</th><th>Scanned By</th><th>Date / Time</th><th>Location</th></tr></thead>
-            <tbody id="rpt-body"></tbody>
-          </table>
-        </div>
-
       </div>
     </div>
 
@@ -930,6 +1160,24 @@ body::before{
   </div>
 </div>
 
+<!-- THEME SWITCHER OVERLAY -->
+<div class="overlay" id="theme-overlay" onclick="if(event.target===this)closeThemeSheet()">
+  <div class="sheet">
+    <div class="sh-drag"></div>
+    <div style="padding:16px 20px 4px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">🎨 UI Customizer</div>
+      <div style="font-size:19px;font-weight:700;line-height:1.4;color:var(--text);">Select UI Color Theme</div>
+      <div style="font-size:12px;color:var(--muted2);margin-top:4px;">Customize the appearance of your QR Asset Manager. Choices persist automatically.</div>
+    </div>
+    <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:10px;" id="theme-options-container">
+      <!-- Theme options will be rendered here dynamically with color preview circles -->
+    </div>
+    <div style="padding:0 20px 28px;">
+      <button type="button" onclick="closeThemeSheet()" style="width:100%;background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;border:none;border-radius:12px;padding:15px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;touch-action:manipulation;-webkit-appearance:none;">Apply and Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- PRINT AREAS -->
 <div id="print-area"><div class="print-page"><div class="print-grid" id="print-grid"></div></div></div>
 <div id="print-area-single">
@@ -976,6 +1224,188 @@ var _pLocked   = false; // close button locked (manual location required)
 var sVideo  = null;
 var sCvs    = null;
 var sCtx    = null;
+
+// ── THEMES & PALETTES ──────────────────────────────────────────────────────────
+var THEMES = [
+  {
+    id: 'classic',
+    name: 'Classic Navy (Sanken Standard)',
+    preview: ['#4a90d9', '#0a1628'],
+    vars: {
+      '--c0': '#0a1628',
+      '--c1': '#0f1f3d',
+      '--c2': '#162847',
+      '--c3': '#1e3660',
+      '--blue': '#4a90d9',
+      '--blue2': '#7bbde8',
+      '--blue3': '#a8d4f0',
+      '--bluedim': 'rgba(74,144,217,.12)',
+      '--blueborder': 'rgba(74,144,217,.28)',
+      '--accent': '#38bdf8',
+      '--text': '#e8f0fc',
+      '--muted': '#5c7499',
+      '--muted2': '#8ba4c8'
+    }
+  },
+  {
+    id: 'slate',
+    name: 'Modern Industrial Slate',
+    preview: ['#3b82f6', '#0f172a'],
+    vars: {
+      '--c0': '#0f172a',
+      '--c1': '#1e293b',
+      '--c2': '#334155',
+      '--c3': '#475569',
+      '--blue': '#3b82f6',
+      '--blue2': '#60a5fa',
+      '--blue3': '#93c5fd',
+      '--bluedim': 'rgba(59,130,246,.12)',
+      '--blueborder': 'rgba(59,130,246,.28)',
+      '--accent': '#0ea5e9',
+      '--text': '#f8fafc',
+      '--muted': '#64748b',
+      '--muted2': '#94a3b8'
+    }
+  },
+  {
+    id: 'emerald',
+    name: 'Eco Emerald',
+    preview: ['#10b981', '#022c22'],
+    vars: {
+      '--c0': '#022c22',
+      '--c1': '#064e3b',
+      '--c2': '#0f766e',
+      '--c3': '#115e59',
+      '--blue': '#10b981',
+      '--blue2': '#34d399',
+      '--blue3': '#6ee7b7',
+      '--bluedim': 'rgba(16,185,129,.12)',
+      '--blueborder': 'rgba(16,185,129,.28)',
+      '--accent': '#2dd4bf',
+      '--text': '#f0fdf4',
+      '--muted': '#14b8a6',
+      '--muted2': '#a7f3d0'
+    }
+  },
+  {
+    id: 'amber',
+    name: 'Heavy Machinery Amber',
+    preview: ['#f59e0b', '#1c1917'],
+    vars: {
+      '--c0': '#1c1917',
+      '--c1': '#292524',
+      '--c2': '#44403c',
+      '--c3': '#57534e',
+      '--blue': '#f59e0b',
+      '--blue2': '#fbbf24',
+      '--blue3': '#fcd34d',
+      '--bluedim': 'rgba(245,158,11,.12)',
+      '--blueborder': 'rgba(245,158,11,.28)',
+      '--accent': '#fb7185',
+      '--text': '#fafaf9',
+      '--muted': '#78716c',
+      '--muted2': '#a8a29e'
+    }
+  },
+  {
+    id: 'crimson',
+    name: 'Cyberpunk Crimson',
+    preview: ['#e11d48', '#0a0104'],
+    vars: {
+      '--c0': '#0a0104',
+      '--c1': '#160207',
+      '--c2': '#24050e',
+      '--c3': '#380d1a',
+      '--blue': '#e11d48',
+      '--blue2': '#fb7185',
+      '--blue3': '#fda4af',
+      '--bluedim': 'rgba(225,29,72,.12)',
+      '--blueborder': 'rgba(225,29,72,.28)',
+      '--accent': '#ff007f',
+      '--text': '#fff5f7',
+      '--muted': '#9f1239',
+      '--muted2': '#f43f5e'
+    }
+  },
+  {
+    id: 'luxury',
+    name: 'Luxury Obsidian & Gold',
+    preview: ['#d4af37', '#0d0d0d'],
+    vars: {
+      '--c0': '#0d0d0d',
+      '--c1': '#171717',
+      '--c2': '#262626',
+      '--c3': '#404040',
+      '--blue': '#d4af37',
+      '--blue2': '#e5c158',
+      '--blue3': '#f3e5ab',
+      '--bluedim': 'rgba(212,175,55,.12)',
+      '--blueborder': 'rgba(212,175,55,.28)',
+      '--accent': '#f59e0b',
+      '--text': '#fafafa',
+      '--muted': '#737373',
+      '--muted2': '#a3a3a3'
+    }
+  }
+];
+
+window.applyTheme = function(themeId) {
+  var tItem = THEMES.find(function(t) { return t.id === themeId; });
+  if (!tItem) return;
+  localStorage.setItem('so_asset_theme', themeId);
+  Object.keys(tItem.vars).forEach(function(key) {
+    document.documentElement.style.setProperty(key, tItem.vars[key]);
+  });
+  renderThemeOptions();
+};
+
+window.initTheme = function() {
+  var saved = localStorage.getItem('so_asset_theme') || 'classic';
+  applyTheme(saved);
+};
+
+window.openThemeSheet = function() {
+  renderThemeOptions();
+  var ov = document.getElementById('theme-overlay');
+  if (ov) {
+    ov.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+window.closeThemeSheet = function() {
+  var ov = document.getElementById('theme-overlay');
+  if (ov) {
+    ov.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+};
+
+window.renderThemeOptions = function() {
+  var container = document.getElementById('theme-options-container');
+  if (!container) return;
+  var activeThemeId = localStorage.getItem('so_asset_theme') || 'classic';
+  var html = '';
+  THEMES.forEach(function(theme) {
+    var isSelected = theme.id === activeThemeId;
+    var borderStyle = isSelected ? 'border-color: var(--accent); background: var(--c2); box-shadow: 0 0 12px var(--bluedim);' : 'border-color: var(--border);';
+    var checkMark = isSelected ? '<span style="color:var(--accent);font-weight:bold;margin-left:auto;font-size:16px;">&#10004;</span>' : '';
+    html += '<div onclick="applyTheme(\'' + theme.id + '\')" style="display:flex;align-items:center;padding:12px 16px;border-radius:12px;border:1.5px solid;cursor:pointer;transition:all 0.2s;' + borderStyle + '" class="ic">' +
+              '<div style="width:24px;height:24px;border-radius:50%;background:' + theme.preview[0] + ';border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,0.3);position:relative;margin-right:12px;display:flex;align-items:center;justify-content:center;">' +
+                '<div style="width:12px;height:12px;border-radius:50%;background:' + theme.preview[1] + ';position:absolute;right:-2px;bottom:-2px;border:1.5px solid #fff;"></div>' +
+              '</div>' +
+              '<div style="display:flex;flex-direction:column;">' +
+                '<span style="font-size:14px;font-weight:600;color:var(--text);">' + theme.name + '</span>' +
+                '<span style="font-size:10px;font-family:\'Space Mono\',monospace;color:var(--muted2);margin-top:2px;">Primary: ' + theme.preview[0] + '</span>' +
+              '</div>' +
+              checkMark +
+            '</div>';
+  });
+  container.innerHTML = html;
+};
+
+// Initial parse automatic loading to ensure zero flash setup
+initTheme();
 
 // ── INIT ───────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function() {
@@ -1034,6 +1464,12 @@ window.addEventListener('DOMContentLoaded', function() {
   // Sign out
   document.getElementById('signout-btn').addEventListener('click', doSignOut);
 
+  // Theme customizer
+  var tBtn = document.getElementById('theme-btn');
+  if (tBtn) {
+    tBtn.addEventListener('click', openThemeSheet);
+  }
+
   // File input
   document.getElementById('file-input').addEventListener('change', function(e) {
     if (e.target.files[0]) readFile(e.target.files[0]);
@@ -1063,6 +1499,24 @@ window.addEventListener('DOMContentLoaded', function() {
     }
     btn.addEventListener('touchend', function(e) { e.preventDefault(); onClose(); }, {passive:false});
     btn.addEventListener('click',    function()  { onClose(); });
+  })();
+
+  // Beautiful Dynamic UTC Clock
+  (function startClock() {
+    var clk = document.getElementById('clock-utc');
+    if (!clk) return;
+    function update() {
+      var d = new Date();
+      var utcStr = d.getUTCFullYear() + '-' +
+        String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getUTCDate()).padStart(2, '0') + ' ' +
+        String(d.getUTCHours()).padStart(2, '0') + ':' +
+        String(d.getUTCMinutes()).padStart(2, '0') + ':' +
+        String(d.getUTCSeconds()).padStart(2, '0');
+      clk.textContent = 'UTC ' + utcStr;
+    }
+    update();
+    setInterval(update, 1000);
   })();
 });
 
@@ -1197,6 +1651,71 @@ function silentPush() {
       var ss=document.getElementById('sync-scans-count'); if(ss)ss.textContent=cfg.sites.length+' sites';
     }
   }).catch(function(){});
+}
+
+function pushConfigToGitHub() {
+  var tok = ghTok();
+  if (!tok) {
+    showSyncBar('err', 'No GitHub Token');
+    setErrBox('Please save a valid GitHub Fine-grained Personal Access Token with read/write (contents) permissions for the skoherath-debug/qr-systemsko repository.');
+    return;
+  }
+  showSyncBar('syncing', 'Pushing config...');
+  setErrBox('');
+
+  var cfg = {
+    users: users.filter(function(u){ return !u.isAdmin; }),
+    sites: sitesList
+  };
+
+  fetch(CLOUD_WRITE, {
+    headers: { Authorization:'token '+tok, Accept:'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' }
+  })
+  .then(function(res) {
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('Authorized error. Please verify your GitHub Token has correct repository permissions.');
+    }
+    if (!res.ok && res.status !== 404) {
+      throw new Error('Failed to fetch config SHA from GitHub (' + res.status + ')');
+    }
+    return res.status === 200 ? res.json() : null;
+  })
+  .then(function(data) {
+    var sha = data ? data.sha : null;
+    var body = {
+      message: 'update config via admin panel',
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(cfg, null, 2))))
+    };
+    if (sha) body.sha = sha;
+
+    return fetch(CLOUD_WRITE, {
+      method: 'PUT',
+      headers: { 
+        Authorization:'token '+tok, 
+        'Content-Type':'application/json', 
+        Accept:'application/vnd.github.v3+json' 
+      },
+      body: JSON.stringify(body)
+    });
+  })
+  .then(function(p) {
+    if (p && (p.ok || p.status === 201 || p.status === 200)) {
+      showSyncBar('ok', 'Config Sync OK', 3000);
+      setErrBox('');
+      var su = document.getElementById('sync-users-count'); if(su) su.textContent = cfg.users.length + ' users';
+      var ss = document.getElementById('sync-scans-count'); if(ss) ss.textContent = cfg.sites.length + ' sites';
+    } else {
+      return p.json().then(function(err) {
+        throw new Error(err.message || 'PUT failed with status ' + p.status);
+      }).catch(function() {
+        throw new Error('Failed to update config on GitHub (status ' + p.status + ')');
+      });
+    }
+  })
+  .catch(function(err) {
+    showSyncBar('err', 'Sync Failed');
+    setErrBox(err.message || err);
+  });
 }
 
 function autoLoadConfig(){
