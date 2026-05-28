@@ -1779,7 +1779,16 @@ function autoLoadConfig(isSilent){
   }
 
   var syncMode = localStorage.getItem('so_sync_mode');
-  if (syncMode === 'github' && ghTok()) {
+  if (syncMode === 'github') {
+    if (!ghTok()) {
+      showSyncBar('err', 'Token Required');
+      if (lss) { lss.style.color='var(--gold)'; lss.textContent='⚠️ Token Required'; }
+      var st = document.getElementById('gh-sync-status');
+      if (st) st.textContent = 'Offline — Setup GitHub PAT in Admin tab';
+      setErrBox('Please go to the Admin tab and enter your GitHub Personal Access Token (PAT) to enable serverless Cloud Sync.');
+      return;
+    }
+
     // GitHub API Sync Mode
     fetch(CLOUD_READ_API, {
       headers: {
@@ -1999,7 +2008,9 @@ function pushScanToGitHub(rec){
   if (!Array.isArray(fullList)) fullList = scans;
 
   var syncMode = localStorage.getItem('so_sync_mode');
-  if (syncMode === 'github' && ghTok()) {
+  if (syncMode === 'github') {
+    if (!ghTok()) return; // Silent return if GitHub Mode is active but no token configured yet
+    
     // GitHub API scans push
     fetch(SCANS_READ_API, {
       headers: {
