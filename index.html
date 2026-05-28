@@ -1625,7 +1625,10 @@ function getAuthHeader(tok) {
 function formatSyncError(err) {
   var msg = err.message || String(err);
   if (msg === 'Failed to fetch' || msg.indexOf('NetworkError') !== -1 || msg.indexOf('fetch') !== -1 || msg.indexOf('CORS') !== -1) {
-    return 'Network Connection Error. Please confirm that your GitHub Token is active, has "Read and Write" access permissions to repository contents, your repository URL is valid, and your internet connection is fully online.';
+    if (window.location.protocol === 'file:') {
+      return 'Network Connection Error. You are opening this page directly as a file. Please start the local server by running "npm run dev" in your terminal and open http://localhost:3000 in your browser to enable database syncing.';
+    }
+    return 'Network Connection Error. The local database server is offline or unreachable. Please ensure the backend server is running ("npm run dev" on port 3000), your internet connection is active, and try again.';
   }
   return msg;
 }
