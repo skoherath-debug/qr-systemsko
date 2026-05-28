@@ -1002,55 +1002,39 @@ body::before{
           
           <div class="card" style="padding:18px; margin-bottom:16px;">
             <div class="f-card-hd">
-              <span class="f-card-title">&#9729; Cloud Sync Management</span>
-              <span class="sec-badge bd-blue" id="sync-status-badge">Offline</span>
+              <span class="f-card-title">&#9729; Server Database Sync</span>
+              <span class="sec-badge" id="sync-status-badge" style="background:#10b981; color:#fff; font-weight:700;">ONLINE</span>
             </div>
             
             <div class="add-card" style="margin-top:12px; padding:14px; border:none; background:transparent;">
               <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-                <div id="sync-anim-dot" style="width:12px;height:12px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .4s;"></div>
+                <div id="sync-anim-dot" style="width:12px;height:12px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;flex-shrink:0;transition:all .4s;"></div>
                 <div style="flex:1;">
-                  <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">&#9729; Cloud Sync</div>
-                  <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Operators auto-load database parameters</div>
+                  <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;" id="gh-sync-title">&#9729; Live Sync Active</div>
+                  <div style="font-size:11px;color:var(--muted2);" id="gh-sync-status">Connected to server database instance</div>
                 </div>
               </div>
 
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-                <div class="rs bl" style="padding: 10px;"><div class="rs-lbl">Users on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-users-count">&#8212;</div></div>
-                <div class="rs gn" style="padding: 10px;"><div class="rs-lbl">Sites on cloud</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-scans-count">&#8212;</div></div>
+                <div class="rs bl" style="padding: 10px;"><div class="rs-lbl">Users synced</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-users-count">&#8212;</div></div>
+                <div class="rs gn" style="padding: 10px;"><div class="rs-lbl">Sites synced</div><div style="font-size:13px;font-weight:700;margin-top:4px;" id="sync-scans-count">&#8212;</div></div>
               </div>
 
-              <div style="font-size:11px;color:var(--muted2);line-height:1.8;padding:10px 12px;background:rgba(74,144,217,.05);border-radius:9px;border:1px solid var(--blueborder);margin-bottom:14px;">
-                <strong style="color:var(--text)">Cloud Procedure:</strong> Setup your Fine-grained GitHub PAT below once to enable automatic background catalog syncing.
+              <div style="font-size:11px;color:var(--muted2);line-height:1.8;padding:10px 12px;background:rgba(16,185,129,.05);border-radius:9px;border:1px solid rgba(16,185,129,.2);margin-bottom:14px;">
+                <strong style="color:var(--text)">Direct Sync Enabled:</strong> Operator accesses, delivery sites list, active visual themes, and GPS-tagged scan logs are securely hosted on the central server. No tokens or GitHub accounts are required.
               </div>
 
               <button type="button" id="push-btn" onclick="pushConfigToGitHub()"
                 style="width:100%;background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;border:none;border-radius:8px;padding:12px;font-family:DM Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;">
-                <span id="push-btn-icon">&#8679;</span> Push to Cloud
+                <span id="push-btn-icon">&#x21BB;</span> Push State to Server
               </button>
 
               <button type="button" onclick="autoLoadConfig()"
-                style="width:100%;background:var(--c2);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:DM Sans,sans-serif;font-size:11px;font-weight:700;color:var(--muted2);cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;text-transform:uppercase;">
-                &#8681; Pull Latest from Cloud
+                style="width:100%;background:var(--c2);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:DM Sans,sans-serif;font-size:11px;font-weight:700;color:var(--muted2);cursor:pointer;letter-spacing:.3px;margin-bottom:10px;touch-action:manipulation;text-transform:uppercase;border:1px solid var(--blueborder);">
+                &#8681; Pull State from Server
               </button>
 
               <div id="sync-err-box" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--red);line-height:1.6;word-break:break-word;margin-bottom:10px;"></div>
-
-              <div style="border-top:1px dashed var(--blueborder);padding-top:14px;margin-top:12px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                  <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">GitHub Token Value</div>
-                  <div id="token-status-ok" style="display:none;font-size:11px;color:var(--green);font-weight:700;">&#10003; Token saved</div>
-                </div>
-                <div style="display:flex;gap:8px;margin-bottom:6px;" id="token-row">
-                  <input class="add-inp" id="gh-token-inp" type="password"
-                    placeholder="Enter Private Token..."
-                    autocomplete="off" autocorrect="off" spellcheck="false"
-                    style="flex:1;font-family:Space Mono,monospace;font-size:11px;"
-                    oninput="onTokenInput()" onkeydown="if(event.key==='Enter')saveGhToken()">
-                  <button type="button" class="add-sub" id="token-save-btn" onclick="saveGhToken()"
-                    style="flex:0;padding:12px 16px;font-size:12px;width:auto;white-space:nowrap;border-radius:8px;">Save</button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1419,6 +1403,11 @@ window.addEventListener('DOMContentLoaded', function() {
   // Load cloud config on page open so operator PINs are ready before login
   autoLoadConfig();
 
+  // Periodic live background database synchronization (silent mode, every 15 seconds)
+  setInterval(function() {
+    autoLoadConfig(true);
+  }, 15000);
+
   sVideo = document.getElementById('scan-video');
   sCvs   = document.getElementById('scan-canvas');
   sCtx   = sCvs.getContext('2d');
@@ -1643,58 +1632,35 @@ function formatSyncError(err) {
 
 // Silent push — called automatically on every save (no error UI spam)
 function silentPush() {
-  var tok = ghTok();
-  if (!tok) return; // no token yet, skip silently
   var cfg = {
     users: users.filter(function(u){ return !u.isAdmin; }),
     sites: sitesList,
     theme: localStorage.getItem('so_asset_theme') || 'classic'
   };
   
-  var auth = getAuthHeader(tok);
-  var getHeaders = { 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' };
-  if (auth.Authorization) getHeaders.Authorization = auth.Authorization;
-
-  fetch(CLOUD_WRITE, {
-    headers: getHeaders
-  }).then(function(g){
-    var sha = null;
-    return g.ok ? g.json().then(function(j){ sha=j.sha; return sha; }) : Promise.resolve(null);
-  }).then(function(sha){
-    var body = {
-      message: 'update config',
-      content: btoa(unescape(encodeURIComponent(JSON.stringify(cfg))))
-    };
-    if (sha) body.sha = sha;
-    
-    var putHeaders = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/vnd.github.v3+json'
-    };
-    if (auth.Authorization) putHeaders.Authorization = auth.Authorization;
-    
-    return fetch(CLOUD_WRITE, {
-      method: 'PUT',
-      headers: putHeaders,
-      body: JSON.stringify(body)
-    });
-  }).then(function(p){
-    if (p && (p.ok || p.status===201)) {
-      showSyncBar('ok', 'Pushed ✓', 2500);
-      var su=document.getElementById('sync-users-count'); if(su)su.textContent=cfg.users.length+' users';
-      var ss=document.getElementById('sync-scans-count'); if(ss)ss.textContent=cfg.sites.length+' sites';
-    }
-  }).catch(function(){});
+  fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cfg)
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('Status ' + res.status);
+    return res.json();
+  })
+  .then(function() {
+    showSyncBar('ok', 'Database Synced ✓', 1500);
+    var su=document.getElementById('sync-users-count'); if(su) su.textContent=cfg.users.length+' users';
+    var ss=document.getElementById('sync-scans-count'); if(ss) ss.textContent=cfg.sites.length+' sites';
+    setErrBox('');
+  })
+  .catch(function(err) {
+    console.error('Silent push failed:', err);
+    showSyncBar('err', 'Sync offline', 2000);
+  });
 }
 
 function pushConfigToGitHub() {
-  var tok = ghTok();
-  if (!tok) {
-    showSyncBar('err', 'No GitHub Token');
-    setErrBox('Please save a valid GitHub Fine-grained Personal Access Token with read/write (contents) permissions for the skoherath-debug/qr-systemsko repository.');
-    return;
-  }
-  showSyncBar('syncing', 'Pushing config...');
+  showSyncBar('syncing', 'Syncing Database...', 0);
   setErrBox('');
 
   var cfg = {
@@ -1703,75 +1669,44 @@ function pushConfigToGitHub() {
     theme: localStorage.getItem('so_asset_theme') || 'classic'
   };
 
-  var auth = getAuthHeader(tok);
-  var getHeaders = { 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' };
-  if (auth.Authorization) getHeaders.Authorization = auth.Authorization;
-
-  fetch(CLOUD_WRITE, {
-    headers: getHeaders
+  fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cfg)
   })
   .then(function(res) {
-    if (res.status === 401 || res.status === 403) {
-      throw new Error('Authorized error. Please verify your GitHub Token has correct repository permissions.');
-    }
-    if (!res.ok && res.status !== 404) {
-      throw new Error('Failed to fetch config SHA from GitHub (status ' + res.status + ')');
-    }
-    return res.status === 200 ? res.json() : null;
+    if (!res.ok) throw new Error('Server returned status ' + res.status);
+    return res.json();
   })
-  .then(function(data) {
-    var sha = data ? data.sha : null;
-    var body = {
-      message: 'update config via admin panel',
-      content: btoa(unescape(encodeURIComponent(JSON.stringify(cfg, null, 2))))
-    };
-    if (sha) body.sha = sha;
-
-    var putHeaders = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/vnd.github.v3+json'
-    };
-    if (auth.Authorization) putHeaders.Authorization = auth.Authorization;
-
-    return fetch(CLOUD_WRITE, {
-      method: 'PUT',
-      headers: putHeaders,
-      body: JSON.stringify(body)
-    });
-  })
-  .then(function(p) {
-    if (p && (p.ok || p.status === 201 || p.status === 200)) {
-      showSyncBar('ok', 'Config Sync OK', 3000);
-      setErrBox('');
-      var su = document.getElementById('sync-users-count'); if(su) su.textContent = cfg.users.length + ' users';
-      var ss = document.getElementById('sync-scans-count'); if(ss) ss.textContent = cfg.sites.length + ' sites';
-    } else {
-      return p.json().then(function(err) {
-        throw new Error(err.message || 'PUT failed with status ' + p.status);
-      }).catch(function() {
-        throw new Error('Failed to update config on GitHub (status ' + p.status + ')');
-      });
-    }
+  .then(function() {
+    showSyncBar('ok', 'Server Database Sync OK', 3000);
+    setErrBox('');
+    var su = document.getElementById('sync-users-count'); if(su) su.textContent = cfg.users.length + ' users';
+    var ss = document.getElementById('sync-scans-count'); if(ss) ss.textContent = cfg.sites.length + ' sites';
   })
   .catch(function(err) {
     showSyncBar('err', 'Sync Failed');
-    setErrBox(formatSyncError(err));
+    setErrBox('Failed to write changes to local server disk: ' + (err.message || err));
   });
 }
 
-function autoLoadConfig(){
+function autoLoadConfig(isSilent){
   var lss = document.getElementById('login-sync-status');
-  if (lss) { lss.style.color='var(--blue2)'; lss.textContent='\u21BB Syncing...'; }
+  if (!isSilent) {
+    if (lss) { lss.style.color='var(--blue2)'; lss.textContent='\u21BB Syncing...'; }
+    showSyncBar('syncing', 'Syncing Data...', 0);
+  }
 
-  var urls = [
-    'https://api.github.com/repos/skoherath-debug/qr-systemsko/contents/so-config.json',
-    'https://raw.githubusercontent.com/skoherath-debug/qr-systemsko/main/so-config.json',
-    'https://raw.githubusercontent.com/skoherath-debug/qr-systemsko/gh-pages/so-config.json',
-    'https://raw.githubusercontent.com/skoherath-debug/qr-systemsko/master/so-config.json'
-  ];
-
-  function applyConfig(cfg) {
+  // 1. Fetch server database config (users, sites, theme)
+  fetch('/api/config')
+  .then(function(res) {
+    if (!res.ok) throw new Error('Status ' + res.status);
+    return res.json();
+  })
+  .then(function(cfg) {
     if (!cfg) return;
+    
+    // Apply Users Sync
     if (Array.isArray(cfg.users) && cfg.users.length) {
       var admins = users.filter(function(u){ return u.isAdmin; });
       var cloud  = cfg.users.filter(function(u){ return !u.isAdmin; });
@@ -1782,102 +1717,104 @@ function autoLoadConfig(){
       users = merged;
       localStorage.setItem(AK, JSON.stringify(users));
     }
+    
+    // Apply Sites Sync
     if (Array.isArray(cfg.sites) && cfg.sites.length) {
       sitesList = cfg.sites;
       localStorage.setItem(SITES_KEY, JSON.stringify(sitesList));
       populateSiteDropdown();
     }
+    
+    // Apply Theme Sync
     if (cfg.theme) {
       applyTheme(cfg.theme, true);
     }
+    
     var cnt = users.filter(function(u){ return !u.isAdmin; }).length;
-    if (lss) {
+    if (!isSilent && lss) {
       lss.style.color='var(--green)';
       lss.textContent = cnt ? ('\u2713 ' + cnt + ' user' + (cnt>1?'s':'') + ' ready') : '\u2713 Connected';
       setTimeout(function(){ if(lss){lss.textContent='';lss.style.color='';} }, 3000);
     }
+    
     var st=document.getElementById('gh-sync-status');
     if (st) st.textContent='Last synced: '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     var su=document.getElementById('sync-users-count'); if(su) su.textContent=(cfg.users?cfg.users.length:0)+' users';
     var ss=document.getElementById('sync-scans-count'); if(ss) ss.textContent=(cfg.sites?cfg.sites.length:0)+' sites';
-    showSyncBar('ok','Config synced \u2713',3000);
+    
     var asc=document.getElementById('screen-admin');
     if (asc&&asc.classList.contains('active')) { renderUsers(); renderSites(); }
-  }
-
-  function tryUrl(idx) {
-    if (idx >= urls.length) { if(lss)lss.textContent=''; return; }
-    var url = urls[idx];
-    var isApi = url.indexOf('api.github.com') !== -1;
     
-    var tok = ghTok();
-    var headers = {};
-    if (isApi) {
-      headers['Accept'] = 'application/vnd.github.v3+json';
-      var auth = getAuthHeader(tok);
-      if (auth.Authorization) headers['Authorization'] = auth.Authorization;
+    // 2. Fetch server database scans (centralized operational logging)
+    return fetch('/api/scans');
+  })
+  .then(function(res) {
+    if (!res) return;
+    if (!res.ok) throw new Error('Status ' + res.status);
+    return res.json();
+  })
+  .then(function(serverScans) {
+    if (Array.isArray(serverScans)) {
+      // Merge server scans with local scans based on uniqueness
+      // Unique key: code + ts
+      var localScans = [];
+      try { localScans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) {}
+      if (!Array.isArray(localScans)) localScans = [];
+      
+      var mergedMap = {};
+      serverScans.forEach(function(s) {
+        if (s && s.code && s.ts) mergedMap[s.code + '_' + s.ts] = s;
+      });
+      localScans.forEach(function(s) {
+        if (s && s.code && s.ts) mergedMap[s.code + '_' + s.ts] = s;
+      });
+      
+      var mergedScans = Object.values(mergedMap);
+      // Sort chronologically by date/time
+      mergedScans.sort(function(a, b) {
+        return new Date(b.ts).getTime() - new Date(a.ts).getTime();
+      });
+      
+      localStorage.setItem(SK, JSON.stringify(mergedScans));
+      scans = mergedScans;
+      renderRptTable();
+      
+      // Update badge scan counters
+      var sbc = document.getElementById('scan-count-badge'); if (sbc) sbc.textContent = scans.length + ' scans';
     }
-
-    fetch(url + (isApi?'':'?nc='+Date.now()), {
-      headers: headers
-    })
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(data){
-      if (!data) { tryUrl(idx+1); return; }
-      if (isApi && data.content) {
-        try {
-          var cfg = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\s/g,'')))));
-          applyConfig(cfg);
-        } catch(e) { tryUrl(idx+1); }
-      } else if (data.users || data.sites) {
-        applyConfig(data);
-      } else {
-        tryUrl(idx+1);
-      }
-    })
-    .catch(function(){ tryUrl(idx+1); });
-  }
-
-  tryUrl(0);
+    if (!isSilent) {
+      showSyncBar('ok', 'Sync Complete ✓', 2500);
+      setErrBox('');
+    }
+  })
+  .catch(function(err) {
+    console.error('Auto sync error:', err);
+    if (!isSilent) {
+      showSyncBar('err', 'Sync Offline', 3000);
+      setErrBox('Synchronization failed: ' + (err.message || err));
+    }
+  });
 }
-function setErrBox(m){var el=document.getElementById('sync-err-box');if(!el)return;el.style.display=m?'block':'none';el.textContent=m;}
-window.saveGhToken=function(){
-  var inp=document.getElementById('gh-token-inp');
-  var val=(inp?inp.value:'').trim();
-  if(!val){if(inp){inp.style.border='2px solid var(--red)';setTimeout(function(){inp.style.border='';},1500);}return;}
-  
-  // Clean whitespaces and arbitrary prefix headers
-  val = val.replace(/^(bearer|token)\s+/i, '');
-  val = val.replace(/[\s\u200B-\u200D\uFEFF]/g, '');
 
-  localStorage.setItem(GH_TOKEN_KEY,val);ghToken=val;GH_FIXED_TOKEN=val;
-  if(inp)inp.value='';
-  var row=document.getElementById('token-row');if(row)row.style.display='none';
-  var hint=document.getElementById('token-hint');if(hint)hint.style.display='none';
-  var tokOk=document.getElementById('token-status-ok');if(tokOk){
-    tokOk.style.display='block';
-    tokOk.innerHTML = '<span style="color:var(--green)">\u2713 Token saved on this device</span> ' +
-                      '<button type="button" onclick="clearGhToken()" style="margin-left:10px;background:var(--c2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:2px 8px;font-size:10px;cursor:pointer;">Change</button>';
-  }
-  setErrBox('');
-  pushConfigToGitHub();
-};
-window.clearGhToken=function(){
-  localStorage.removeItem(GH_TOKEN_KEY);
-  ghToken='';
-  GH_FIXED_TOKEN='';
-  var row=document.getElementById('token-row');if(row)row.style.display='flex';
-  var hint=document.getElementById('token-hint');if(hint)hint.style.display='block';
-  var tokOk=document.getElementById('token-status-ok');if(tokOk)tokOk.style.display='none';
-  setErrBox('');
-};
-window.onTokenInput=function(){
-  var inp=document.getElementById('gh-token-inp');if(!inp)return;inp.style.border='';
-  var btn=document.getElementById('token-save-btn');
-  if(btn)btn.style.background=inp.value.trim().length>10?'linear-gradient(135deg,var(--green),#059669)':'';
-};
+function setErrBox(m){var el=document.getElementById('sync-err-box');if(!el)return;el.style.display=m?'block':'none';el.textContent=m;}
 function fullSync(){pushConfigToGitHub();}
-function pushScanToGitHub(){}
+function pushScanToGitHub(rec){
+  var fullList = [];
+  try { fullList = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) {}
+  if (!Array.isArray(fullList)) fullList = scans;
+
+  fetch('/api/scans', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fullList)
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('Status ' + res.status);
+  })
+  .catch(function(err) {
+    console.error('Error auto-uploading scan log:', err);
+  });
+}
 function showSyncAnim(){}
 function setSyncStatus(){}
 function syncUI(){}
@@ -1971,7 +1908,15 @@ function loadUsers() {
 }
 function saveUsers() { localStorage.setItem(AK, JSON.stringify(users)); silentPush(); }
 function loadScans() { try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; } }
-function saveScans() { localStorage.setItem(SK, JSON.stringify(scans)); }
+function saveScans() {
+  localStorage.setItem(SK, JSON.stringify(scans));
+  fetch('/api/scans', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(scans)
+  })
+  .catch(function(e){ console.error('Scan delete push sync failed', e); });
+}
 
 // ── PIN PAD ────────────────────────────────────────────────────────────────────
 function pinAdd(d) {
@@ -2100,26 +2045,6 @@ function renderAdmin() {
   var udisp = document.getElementById('admin-username-display');
   if (udisp && curUser) udisp.textContent = curUser.name + ' (' + (curUser.role||'Admin') + ')';
   renderSites();
-  var tok=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';
-  var row=document.getElementById('token-row');
-  var hint=document.getElementById('token-hint');
-  var tokOk=document.getElementById('token-status-ok');
-  if(GH_FIXED_TOKEN){
-    if(row)row.style.display='none';
-    if(hint)hint.style.display='none';
-    if(tokOk){tokOk.style.display='block';tokOk.innerHTML='<span style="color:var(--blue2)">\u2713 Build embedded master token active</span>';}
-  } else if(tok){
-    if(row)row.style.display='none';
-    if(hint)hint.style.display='none';
-    if(tokOk){
-      tokOk.style.display='block';
-      tokOk.innerHTML='<span style="color:var(--green)">\u2713 Token saved on this device</span> <button type="button" onclick="clearGhToken()" style="margin-left:10px;background:var(--c2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:2px 8px;font-size:10px;cursor:pointer;white-space:nowrap;display:inline-block;">Change</button>';
-    }
-  } else {
-    if(row)row.style.display='flex';
-    if(hint)hint.style.display='block';
-    if(tokOk)tokOk.style.display='none';
-  }
   var su=document.getElementById('sync-users-count');
   if(su)su.textContent=users.filter(function(u){return !u.isAdmin;}).length+' users';
   var ss=document.getElementById('sync-scans-count');
