@@ -1675,36 +1675,16 @@ function formatSyncError(err) {
 
 // Silent push — called automatically on every save (no error UI spam)
 function silentPush() {
-  var cfg = {
-    users: users.filter(function(u){ return !u.isAdmin; }),
-    sites: sitesList,
-    theme: localStorage.getItem('so_asset_theme') || 'classic'
-  };
-  
-  fetch('/api/config', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(cfg)
-  })
-  .then(function(res) {
-    if (!res.ok) throw new Error('Status ' + res.status);
-    return res.json();
-  })
-  .then(function() {
-    showSyncBar('ok', 'Database Synced ✓', 1500);
-    var su=document.getElementById('sync-users-count'); if(su) su.textContent=cfg.users.length+' users';
-    var ss=document.getElementById('sync-scans-count'); if(ss) ss.textContent=cfg.sites.length+' sites';
-    setErrBox('');
-  })
-  .catch(function(err) {
-    console.error('Silent push failed:', err);
-    showSyncBar('err', 'Sync offline', 2000);
-  });
+  pushConfigToGitHub(true);
 }
 
-function pushConfigToGitHub() {
-  showSyncBar('syncing', 'Syncing Database...', 0);
-  setErrBox('');
+function pushConfigToGitHub(isSilent) {
+  if (!isSilent) {
+    showSyncBar('syncing', 'Syncing Database...', 0);
+    setErrBox('');
+  } else {
+    showSyncBar('syncing', 'Auto-saving...', 1500);
+  }
 
   var cfg = {
     users: users.filter(function(u){ return !u.isAdmin; }),
@@ -1728,7 +1708,7 @@ function pushConfigToGitHub() {
     })
     .then(function(data) {
       var bodyPayload = {
-        message: 'Sync config state from web console',
+        message: 'Auto-sync config state',
         content: btoa(unescape(encodeURIComponent(JSON.stringify(cfg))))
       };
       if (data.sha) bodyPayload.sha = data.sha;
@@ -1748,14 +1728,19 @@ function pushConfigToGitHub() {
       return res.json();
     })
     .then(function() {
-      showSyncBar('ok', 'GitHub Sync OK ✓', 3000);
+      showSyncBar('ok', 'Database Synced ✓', 2000);
       setErrBox('');
       var su = document.getElementById('sync-users-count'); if(su) su.textContent = cfg.users.length + ' users';
       var ss = document.getElementById('sync-scans-count'); if(ss) ss.textContent = cfg.sites.length + ' sites';
     })
     .catch(function(err) {
-      showSyncBar('err', 'Sync Failed');
-      setErrBox(formatSyncError(err));
+      console.error('GitHub silent push failed:', err);
+      if (!isSilent) {
+        showSyncBar('err', 'Sync Failed');
+        setErrBox(formatSyncError(err));
+      } else {
+        showSyncBar('err', 'Sync offline', 2000);
+      }
     });
   } else {
     // Local Node Server Mode
@@ -1769,14 +1754,19 @@ function pushConfigToGitHub() {
       return res.json();
     })
     .then(function() {
-      showSyncBar('ok', 'Server Database Sync OK ✓', 3000);
+      showSyncBar('ok', 'Database Synced ✓', 2000);
       setErrBox('');
       var su = document.getElementById('sync-users-count'); if(su) su.textContent = cfg.users.length + ' users';
       var ss = document.getElementById('sync-scans-count'); if(ss) ss.textContent = cfg.sites.length + ' sites';
     })
     .catch(function(err) {
-      showSyncBar('err', 'Sync Failed');
-      setErrBox('Failed to write changes to local server disk: ' + (err.message || err));
+      console.error('Local server silent push failed:', err);
+      if (!isSilent) {
+        showSyncBar('err', 'Sync Failed');
+        setErrBox('Failed to write changes to local server disk: ' + (err.message || err));
+      } else {
+        showSyncBar('err', 'Sync offline', 2000);
+      }
     });
   }
 }
@@ -2154,6 +2144,14 @@ window.initSync = function() {
     }
   }
   setSyncMode(mode);
+
+  // Setup smart background auto-sync polling every 30 seconds
+  setInterval(function() {
+    if (document.hidden) return; // Only sync when the user is actively viewing the tab to conserve bandwidth/battery
+    var activeMode = localStorage.getItem('so_sync_mode');
+    if (activeMode === 'github' && !ghTok()) return; // GitHub mode active but no token entered yet
+    autoLoadConfig(true); // Perform a silent auto-pull and merge of state
+  }, 30000);
 };
 
 // ── SITES ─────────────────────────────────────────────────────────────────────
@@ -2247,12 +2245,17 @@ function saveUsers() { localStorage.setItem(AK, JSON.stringify(users)); silentPu
 function loadScans() { try { scans = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { scans = []; } }
 function saveScans() {
   localStorage.setItem(SK, JSON.stringify(scans));
-  fetch('/api/scans', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(scans)
-  })
-  .catch(function(e){ console.error('Scan delete push sync failed', e); });
+  var syncMode = localStorage.getItem('so_sync_mode');
+  if (syncMode === 'github' && ghTok()) {
+    pushScanToGitHub();
+  } else {
+    fetch('/api/scans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(scans)
+    })
+    .catch(function(e){ console.error('Scan delete push sync failed', e); });
+  }
 }
 
 // ── PIN PAD ────────────────────────────────────────────────────────────────────
