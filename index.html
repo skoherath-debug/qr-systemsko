@@ -1623,6 +1623,24 @@ function showSyncBar(state, msg, autohide) {
   if (autohide) setTimeout(function(){ if(bar)bar.classList.add('hide'); }, autohide);
 }
 
+// Helper to construct headers with the modern Bearer authentication format safely
+function getAuthHeader(tok) {
+  if (!tok) return {};
+  var tokenVal = tok.trim();
+  tokenVal = tokenVal.replace(/^(bearer|token)\s+/i, '');
+  tokenVal = tokenVal.replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+  return { 'Authorization': 'Bearer ' + tokenVal };
+}
+
+// Enhance sync error description for network or credential failures
+function formatSyncError(err) {
+  var msg = err.message || String(err);
+  if (msg === 'Failed to fetch' || msg.indexOf('NetworkError') !== -1 || msg.indexOf('fetch') !== -1 || msg.indexOf('CORS') !== -1) {
+    return 'Network Connection Error. Please confirm that your GitHub Token is active, has "Read and Write" access permissions to repository contents, your repository URL is valid, and your internet connection is fully online.';
+  }
+  return msg;
+}
+
 // Silent push — called automatically on every save (no error UI spam)
 function silentPush() {
   var tok = ghTok();
@@ -1632,8 +1650,13 @@ function silentPush() {
     sites: sitesList,
     theme: localStorage.getItem('so_asset_theme') || 'classic'
   };
+  
+  var auth = getAuthHeader(tok);
+  var getHeaders = { 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' };
+  if (auth.Authorization) getHeaders.Authorization = auth.Authorization;
+
   fetch(CLOUD_WRITE, {
-    headers: { Authorization:'token '+tok, Accept:'application/vnd.github.v3+json' }
+    headers: getHeaders
   }).then(function(g){
     var sha = null;
     return g.ok ? g.json().then(function(j){ sha=j.sha; return sha; }) : Promise.resolve(null);
@@ -1643,9 +1666,16 @@ function silentPush() {
       content: btoa(unescape(encodeURIComponent(JSON.stringify(cfg))))
     };
     if (sha) body.sha = sha;
+    
+    var putHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json'
+    };
+    if (auth.Authorization) putHeaders.Authorization = auth.Authorization;
+    
     return fetch(CLOUD_WRITE, {
       method: 'PUT',
-      headers: { Authorization:'token '+tok, 'Content-Type':'application/json', Accept:'application/vnd.github.v3+json' },
+      headers: putHeaders,
       body: JSON.stringify(body)
     });
   }).then(function(p){
@@ -1673,15 +1703,19 @@ function pushConfigToGitHub() {
     theme: localStorage.getItem('so_asset_theme') || 'classic'
   };
 
+  var auth = getAuthHeader(tok);
+  var getHeaders = { 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' };
+  if (auth.Authorization) getHeaders.Authorization = auth.Authorization;
+
   fetch(CLOUD_WRITE, {
-    headers: { Authorization:'token '+tok, Accept:'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' }
+    headers: getHeaders
   })
   .then(function(res) {
     if (res.status === 401 || res.status === 403) {
       throw new Error('Authorized error. Please verify your GitHub Token has correct repository permissions.');
     }
     if (!res.ok && res.status !== 404) {
-      throw new Error('Failed to fetch config SHA from GitHub (' + res.status + ')');
+      throw new Error('Failed to fetch config SHA from GitHub (status ' + res.status + ')');
     }
     return res.status === 200 ? res.json() : null;
   })
@@ -1693,13 +1727,15 @@ function pushConfigToGitHub() {
     };
     if (sha) body.sha = sha;
 
+    var putHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json'
+    };
+    if (auth.Authorization) putHeaders.Authorization = auth.Authorization;
+
     return fetch(CLOUD_WRITE, {
       method: 'PUT',
-      headers: { 
-        Authorization:'token '+tok, 
-        'Content-Type':'application/json', 
-        Accept:'application/vnd.github.v3+json' 
-      },
+      headers: putHeaders,
       body: JSON.stringify(body)
     });
   })
@@ -1719,7 +1755,7 @@ function pushConfigToGitHub() {
   })
   .catch(function(err) {
     showSyncBar('err', 'Sync Failed');
-    setErrBox(err.message || err);
+    setErrBox(formatSyncError(err));
   });
 }
 
@@ -1773,8 +1809,17 @@ function autoLoadConfig(){
     if (idx >= urls.length) { if(lss)lss.textContent=''; return; }
     var url = urls[idx];
     var isApi = url.indexOf('api.github.com') !== -1;
+    
+    var tok = ghTok();
+    var headers = {};
+    if (isApi) {
+      headers['Accept'] = 'application/vnd.github.v3+json';
+      var auth = getAuthHeader(tok);
+      if (auth.Authorization) headers['Authorization'] = auth.Authorization;
+    }
+
     fetch(url + (isApi?'':'?nc='+Date.now()), {
-      headers: isApi ? {Accept:'application/vnd.github.v3+json'} : {}
+      headers: headers
     })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(data){
@@ -1800,15 +1845,31 @@ window.saveGhToken=function(){
   var inp=document.getElementById('gh-token-inp');
   var val=(inp?inp.value:'').trim();
   if(!val){if(inp){inp.style.border='2px solid var(--red)';setTimeout(function(){inp.style.border='';},1500);}return;}
+  
+  // Clean whitespaces and arbitrary prefix headers
+  val = val.replace(/^(bearer|token)\s+/i, '');
+  val = val.replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+
   localStorage.setItem(GH_TOKEN_KEY,val);ghToken=val;GH_FIXED_TOKEN=val;
   if(inp)inp.value='';
   var row=document.getElementById('token-row');if(row)row.style.display='none';
   var hint=document.getElementById('token-hint');if(hint)hint.style.display='none';
-  var tokOk=document.getElementById('token-status-ok');if(tokOk){tokOk.style.display='block';tokOk.textContent='✓ Token saved';}
+  var tokOk=document.getElementById('token-status-ok');if(tokOk){
+    tokOk.style.display='block';
+    tokOk.innerHTML = '<span style="color:var(--green)">\u2713 Token saved on this device</span> ' +
+                      '<button type="button" onclick="clearGhToken()" style="margin-left:10px;background:var(--c2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:2px 8px;font-size:10px;cursor:pointer;">Change</button>';
+  }
   setErrBox('');
   pushConfigToGitHub();
-
-  pushConfigToGitHub();
+};
+window.clearGhToken=function(){
+  localStorage.removeItem(GH_TOKEN_KEY);
+  ghToken='';
+  GH_FIXED_TOKEN='';
+  var row=document.getElementById('token-row');if(row)row.style.display='flex';
+  var hint=document.getElementById('token-hint');if(hint)hint.style.display='block';
+  var tokOk=document.getElementById('token-status-ok');if(tokOk)tokOk.style.display='none';
+  setErrBox('');
 };
 window.onTokenInput=function(){
   var inp=document.getElementById('gh-token-inp');if(!inp)return;inp.style.border='';
@@ -2043,30 +2104,17 @@ function renderAdmin() {
   var row=document.getElementById('token-row');
   var hint=document.getElementById('token-hint');
   var tokOk=document.getElementById('token-status-ok');
-  if(tok){
-    if(row)row.style.display='none';
-    if(hint)hint.style.display='none';
-    if(tokOk)tokOk.style.display='block';
-  } else {
-    if(row)row.style.display='flex';
-    if(hint)hint.style.display='block';
-    if(tokOk)tokOk.style.display='none';
-  }
-  var su=document.getElementById('sync-users-count');
-  if(su)su.textContent=users.filter(function(u){return !u.isAdmin;}).length+' users';
-  var ss=document.getElementById('sync-scans-count');
-  if(ss)ss.textContent=sitesList.length+' sites';  // Show token status
-  var tok=GH_FIXED_TOKEN||localStorage.getItem(GH_TOKEN_KEY)||'';
-  var row=document.getElementById('token-row');
-  var hint=document.getElementById('token-hint');
-  var tokOk=document.getElementById('token-status-ok');
   if(GH_FIXED_TOKEN){
     if(row)row.style.display='none';
     if(hint)hint.style.display='none';
+    if(tokOk){tokOk.style.display='block';tokOk.innerHTML='<span style="color:var(--blue2)">\u2713 Build embedded master token active</span>';}
   } else if(tok){
     if(row)row.style.display='none';
     if(hint)hint.style.display='none';
-    if(tokOk){tokOk.style.display='block';tokOk.textContent='\u2713 Token saved on this device';}
+    if(tokOk){
+      tokOk.style.display='block';
+      tokOk.innerHTML='<span style="color:var(--green)">\u2713 Token saved on this device</span> <button type="button" onclick="clearGhToken()" style="margin-left:10px;background:var(--c2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:2px 8px;font-size:10px;cursor:pointer;white-space:nowrap;display:inline-block;">Change</button>';
+    }
   } else {
     if(row)row.style.display='flex';
     if(hint)hint.style.display='block';
